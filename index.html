@@ -6,305 +6,392 @@
 <title>Easy MH — Video Generator</title>
 <style>
 @font-face { font-family: 'F-Montserrat'; src: url('/fonts/Montserrat-Bold.ttf'); font-weight: bold; }
-@font-face { font-family: 'F-Gilroy';     src: url('/fonts/Gilroy-Medium.ttf'); }
-@font-face { font-family: 'F-Georgia';    src: url('/fonts/Georgia.ttf'); }
-@font-face { font-family: 'F-LTCarpet';  src: url('/fonts/LTCarpet.ttf'); }
-@font-face { font-family: 'F-Inter';     src: url('/fonts/Inter-VariableFont_opsz,wght.ttf'); }
-@font-face { font-family: 'F-Bodyhand';  src: url('/fonts/Bodyhand Regular.otf'); }
+@font-face { font-family: 'F-Gilroy';    src: url('/fonts/Gilroy-Medium.ttf'); }
+@font-face { font-family: 'F-Georgia';   src: url('/fonts/Georgia.ttf'); }
+@font-face { font-family: 'F-LTCarpet'; src: url('/fonts/LTCarpet.ttf'); }
+@font-face { font-family: 'F-Inter';    src: url('/fonts/Inter-VariableFont_opsz,wght.ttf'); }
+@font-face { font-family: 'F-Bodyhand'; src: url('/fonts/Bodyhand Regular.otf'); }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --bg:       #080808;
+  --surface:  rgba(255,255,255,0.04);
+  --border:   rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --text:     rgba(255,255,255,0.92);
+  --text-2:   rgba(255,255,255,0.45);
+  --text-3:   rgba(255,255,255,0.22);
+  --accent:   #ffffff;
+  --green:    #32d74b;
+  --ease:     cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { -webkit-font-smoothing: antialiased; }
+
 body {
-  background: #0d0d0d;
-  color: #e8e8e8;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
-  padding: 40px 16px 80px;
+  padding: 48px 20px 100px;
 }
 
 .layout {
-  max-width: 1100px;
+  max-width: 1080px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
+  grid-template-columns: 1fr 290px;
+  gap: 20px;
   align-items: start;
 }
 
-h1 { font-size: 20px; font-weight: 600; color: #fff; margin-bottom: 28px; grid-column: 1 / -1; }
-h1 span { color: #555; font-weight: 400; }
+/* ── Header ── */
+.page-header {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.page-subtitle {
+  font-size: 15px;
+  color: var(--text-3);
+  font-weight: 400;
+  letter-spacing: -0.2px;
+}
 
+/* ── Card ── */
 .card {
-  background: #161616;
-  border: 1px solid #222;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
 }
 
-.card-title {
-  font-size: 10px;
-  font-weight: 700;
+.card-label {
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #555;
-  margin-bottom: 14px;
+  letter-spacing: 0.8px;
+  color: var(--text-3);
+  margin-bottom: 16px;
 }
+
+.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
 /* ── Scripts ── */
-.script-item { margin-bottom: 12px; }
+.script-item { margin-bottom: 14px; }
 .script-item:last-child { margin-bottom: 0; }
 
 .script-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
-.script-label { font-size: 11px; color: #555; }
+.script-index {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+  letter-spacing: 0.2px;
+}
 .script-remove {
-  background: none; border: none; color: #444;
-  font-size: 16px; cursor: pointer; padding: 0 4px;
-  line-height: 1; transition: color 0.15s;
+  background: none; border: none;
+  color: var(--text-3); font-size: 18px;
+  cursor: pointer; padding: 0 2px; line-height: 1;
+  transition: color 0.15s var(--ease);
 }
-.script-remove:hover { color: #e05252; }
+.script-remove:hover { color: #ff453a; }
 
 textarea {
   width: 100%;
-  min-height: 120px;
-  background: #0d0d0d;
-  border: 1px solid #242424;
-  border-radius: 8px;
-  color: #e8e8e8;
+  min-height: 110px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
   font-size: 14px;
-  line-height: 1.6;
-  padding: 12px 14px;
+  line-height: 1.65;
+  padding: 13px 15px;
   resize: vertical;
   outline: none;
   font-family: inherit;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s var(--ease);
+  letter-spacing: -0.1px;
 }
-textarea:focus { border-color: #3a3a3a; }
-textarea::placeholder { color: #3a3a3a; }
+textarea:focus { border-color: var(--border-2); }
+textarea::placeholder { color: var(--text-3); }
 
-/* ── Script result ── */
+/* Script result */
 .script-result { margin-top: 10px; display: none; }
 .script-result.visible { display: block; }
-
-.result-track { height: 1px; background: #1e1e1e; border-radius: 1px; overflow: hidden; margin-bottom: 9px; }
-.result-fill  { height: 100%; background: #fff; width: 0%; transition: width 0.5s ease; border-radius: 1px; }
-
-.result-row {
-  display: flex; align-items: center;
-  justify-content: space-between; min-height: 24px;
-}
-.result-msg { font-size: 12px; color: #555; }
-.result-msg.done  { color: #3dd68c; }
-.result-msg.error { color: #e05252; }
-
+.result-track { height: 1px; background: var(--border); border-radius: 1px; overflow: hidden; margin-bottom: 10px; }
+.result-fill  { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s var(--ease); }
+.result-row   { display: flex; align-items: center; justify-content: space-between; min-height: 26px; }
+.result-msg   { font-size: 12px; color: var(--text-2); letter-spacing: -0.1px; }
+.result-msg.done  { color: var(--green); }
+.result-msg.error { color: #ff453a; }
 .result-dl {
   display: none; align-items: center; gap: 5px;
-  padding: 5px 12px; background: #18a058; color: #fff;
-  border-radius: 6px; font-size: 11px; font-weight: 600;
-  text-decoration: none; transition: background 0.15s;
+  padding: 5px 13px; background: var(--green); color: #000;
+  border-radius: 20px; font-size: 11px; font-weight: 600;
+  text-decoration: none; letter-spacing: -0.1px;
+  transition: opacity 0.15s var(--ease);
 }
 .result-dl.show { display: inline-flex; }
-.result-dl:hover { background: #16924e; }
+.result-dl:hover { opacity: 0.85; }
 
 .add-script-btn {
-  margin-top: 12px; padding: 8px 14px;
-  background: none; border: 1px dashed #2a2a2a;
-  border-radius: 8px; color: #555; font-size: 13px;
-  cursor: pointer; width: 100%; transition: all 0.15s;
+  margin-top: 14px; padding: 9px 16px;
+  background: none; border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 12px; color: var(--text-3); font-size: 13px;
+  font-family: inherit; cursor: pointer; width: 100%;
+  transition: all 0.2s var(--ease); letter-spacing: -0.1px;
 }
-.add-script-btn:hover { border-color: #444; color: #aaa; }
+.add-script-btn:hover { border-color: var(--border-2); color: var(--text-2); }
 
 /* ── Pills ── */
-.pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill-group { display: flex; flex-wrap: wrap; gap: 7px; }
 .pill {
-  padding: 6px 13px; border-radius: 20px;
-  border: 1px solid #242424; background: #0d0d0d;
-  color: #888; font-size: 13px; cursor: pointer;
-  transition: all 0.15s; user-select: none;
+  padding: 7px 15px; border-radius: 24px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-2); font-size: 13px;
+  font-family: inherit; cursor: pointer;
+  transition: all 0.18s var(--ease);
+  user-select: none; letter-spacing: -0.1px;
 }
-.pill:hover { border-color: #3a3a3a; color: #ccc; }
-.pill.active { border-color: #fff; color: #fff; background: #1c1c1c; }
+.pill:hover { border-color: var(--border-2); color: var(--text); }
+.pill.active {
+  background: var(--accent); color: #000;
+  border-color: transparent; font-weight: 500;
+}
 
-/* ── Font pills ── */
+/* ── Font grid ── */
 .font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .font-pill {
-  padding: 10px 14px; border-radius: 10px;
-  border: 1px solid #242424; background: #0d0d0d;
-  cursor: pointer; transition: all 0.15s; user-select: none;
+  padding: 12px 14px; border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  cursor: pointer; transition: all 0.18s var(--ease); user-select: none;
 }
-.font-pill:hover { border-color: #3a3a3a; }
-.font-pill.active { border-color: #fff; background: #1c1c1c; }
-.font-pill-label  { font-size: 10px; color: #555; font-family: -apple-system, sans-serif; margin-bottom: 4px; }
-.font-pill-sample { font-size: 14px; color: #ccc; line-height: 1.3; }
+.font-pill:hover { border-color: var(--border-2); background: rgba(255,255,255,0.04); }
+.font-pill.active {
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.07);
+}
+.font-pill-label  { font-size: 10px; font-weight: 500; letter-spacing: 0.3px; color: var(--text-3); font-family: -apple-system, sans-serif; margin-bottom: 5px; }
+.font-pill-sample { font-size: 14px; color: var(--text); line-height: 1.3; }
 
-/* ── Size slider ── */
-.size-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-.size-row label { font-size: 11px; color: #555; white-space: nowrap; }
+/* Size slider */
+.size-row { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
+.size-row label { font-size: 12px; color: var(--text-3); white-space: nowrap; font-weight: 500; }
 .size-slider {
   flex: 1; -webkit-appearance: none; appearance: none;
-  height: 3px; background: #2a2a2a; border-radius: 2px; outline: none; cursor: pointer;
+  height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer;
 }
 .size-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 16px; height: 16px;
-  border-radius: 50%; background: #fff; cursor: pointer;
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  cursor: pointer; transition: transform 0.1s;
 }
-.size-value { font-size: 13px; color: #ccc; font-family: 'SF Mono', monospace; min-width: 28px; text-align: right; }
+.size-slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+.size-value {
+  font-size: 13px; color: var(--text-2);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  min-width: 30px; text-align: right; letter-spacing: -0.5px;
+}
 
-/* ── Segmented tabs (bg type) ── */
-.seg-tabs {
-  display: flex; background: #0d0d0d;
-  border: 1px solid #1e1e1e; border-radius: 8px;
-  padding: 3px; gap: 2px; margin-bottom: 14px;
+/* ── Segmented control ── */
+.seg-control {
+  display: flex; background: rgba(255,255,255,0.05);
+  border-radius: 10px; padding: 3px; gap: 2px; margin-bottom: 18px;
 }
-.seg-tab {
-  flex: 1; padding: 6px; background: none; border: none;
-  color: #555; font-size: 12px; font-weight: 500;
-  cursor: pointer; border-radius: 5px; transition: all 0.15s;
+.seg-btn {
+  flex: 1; padding: 7px; background: none; border: none;
+  color: var(--text-2); font-size: 13px; font-weight: 500;
+  font-family: inherit; cursor: pointer; border-radius: 8px;
+  transition: all 0.2s var(--ease); letter-spacing: -0.2px;
 }
-.seg-tab.active { background: #1c1c1c; color: #fff; }
-.seg-tab:hover:not(.active) { color: #aaa; }
+.seg-btn.active {
+  background: rgba(255,255,255,0.1);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.seg-btn:hover:not(.active) { color: var(--text); }
 
 /* ── Color presets ── */
 .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .preset-swatch {
-  aspect-ratio: 3/2; border-radius: 8px; border: 2px solid transparent;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700; transition: all 0.15s;
+  aspect-ratio: 1; border-radius: 12px;
+  border: 2px solid transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  transition: all 0.18s var(--ease);
 }
-.preset-swatch:hover { transform: scale(1.05); }
-.preset-swatch.active { border-color: #fff; }
+.preset-swatch:hover { transform: scale(1.06); }
+.preset-swatch.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 
-.divider { border: none; border-top: 1px solid #1e1e1e; margin: 14px 0; }
-
-.custom-colors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.color-row label { font-size: 11px; color: #555; display: block; margin-bottom: 6px; }
-.color-input-wrap {
-  display: flex; align-items: center; gap: 8px;
-  background: #0d0d0d; border: 1px solid #242424; border-radius: 8px;
-  padding: 6px 10px; transition: border-color 0.15s;
+/* Color inputs */
+.color-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.color-field label { font-size: 11px; font-weight: 500; color: var(--text-3); display: block; margin-bottom: 7px; letter-spacing: 0.1px; }
+.color-input {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 7px 11px;
+  transition: border-color 0.2s var(--ease);
 }
-.color-input-wrap:focus-within { border-color: #3a3a3a; }
-.color-input-wrap input[type="color"] {
-  width: 20px; height: 20px; border: none; background: none;
-  padding: 0; cursor: pointer; border-radius: 3px; flex-shrink: 0;
+.color-input:focus-within { border-color: var(--border-2); }
+.color-input input[type="color"] {
+  width: 18px; height: 18px; border: none; background: none;
+  padding: 0; cursor: pointer; border-radius: 4px; flex-shrink: 0;
 }
-.color-input-wrap input[type="text"] {
+.color-input input[type="text"] {
   background: none; border: none; outline: none;
-  color: #ccc; font-size: 13px;
-  font-family: 'SF Mono', 'Fira Code', monospace; width: 70px;
+  color: var(--text-2); font-size: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  width: 68px; letter-spacing: -0.3px;
 }
 
 /* ── Photo upload ── */
 .photo-drop {
-  border: 1px dashed #2a2a2a; border-radius: 8px;
-  cursor: pointer; transition: border-color 0.15s; overflow: hidden;
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 12px; cursor: pointer;
+  transition: border-color 0.2s var(--ease); overflow: hidden;
 }
-.photo-drop:hover { border-color: #444; }
-.photo-drop-inner {
-  padding: 24px 16px; text-align: center;
-}
-.photo-drop p { font-size: 12px; color: #555; pointer-events: none; }
+.photo-drop:hover { border-color: var(--border-2); }
+.photo-drop-inner { padding: 26px 16px; text-align: center; }
+.photo-drop-inner p { font-size: 13px; color: var(--text-3); pointer-events: none; letter-spacing: -0.1px; }
 .photo-drop input[type="file"] { display: none; }
-.photo-preview-img {
-  width: 100%; height: 90px; object-fit: cover;
-  display: none; border-radius: 6px;
-}
+.photo-preview-img { width: 100%; height: 88px; object-fit: cover; display: none; }
 
-/* ── Christmas frame toggle ── */
-.frame-toggle-row {
-  display: flex; align-items: center; gap: 10px;
+/* ── Frame toggle ── */
+.frame-row {
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
-.frame-toggle-row input[type="checkbox"] {
-  width: 15px; height: 15px; cursor: pointer; accent-color: #fff; flex-shrink: 0;
+.frame-row input[type="checkbox"] {
+  width: 16px; height: 16px; cursor: pointer;
+  accent-color: var(--accent); flex-shrink: 0;
+  border-radius: 4px;
 }
-.frame-toggle-row label { font-size: 13px; color: #888; cursor: pointer; flex: 1; }
-
-.frame-preview-thumb {
-  width: 32px; height: 56px; object-fit: cover;
-  border-radius: 4px; border: 1px solid #242424; flex-shrink: 0;
+.frame-row label { font-size: 13px; color: var(--text-2); cursor: pointer; flex: 1; letter-spacing: -0.1px; }
+.frame-thumb {
+  width: 30px; height: 54px; object-fit: cover;
+  border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0;
+  opacity: 0.7; transition: opacity 0.2s;
 }
+#frame-enabled:checked ~ label { color: var(--text); }
+.frame-row:hover .frame-thumb { opacity: 1; }
 
 /* ── Music ── */
 .music-upload { display: flex; align-items: center; gap: 10px; }
 .music-upload input[type="file"] { display: none; }
-.music-btn {
-  padding: 7px 14px; background: #0d0d0d; border: 1px solid #242424;
-  border-radius: 8px; color: #777; font-size: 12px; cursor: pointer; transition: all 0.15s;
+.file-btn {
+  padding: 7px 16px; background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text-2); font-size: 13px; font-family: inherit;
+  cursor: pointer; transition: all 0.18s var(--ease); letter-spacing: -0.1px;
 }
-.music-btn:hover { border-color: #3a3a3a; color: #ccc; }
-.music-name { font-size: 12px; color: #555; }
+.file-btn:hover { background: rgba(255,255,255,0.09); border-color: var(--border-2); color: var(--text); }
+.file-name { font-size: 12px; color: var(--text-3); letter-spacing: -0.1px; }
 
-/* ── Generate ── */
+/* ── Generate button ── */
 .generate-btn {
-  width: 100%; padding: 15px; background: #fff; color: #000;
-  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
-  cursor: pointer; transition: all 0.15s; margin-bottom: 14px;
+  width: 100%; padding: 16px;
+  background: var(--accent);
+  color: #000; border: none; border-radius: 14px;
+  font-size: 15px; font-weight: 600; font-family: inherit;
+  cursor: pointer; letter-spacing: -0.3px;
+  transition: all 0.2s var(--ease);
+  margin-bottom: 12px;
 }
-.generate-btn:hover { background: #e8e8e8; }
-.generate-btn:disabled { background: #1c1c1c; color: #444; cursor: not-allowed; }
+.generate-btn:hover { transform: scale(1.01); box-shadow: 0 4px 20px rgba(255,255,255,0.12); }
+.generate-btn:active { transform: scale(0.99); }
+.generate-btn:disabled {
+  background: rgba(255,255,255,0.07);
+  color: var(--text-3); cursor: not-allowed;
+  transform: none; box-shadow: none;
+}
 
 /* ── Preview ── */
-.preview-sticky { position: sticky; top: 40px; }
-.preview-frame-wrap {
-  width: 100%; aspect-ratio: 9/16; border-radius: 12px;
-  overflow: hidden; margin-bottom: 14px; border: 1px solid #222;
+.preview-sticky { position: sticky; top: 48px; }
+.preview-wrap {
+  width: 100%; aspect-ratio: 9/16;
+  border-radius: 20px; overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
   position: relative;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
 }
-.preview-frame {
+.preview-bg {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  padding: 24px; transition: background 0.2s; background-size: cover !important;
-  background-position: center !important;
+  padding: 24px; transition: background 0.25s var(--ease);
+  background-size: cover !important; background-position: center !important;
 }
-.preview-text { text-align: center; line-height: 1.35; word-break: break-word; transition: color 0.2s; }
-.preview-frame-overlay {
-  position: absolute; inset: 0; width: 100%; height: 100%;
+.preview-text {
+  text-align: center; line-height: 1.3;
+  word-break: break-word; transition: all 0.2s var(--ease);
+}
+.preview-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
   object-fit: fill; pointer-events: none;
   display: none;
 }
-.preview-frame-overlay.show { display: block; }
+.preview-overlay.show { display: block; }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
   .preview-sticky { position: static; }
-  .preview-frame-wrap { max-width: 200px; margin: 0 auto 14px; }
+  .preview-wrap { max-width: 200px; margin: 0 auto 14px; }
   .font-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 <div class="layout">
-  <h1>Easy MH <span>/ Video Generator</span></h1>
 
-  <!-- LEFT -->
+  <div class="page-header">
+    <span class="page-title">Easy MH</span>
+    <span class="page-subtitle">/ Video Generator</span>
+  </div>
+
+  <!-- ── LEFT ── -->
   <div>
 
     <!-- Scripts -->
     <div class="card">
-      <div class="card-title">Scripts</div>
+      <div class="card-label">Scripts</div>
       <div id="scripts-list"></div>
       <button class="add-script-btn" id="add-script-btn">+ Add script</button>
     </div>
 
     <!-- Voice -->
     <div class="card">
-      <div class="card-title">Voice</div>
+      <div class="card-label">Voice</div>
       <div class="pill-group" id="voice-group">
-        <div class="pill active" data-value="cm1VTuOWsFQRdZ5uDzSB">Тамера ♀</div>
-        <div class="pill" data-value="zIiblxeTGn5wMzcBul83">Хейлі ♀</div>
-        <div class="pill" data-value="F6d1zUrtT0hMMRrPcNx3">Micheal ♂</div>
-        <div class="pill" data-value="oBvxKpVhvq7xGdAVcOHG">Charles ♂</div>
+        <button class="pill active" data-value="cm1VTuOWsFQRdZ5uDzSB">Тамера ♀</button>
+        <button class="pill" data-value="zIiblxeTGn5wMzcBul83">Хейлі ♀</button>
+        <button class="pill" data-value="F6d1zUrtT0hMMRrPcNx3">Micheal ♂</button>
+        <button class="pill" data-value="oBvxKpVhvq7xGdAVcOHG">Charles ♂</button>
       </div>
     </div>
 
     <!-- Font -->
     <div class="card">
-      <div class="card-title">Font</div>
+      <div class="card-label">Font</div>
       <div class="font-grid" id="font-group">
         <div class="font-pill active" data-value="Montserrat" data-family="F-Montserrat" data-bold="1">
           <div class="font-pill-label">Montserrat</div>
@@ -338,14 +425,13 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
-    <!-- Colors / Background -->
+    <!-- Background & Colors -->
     <div class="card">
-      <div class="card-title">Background &amp; Colors</div>
+      <div class="card-label">Background &amp; Colors</div>
 
-      <!-- BG type tabs -->
-      <div class="seg-tabs">
-        <button class="seg-tab active" id="bg-tab-color">Solid color</button>
-        <button class="seg-tab" id="bg-tab-photo">Photo</button>
+      <div class="seg-control">
+        <button class="seg-btn active" id="bg-tab-color">Solid color</button>
+        <button class="seg-btn" id="bg-tab-photo">Photo</button>
       </div>
 
       <!-- Color mode -->
@@ -360,17 +446,17 @@ textarea::placeholder { color: #3a3a3a; }
           <div class="preset-swatch" data-bg="#1a3e1a" data-text="#FFFFFF" style="background:#1a3e1a;color:#fff">Aa</div>
           <div class="preset-swatch" data-bg="#0047ab" data-text="#FFFFFF" style="background:#0047ab;color:#fff">Aa</div>
         </div>
-        <div class="custom-colors">
-          <div class="color-row">
+        <div class="color-pair">
+          <div class="color-field">
             <label>Background</label>
-            <div class="color-input-wrap">
+            <div class="color-input">
               <input type="color" id="bg-picker" value="#000000">
               <input type="text"  id="bg-hex"    value="#000000" maxlength="7" spellcheck="false">
             </div>
           </div>
-          <div class="color-row">
+          <div class="color-field">
             <label>Text color</label>
-            <div class="color-input-wrap">
+            <div class="color-input">
               <input type="color" id="text-picker" value="#FFFFFF">
               <input type="text"  id="text-hex"    value="#FFFFFF" maxlength="7" spellcheck="false">
             </div>
@@ -388,9 +474,9 @@ textarea::placeholder { color: #3a3a3a; }
           <input type="file" id="bg-photo-input" accept="image/*">
         </label>
         <hr class="divider">
-        <div class="color-row">
+        <div class="color-field">
           <label>Text color</label>
-          <div class="color-input-wrap">
+          <div class="color-input">
             <input type="color" id="text-picker-photo" value="#FFFFFF">
             <input type="text"  id="text-hex-photo"    value="#FFFFFF" maxlength="7" spellcheck="false">
           </div>
@@ -398,44 +484,43 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
-    <!-- Frame overlay -->
+    <!-- Frame -->
     <div class="card">
-      <div class="card-title">Frame <span style="color:#333;font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></div>
-      <div class="frame-toggle-row">
+      <div class="card-label">Frame <span style="color:var(--text-3);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
+      <label class="frame-row">
         <input type="checkbox" id="frame-enabled">
-        <label for="frame-enabled">Christmas lights frame</label>
-        <img class="frame-preview-thumb" src="/static-frames/christmas.png" alt="Christmas frame">
-      </div>
+        <span style="font-size:13px;color:var(--text-2);letter-spacing:-0.1px;flex:1">Christmas lights</span>
+        <img class="frame-thumb" src="/static-frames/christmas.png" alt="">
+      </label>
     </div>
 
     <!-- Music -->
     <div class="card">
-      <div class="card-title">Music <span style="color:#333;font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></div>
+      <div class="card-label">Music <span style="color:var(--text-3);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
       <div class="music-upload">
-        <label class="music-btn" for="music-input">Choose file</label>
+        <label class="file-btn" for="music-input">Choose file</label>
         <input type="file" id="music-input" accept="audio/*">
-        <span class="music-name" id="music-name">No file</span>
+        <span class="file-name" id="music-name">No file</span>
       </div>
     </div>
 
   </div>
 
-  <!-- RIGHT — preview + button -->
+  <!-- ── RIGHT ── -->
   <div class="preview-sticky">
-    <div class="preview-frame-wrap">
-      <div class="preview-frame" id="preview-frame" style="background:#000">
+    <div class="preview-wrap">
+      <div class="preview-bg" id="preview-frame" style="background:#000">
         <div class="preview-text" id="preview-text"
              style="font-family:'F-Montserrat';font-weight:bold;color:#fff;font-size:22px">
           The way you love her matters.
         </div>
       </div>
-      <img class="preview-frame-overlay" id="preview-overlay" src="/static-frames/christmas.png" alt="">
+      <img class="preview-overlay" id="preview-overlay" src="/static-frames/christmas.png" alt="">
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
   </div>
 
 </div>
-
 <script>
   const state = {
     voiceId:    'cm1VTuOWsFQRdZ5uDzSB',
@@ -458,16 +543,15 @@ textarea::placeholder { color: #3a3a3a; }
     const idx  = scriptCount;
     const list = document.getElementById('scripts-list');
     const num  = list.children.length + 1;
-
     const item = document.createElement('div');
     item.className = 'script-item';
     item.id = `script-item-${idx}`;
     item.innerHTML = `
       <div class="script-header">
-        <span class="script-label">Script #${num}</span>
+        <span class="script-index">Script ${num}</span>
         <button class="script-remove" onclick="removeScript(${idx})">×</button>
       </div>
-      <textarea class="script-text" id="script-text-${idx}" placeholder="Paste your script here..."></textarea>
+      <textarea class="script-text" id="script-text-${idx}" placeholder="Paste your script here…"></textarea>
       <div class="script-result" id="script-result-${idx}">
         <div class="result-track"><div class="result-fill" id="result-fill-${idx}"></div></div>
         <div class="result-row">
@@ -481,26 +565,19 @@ textarea::placeholder { color: #3a3a3a; }
   }
 
   function removeScript(idx) {
-    const el = document.getElementById(`script-item-${idx}`);
-    if (el) el.remove();
-    reindexLabels();
-    updateRemoveButtons();
-    updateGenerateLabel();
+    document.getElementById(`script-item-${idx}`)?.remove();
+    reindexLabels(); updateRemoveButtons(); updateGenerateLabel();
   }
 
   function reindexLabels() {
-    document.querySelectorAll('#scripts-list .script-label').forEach((el, i) => {
-      el.textContent = `Script #${i + 1}`;
-    });
-    document.querySelectorAll('#scripts-list .result-dl').forEach((el, i) => {
-      el.download = `video-${i + 1}.mp4`;
-    });
+    document.querySelectorAll('#scripts-list .script-index').forEach((el, i) => el.textContent = `Script ${i + 1}`);
+    document.querySelectorAll('#scripts-list .result-dl').forEach((el, i) => { el.download = `video-${i + 1}.mp4`; });
   }
 
   function updateRemoveButtons() {
     const items = document.querySelectorAll('#scripts-list .script-item');
     items.forEach(item => {
-      item.querySelector('.script-remove').style.display = items.length > 1 ? 'block' : 'none';
+      item.querySelector('.script-remove').style.display = items.length > 1 ? '' : 'none';
     });
   }
 
@@ -515,19 +592,15 @@ textarea::placeholder { color: #3a3a3a; }
   // ── Preview ───────────────────────────────────────────
   function updatePreview() {
     const frame = document.getElementById('preview-frame');
-    if (state.bgType === 'photo' && state.bgImageURL) {
-      frame.style.background = `url(${state.bgImageURL}) center/cover no-repeat`;
-    } else {
-      frame.style.background = state.bgColor;
-    }
+    frame.style.background = (state.bgType === 'photo' && state.bgImageURL)
+      ? `url(${state.bgImageURL}) center/cover no-repeat`
+      : state.bgColor;
     const pt = document.getElementById('preview-text');
     pt.style.color      = state.textColor;
     pt.style.fontFamily = `'${state.fontFamily}'`;
     pt.style.fontWeight = state.fontBold ? 'bold' : 'normal';
     pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
-
-    const overlay = document.getElementById('preview-overlay');
-    overlay.classList.toggle('show', state.useFrame);
+    document.getElementById('preview-overlay').classList.toggle('show', state.useFrame);
   }
 
   function applyColors(bg, txt) {
@@ -539,7 +612,7 @@ textarea::placeholder { color: #3a3a3a; }
     updatePreview();
   }
 
-  // ── BG type tabs ──────────────────────────────────────
+  // ── BG tabs ───────────────────────────────────────────
   document.getElementById('bg-tab-color').addEventListener('click', () => {
     state.bgType = 'color';
     document.getElementById('bg-tab-color').classList.add('active');
@@ -548,7 +621,6 @@ textarea::placeholder { color: #3a3a3a; }
     document.getElementById('bg-photo-section').style.display = 'none';
     updatePreview();
   });
-
   document.getElementById('bg-tab-photo').addEventListener('click', () => {
     state.bgType = 'photo';
     document.getElementById('bg-tab-photo').classList.add('active');
@@ -560,15 +632,11 @@ textarea::placeholder { color: #3a3a3a; }
 
   // ── Photo upload ──────────────────────────────────────
   document.getElementById('bg-photo-input').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    state.bgImageURL = url;
-    const preview = document.getElementById('bg-photo-preview');
-    const inner   = document.getElementById('bg-photo-inner');
-    preview.src = url;
-    preview.style.display = 'block';
-    inner.style.display   = 'none';
+    const file = e.target.files[0]; if (!file) return;
+    state.bgImageURL = URL.createObjectURL(file);
+    document.getElementById('bg-photo-preview').src = state.bgImageURL;
+    document.getElementById('bg-photo-preview').style.display = 'block';
+    document.getElementById('bg-photo-inner').style.display   = 'none';
     updatePreview();
   });
 
@@ -576,8 +644,7 @@ textarea::placeholder { color: #3a3a3a; }
   document.getElementById('voice-group').querySelectorAll('.pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
-      p.classList.add('active');
-      state.voiceId = p.dataset.value;
+      p.classList.add('active'); state.voiceId = p.dataset.value;
     });
   });
 
@@ -586,9 +653,7 @@ textarea::placeholder { color: #3a3a3a; }
     p.addEventListener('click', () => {
       document.getElementById('font-group').querySelectorAll('.font-pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active');
-      state.font = p.dataset.value;
-      state.fontFamily = p.dataset.family;
-      state.fontBold = !!p.dataset.bold;
+      state.font = p.dataset.value; state.fontFamily = p.dataset.family; state.fontBold = !!p.dataset.bold;
       updatePreview();
     });
   });
@@ -599,16 +664,15 @@ textarea::placeholder { color: #3a3a3a; }
     updatePreview();
   });
 
-  // ── Colors ────────────────────────────────────────────
+  // ── Color presets ─────────────────────────────────────
   document.getElementById('preset-group').querySelectorAll('.preset-swatch').forEach(s => {
     s.addEventListener('click', () => {
       document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
-      s.classList.add('active');
-      applyColors(s.dataset.bg, s.dataset.text);
+      s.classList.add('active'); applyColors(s.dataset.bg, s.dataset.text);
     });
   });
 
-  // Color mode pickers
+  // Color pickers (color mode)
   document.getElementById('bg-picker').addEventListener('input', e => {
     document.getElementById('bg-hex').value = e.target.value;
     document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -634,7 +698,7 @@ textarea::placeholder { color: #3a3a3a; }
     }
   });
 
-  // Photo mode text color pickers
+  // Color pickers (photo mode)
   document.getElementById('text-picker-photo').addEventListener('input', e => {
     document.getElementById('text-hex-photo').value = e.target.value;
     state.textColor = e.target.value; updatePreview();
@@ -646,10 +710,9 @@ textarea::placeholder { color: #3a3a3a; }
     }
   });
 
-  // ── Christmas frame ────────────────────────────────────
+  // ── Frame ─────────────────────────────────────────────
   document.getElementById('frame-enabled').addEventListener('change', e => {
-    state.useFrame = e.target.checked;
-    updatePreview();
+    state.useFrame = e.target.checked; updatePreview();
   });
 
   // ── Music ─────────────────────────────────────────────
@@ -668,17 +731,17 @@ textarea::placeholder { color: #3a3a3a; }
     dlBtn.classList.remove('show');
     msg.className = 'result-msg';
     fill.style.width = '5%';
-    msg.textContent  = 'Generating audio...';
+    msg.textContent  = 'Generating audio…';
 
     let prog = 5;
     const iv = setInterval(() => {
       if (prog < 85) {
         prog += Math.random() * 3;
         fill.style.width = prog + '%';
-        if (prog < 25)      msg.textContent = 'Generating audio...';
-        else if (prog < 50) msg.textContent = 'Transcribing...';
-        else if (prog < 70) msg.textContent = 'Building subtitles...';
-        else                msg.textContent = 'Rendering video...';
+        if      (prog < 25) msg.textContent = 'Generating audio…';
+        else if (prog < 50) msg.textContent = 'Transcribing…';
+        else if (prog < 70) msg.textContent = 'Building subtitles…';
+        else                msg.textContent = 'Rendering video…';
       }
     }, 2000);
 
@@ -691,10 +754,8 @@ textarea::placeholder { color: #3a3a3a; }
       form.append('text_color',          state.textColor);
       form.append('font_size',           state.fontSize);
       form.append('use_christmas_frame', state.useFrame ? '1' : '0');
-
       const mf = document.getElementById('music-input').files[0];
       if (mf) form.append('music', mf);
-
       if (state.bgType === 'photo') {
         const bgFile = document.getElementById('bg-photo-input').files[0];
         if (bgFile) form.append('bg_image', bgFile);
@@ -726,19 +787,14 @@ textarea::placeholder { color: #3a3a3a; }
       const text = document.getElementById(`script-text-${id}`)?.value.trim();
       if (text) scripts.push({ id, text });
     });
-
     if (!scripts.length) { alert('Please enter at least one script.'); return; }
 
     const btn = document.getElementById('generate-btn');
     btn.disabled = true;
-
     for (let i = 0; i < scripts.length; i++) {
-      btn.textContent = scripts.length > 1
-        ? `Generating ${i + 1}/${scripts.length}...`
-        : 'Generating...';
+      btn.textContent = scripts.length > 1 ? `Generating ${i + 1} of ${scripts.length}…` : 'Generating…';
       await generateOne(scripts[i].text, scripts[i].id);
     }
-
     btn.disabled = false;
     btn.textContent = scripts.length > 1 ? `Generate All (${scripts.length})` : 'Generate';
   });
