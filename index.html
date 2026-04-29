@@ -51,7 +51,7 @@ h1 span { color: #555; font-weight: 400; }
   margin-bottom: 14px;
 }
 
-/* Scripts */
+/* ── Scripts ── */
 .script-item { margin-bottom: 12px; }
 .script-item:last-child { margin-bottom: 0; }
 
@@ -63,14 +63,9 @@ h1 span { color: #555; font-weight: 400; }
 }
 .script-label { font-size: 11px; color: #555; }
 .script-remove {
-  background: none;
-  border: none;
-  color: #444;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  transition: color 0.15s;
+  background: none; border: none; color: #444;
+  font-size: 16px; cursor: pointer; padding: 0 4px;
+  line-height: 1; transition: color 0.15s;
 }
 .script-remove:hover { color: #e05252; }
 
@@ -92,83 +87,62 @@ textarea {
 textarea:focus { border-color: #3a3a3a; }
 textarea::placeholder { color: #3a3a3a; }
 
-/* Script result */
-.script-result {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: #0d0d0d;
-  border: 1px solid #1e1e1e;
-  border-radius: 8px;
-  display: none;
-}
+/* ── Script result ── */
+.script-result { margin-top: 10px; display: none; }
 .script-result.visible { display: block; }
-.result-progress-wrap { background: #1e1e1e; border-radius: 3px; height: 2px; overflow: hidden; margin-bottom: 8px; }
-.result-progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.5s ease; border-radius: 3px; }
-.result-status { font-size: 12px; color: #666; }
-.result-error { font-size: 12px; color: #e05252; margin-top: 4px; display: none; }
-.result-download {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 8px 14px;
-  background: #18a058;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.15s;
+
+.result-track { height: 1px; background: #1e1e1e; border-radius: 1px; overflow: hidden; margin-bottom: 9px; }
+.result-fill  { height: 100%; background: #fff; width: 0%; transition: width 0.5s ease; border-radius: 1px; }
+
+.result-row {
+  display: flex; align-items: center;
+  justify-content: space-between; min-height: 24px;
 }
-.result-download:hover { background: #16924e; }
+.result-msg { font-size: 12px; color: #555; }
+.result-msg.done  { color: #3dd68c; }
+.result-msg.error { color: #e05252; }
+
+.result-dl {
+  display: none; align-items: center; gap: 5px;
+  padding: 5px 12px; background: #18a058; color: #fff;
+  border-radius: 6px; font-size: 11px; font-weight: 600;
+  text-decoration: none; transition: background 0.15s;
+}
+.result-dl.show { display: inline-flex; }
+.result-dl:hover { background: #16924e; }
 
 .add-script-btn {
-  margin-top: 12px;
-  padding: 8px 14px;
-  background: none;
-  border: 1px dashed #2a2a2a;
-  border-radius: 8px;
-  color: #555;
-  font-size: 13px;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.15s;
+  margin-top: 12px; padding: 8px 14px;
+  background: none; border: 1px dashed #2a2a2a;
+  border-radius: 8px; color: #555; font-size: 13px;
+  cursor: pointer; width: 100%; transition: all 0.15s;
 }
 .add-script-btn:hover { border-color: #444; color: #aaa; }
 
-/* Pills */
+/* ── Pills ── */
 .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill {
-  padding: 6px 13px;
-  border-radius: 20px;
-  border: 1px solid #242424;
-  background: #0d0d0d;
-  color: #888;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
+  padding: 6px 13px; border-radius: 20px;
+  border: 1px solid #242424; background: #0d0d0d;
+  color: #888; font-size: 13px; cursor: pointer;
+  transition: all 0.15s; user-select: none;
 }
 .pill:hover { border-color: #3a3a3a; color: #ccc; }
 .pill.active { border-color: #fff; color: #fff; background: #1c1c1c; }
 
-/* Font pills */
+/* ── Font pills ── */
 .font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .font-pill {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #242424;
-  background: #0d0d0d;
-  cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
+  padding: 10px 14px; border-radius: 10px;
+  border: 1px solid #242424; background: #0d0d0d;
+  cursor: pointer; transition: all 0.15s; user-select: none;
 }
 .font-pill:hover { border-color: #3a3a3a; }
 .font-pill.active { border-color: #fff; background: #1c1c1c; }
-.font-pill-label { font-size: 10px; color: #555; font-family: -apple-system, sans-serif; margin-bottom: 4px; }
+.font-pill-label  { font-size: 10px; color: #555; font-family: -apple-system, sans-serif; margin-bottom: 4px; }
 .font-pill-sample { font-size: 14px; color: #ccc; line-height: 1.3; }
 
-/* Size slider */
+/* ── Size slider ── */
 .size-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
 .size-row label { font-size: 11px; color: #555; white-space: nowrap; }
 .size-slider {
@@ -181,7 +155,21 @@ textarea::placeholder { color: #3a3a3a; }
 }
 .size-value { font-size: 13px; color: #ccc; font-family: 'SF Mono', monospace; min-width: 28px; text-align: right; }
 
-/* Color presets */
+/* ── Segmented tabs (bg type) ── */
+.seg-tabs {
+  display: flex; background: #0d0d0d;
+  border: 1px solid #1e1e1e; border-radius: 8px;
+  padding: 3px; gap: 2px; margin-bottom: 14px;
+}
+.seg-tab {
+  flex: 1; padding: 6px; background: none; border: none;
+  color: #555; font-size: 12px; font-weight: 500;
+  cursor: pointer; border-radius: 5px; transition: all 0.15s;
+}
+.seg-tab.active { background: #1c1c1c; color: #fff; }
+.seg-tab:hover:not(.active) { color: #aaa; }
+
+/* ── Color presets ── */
 .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .preset-swatch {
   aspect-ratio: 3/2; border-radius: 8px; border: 2px solid transparent;
@@ -211,7 +199,37 @@ textarea::placeholder { color: #3a3a3a; }
   font-family: 'SF Mono', 'Fira Code', monospace; width: 70px;
 }
 
-/* Music */
+/* ── Photo upload ── */
+.photo-drop {
+  border: 1px dashed #2a2a2a; border-radius: 8px;
+  cursor: pointer; transition: border-color 0.15s; overflow: hidden;
+}
+.photo-drop:hover { border-color: #444; }
+.photo-drop-inner {
+  padding: 24px 16px; text-align: center;
+}
+.photo-drop p { font-size: 12px; color: #555; pointer-events: none; }
+.photo-drop input[type="file"] { display: none; }
+.photo-preview-img {
+  width: 100%; height: 90px; object-fit: cover;
+  display: none; border-radius: 6px;
+}
+
+/* ── Christmas frame toggle ── */
+.frame-toggle-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.frame-toggle-row input[type="checkbox"] {
+  width: 15px; height: 15px; cursor: pointer; accent-color: #fff; flex-shrink: 0;
+}
+.frame-toggle-row label { font-size: 13px; color: #888; cursor: pointer; flex: 1; }
+
+.frame-preview-thumb {
+  width: 32px; height: 56px; object-fit: cover;
+  border-radius: 4px; border: 1px solid #242424; flex-shrink: 0;
+}
+
+/* ── Music ── */
 .music-upload { display: flex; align-items: center; gap: 10px; }
 .music-upload input[type="file"] { display: none; }
 .music-btn {
@@ -221,7 +239,7 @@ textarea::placeholder { color: #3a3a3a; }
 .music-btn:hover { border-color: #3a3a3a; color: #ccc; }
 .music-name { font-size: 12px; color: #555; }
 
-/* Generate */
+/* ── Generate ── */
 .generate-btn {
   width: 100%; padding: 15px; background: #fff; color: #000;
   border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
@@ -230,18 +248,26 @@ textarea::placeholder { color: #3a3a3a; }
 .generate-btn:hover { background: #e8e8e8; }
 .generate-btn:disabled { background: #1c1c1c; color: #444; cursor: not-allowed; }
 
-/* Preview */
+/* ── Preview ── */
 .preview-sticky { position: sticky; top: 40px; }
 .preview-frame-wrap {
   width: 100%; aspect-ratio: 9/16; border-radius: 12px;
   overflow: hidden; margin-bottom: 14px; border: 1px solid #222;
+  position: relative;
 }
 .preview-frame {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  padding: 24px; transition: background 0.2s;
+  padding: 24px; transition: background 0.2s; background-size: cover !important;
+  background-position: center !important;
 }
 .preview-text { text-align: center; line-height: 1.35; word-break: break-word; transition: color 0.2s; }
+.preview-frame-overlay {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: fill; pointer-events: none;
+  display: none;
+}
+.preview-frame-overlay.show { display: block; }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
@@ -312,35 +338,73 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
-    <!-- Colors -->
+    <!-- Colors / Background -->
     <div class="card">
-      <div class="card-title">Colors</div>
-      <div class="preset-grid" id="preset-group">
-        <div class="preset-swatch active" data-bg="#000000" data-text="#FFFFFF" style="background:#000;color:#fff">Aa</div>
-        <div class="preset-swatch" data-bg="#1a1a3e" data-text="#FFFFFF" style="background:#1a1a3e;color:#fff">Aa</div>
-        <div class="preset-swatch" data-bg="#000000" data-text="#FFD700" style="background:#000;color:#FFD700">Aa</div>
-        <div class="preset-swatch" data-bg="#2a2a2a" data-text="#FFFFFF" style="background:#2a2a2a;color:#fff">Aa</div>
-        <div class="preset-swatch" data-bg="#FFFFFF" data-text="#000000" style="background:#fff;color:#000">Aa</div>
-        <div class="preset-swatch" data-bg="#5c1a1a" data-text="#FFFFFF" style="background:#5c1a1a;color:#fff">Aa</div>
-        <div class="preset-swatch" data-bg="#1a3e1a" data-text="#FFFFFF" style="background:#1a3e1a;color:#fff">Aa</div>
-        <div class="preset-swatch" data-bg="#0047ab" data-text="#FFFFFF" style="background:#0047ab;color:#fff">Aa</div>
+      <div class="card-title">Background &amp; Colors</div>
+
+      <!-- BG type tabs -->
+      <div class="seg-tabs">
+        <button class="seg-tab active" id="bg-tab-color">Solid color</button>
+        <button class="seg-tab" id="bg-tab-photo">Photo</button>
       </div>
-      <hr class="divider">
-      <div class="custom-colors">
-        <div class="color-row">
-          <label>Background</label>
-          <div class="color-input-wrap">
-            <input type="color" id="bg-picker" value="#000000">
-            <input type="text"  id="bg-hex"    value="#000000" maxlength="7" spellcheck="false">
+
+      <!-- Color mode -->
+      <div id="bg-color-section">
+        <div class="preset-grid" id="preset-group">
+          <div class="preset-swatch active" data-bg="#000000" data-text="#FFFFFF" style="background:#000;color:#fff">Aa</div>
+          <div class="preset-swatch" data-bg="#1a1a3e" data-text="#FFFFFF" style="background:#1a1a3e;color:#fff">Aa</div>
+          <div class="preset-swatch" data-bg="#000000" data-text="#FFD700" style="background:#000;color:#FFD700">Aa</div>
+          <div class="preset-swatch" data-bg="#2a2a2a" data-text="#FFFFFF" style="background:#2a2a2a;color:#fff">Aa</div>
+          <div class="preset-swatch" data-bg="#FFFFFF" data-text="#000000" style="background:#fff;color:#000">Aa</div>
+          <div class="preset-swatch" data-bg="#5c1a1a" data-text="#FFFFFF" style="background:#5c1a1a;color:#fff">Aa</div>
+          <div class="preset-swatch" data-bg="#1a3e1a" data-text="#FFFFFF" style="background:#1a3e1a;color:#fff">Aa</div>
+          <div class="preset-swatch" data-bg="#0047ab" data-text="#FFFFFF" style="background:#0047ab;color:#fff">Aa</div>
+        </div>
+        <div class="custom-colors">
+          <div class="color-row">
+            <label>Background</label>
+            <div class="color-input-wrap">
+              <input type="color" id="bg-picker" value="#000000">
+              <input type="text"  id="bg-hex"    value="#000000" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="color-row">
+            <label>Text color</label>
+            <div class="color-input-wrap">
+              <input type="color" id="text-picker" value="#FFFFFF">
+              <input type="text"  id="text-hex"    value="#FFFFFF" maxlength="7" spellcheck="false">
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Photo mode -->
+      <div id="bg-photo-section" style="display:none">
+        <label class="photo-drop" id="bg-photo-drop" for="bg-photo-input">
+          <div class="photo-drop-inner" id="bg-photo-inner">
+            <p>Click to upload background image</p>
+          </div>
+          <img class="photo-preview-img" id="bg-photo-preview" alt="">
+          <input type="file" id="bg-photo-input" accept="image/*">
+        </label>
+        <hr class="divider">
         <div class="color-row">
           <label>Text color</label>
           <div class="color-input-wrap">
-            <input type="color" id="text-picker" value="#FFFFFF">
-            <input type="text"  id="text-hex"    value="#FFFFFF" maxlength="7" spellcheck="false">
+            <input type="color" id="text-picker-photo" value="#FFFFFF">
+            <input type="text"  id="text-hex-photo"    value="#FFFFFF" maxlength="7" spellcheck="false">
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Frame overlay -->
+    <div class="card">
+      <div class="card-title">Frame <span style="color:#333;font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></div>
+      <div class="frame-toggle-row">
+        <input type="checkbox" id="frame-enabled">
+        <label for="frame-enabled">Christmas lights frame</label>
+        <img class="frame-preview-thumb" src="/static-frames/christmas.png" alt="Christmas frame">
       </div>
     </div>
 
@@ -365,6 +429,7 @@ textarea::placeholder { color: #3a3a3a; }
           The way you love her matters.
         </div>
       </div>
+      <img class="preview-frame-overlay" id="preview-overlay" src="/static-frames/christmas.png" alt="">
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
   </div>
@@ -373,37 +438,42 @@ textarea::placeholder { color: #3a3a3a; }
 
 <script>
   const state = {
-    voiceId: 'cm1VTuOWsFQRdZ5uDzSB',
-    font: 'Montserrat',
+    voiceId:    'cm1VTuOWsFQRdZ5uDzSB',
+    font:       'Montserrat',
     fontFamily: 'F-Montserrat',
-    fontBold: true,
-    bgColor: '#000000',
-    textColor: '#FFFFFF',
-    fontSize: 58,
+    fontBold:   true,
+    bgColor:    '#000000',
+    textColor:  '#FFFFFF',
+    fontSize:   58,
+    bgType:     'color',
+    bgImageURL: null,
+    useFrame:   false,
   };
 
   let scriptCount = 0;
 
-  // ── Scripts ──────────────────────────────────────
+  // ── Scripts ──────────────────────────────────────────
   function addScript() {
     scriptCount++;
-    const idx = scriptCount;
+    const idx  = scriptCount;
     const list = document.getElementById('scripts-list');
+    const num  = list.children.length + 1;
 
     const item = document.createElement('div');
     item.className = 'script-item';
     item.id = `script-item-${idx}`;
     item.innerHTML = `
       <div class="script-header">
-        <span class="script-label">Script #${list.children.length + 1}</span>
+        <span class="script-label">Script #${num}</span>
         <button class="script-remove" onclick="removeScript(${idx})">×</button>
       </div>
       <textarea class="script-text" id="script-text-${idx}" placeholder="Paste your script here..."></textarea>
       <div class="script-result" id="script-result-${idx}">
-        <div class="result-progress-wrap"><div class="result-progress-bar" id="result-bar-${idx}"></div></div>
-        <div class="result-status" id="result-status-${idx}"></div>
-        <div class="result-error"  id="result-error-${idx}"></div>
-        <a class="result-download" id="result-dl-${idx}" style="display:none" download="video-${idx}.mp4">↓ Download #${list.children.length + 1}</a>
+        <div class="result-track"><div class="result-fill" id="result-fill-${idx}"></div></div>
+        <div class="result-row">
+          <span class="result-msg" id="result-msg-${idx}"></span>
+          <a class="result-dl" id="result-dl-${idx}" download="video-${num}.mp4">↓ Download</a>
+        </div>
       </div>`;
     list.appendChild(item);
     updateRemoveButtons();
@@ -422,8 +492,7 @@ textarea::placeholder { color: #3a3a3a; }
     document.querySelectorAll('#scripts-list .script-label').forEach((el, i) => {
       el.textContent = `Script #${i + 1}`;
     });
-    document.querySelectorAll('#scripts-list .result-download').forEach((el, i) => {
-      el.textContent = `↓ Download #${i + 1}`;
+    document.querySelectorAll('#scripts-list .result-dl').forEach((el, i) => {
       el.download = `video-${i + 1}.mp4`;
     });
   }
@@ -441,18 +510,24 @@ textarea::placeholder { color: #3a3a3a; }
   }
 
   document.getElementById('add-script-btn').addEventListener('click', addScript);
-
-  // Init with one script
   addScript();
 
-  // ── Preview ───────────────────────────────────────
+  // ── Preview ───────────────────────────────────────────
   function updatePreview() {
-    document.getElementById('preview-frame').style.background = state.bgColor;
+    const frame = document.getElementById('preview-frame');
+    if (state.bgType === 'photo' && state.bgImageURL) {
+      frame.style.background = `url(${state.bgImageURL}) center/cover no-repeat`;
+    } else {
+      frame.style.background = state.bgColor;
+    }
     const pt = document.getElementById('preview-text');
     pt.style.color      = state.textColor;
     pt.style.fontFamily = `'${state.fontFamily}'`;
     pt.style.fontWeight = state.fontBold ? 'bold' : 'normal';
     pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
+
+    const overlay = document.getElementById('preview-overlay');
+    overlay.classList.toggle('show', state.useFrame);
   }
 
   function applyColors(bg, txt) {
@@ -464,7 +539,40 @@ textarea::placeholder { color: #3a3a3a; }
     updatePreview();
   }
 
-  // ── Voice ─────────────────────────────────────────
+  // ── BG type tabs ──────────────────────────────────────
+  document.getElementById('bg-tab-color').addEventListener('click', () => {
+    state.bgType = 'color';
+    document.getElementById('bg-tab-color').classList.add('active');
+    document.getElementById('bg-tab-photo').classList.remove('active');
+    document.getElementById('bg-color-section').style.display = '';
+    document.getElementById('bg-photo-section').style.display = 'none';
+    updatePreview();
+  });
+
+  document.getElementById('bg-tab-photo').addEventListener('click', () => {
+    state.bgType = 'photo';
+    document.getElementById('bg-tab-photo').classList.add('active');
+    document.getElementById('bg-tab-color').classList.remove('active');
+    document.getElementById('bg-color-section').style.display = 'none';
+    document.getElementById('bg-photo-section').style.display = '';
+    updatePreview();
+  });
+
+  // ── Photo upload ──────────────────────────────────────
+  document.getElementById('bg-photo-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    state.bgImageURL = url;
+    const preview = document.getElementById('bg-photo-preview');
+    const inner   = document.getElementById('bg-photo-inner');
+    preview.src = url;
+    preview.style.display = 'block';
+    inner.style.display   = 'none';
+    updatePreview();
+  });
+
+  // ── Voice ─────────────────────────────────────────────
   document.getElementById('voice-group').querySelectorAll('.pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
@@ -473,12 +581,14 @@ textarea::placeholder { color: #3a3a3a; }
     });
   });
 
-  // ── Font ──────────────────────────────────────────
+  // ── Font ──────────────────────────────────────────────
   document.getElementById('font-group').querySelectorAll('.font-pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('font-group').querySelectorAll('.font-pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active');
-      state.font = p.dataset.value; state.fontFamily = p.dataset.family; state.fontBold = !!p.dataset.bold;
+      state.font = p.dataset.value;
+      state.fontFamily = p.dataset.family;
+      state.fontBold = !!p.dataset.bold;
       updatePreview();
     });
   });
@@ -489,7 +599,7 @@ textarea::placeholder { color: #3a3a3a; }
     updatePreview();
   });
 
-  // ── Colors ────────────────────────────────────────
+  // ── Colors ────────────────────────────────────────────
   document.getElementById('preset-group').querySelectorAll('.preset-swatch').forEach(s => {
     s.addEventListener('click', () => {
       document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -498,6 +608,7 @@ textarea::placeholder { color: #3a3a3a; }
     });
   });
 
+  // Color mode pickers
   document.getElementById('bg-picker').addEventListener('input', e => {
     document.getElementById('bg-hex').value = e.target.value;
     document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -523,63 +634,87 @@ textarea::placeholder { color: #3a3a3a; }
     }
   });
 
-  // ── Music ─────────────────────────────────────────
+  // Photo mode text color pickers
+  document.getElementById('text-picker-photo').addEventListener('input', e => {
+    document.getElementById('text-hex-photo').value = e.target.value;
+    state.textColor = e.target.value; updatePreview();
+  });
+  document.getElementById('text-hex-photo').addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+      document.getElementById('text-picker-photo').value = e.target.value;
+      state.textColor = e.target.value; updatePreview();
+    }
+  });
+
+  // ── Christmas frame ────────────────────────────────────
+  document.getElementById('frame-enabled').addEventListener('change', e => {
+    state.useFrame = e.target.checked;
+    updatePreview();
+  });
+
+  // ── Music ─────────────────────────────────────────────
   document.getElementById('music-input').addEventListener('change', e => {
     document.getElementById('music-name').textContent = e.target.files[0]?.name || 'No file';
   });
 
-  // ── Generate ──────────────────────────────────────
-  async function generateOne(scriptIdx, text, resultIdx) {
-    const bar    = document.getElementById(`result-bar-${resultIdx}`);
-    const status = document.getElementById(`result-status-${resultIdx}`);
-    const errEl  = document.getElementById(`result-error-${resultIdx}`);
+  // ── Generate ──────────────────────────────────────────
+  async function generateOne(text, resultIdx) {
+    const fill   = document.getElementById(`result-fill-${resultIdx}`);
+    const msg    = document.getElementById(`result-msg-${resultIdx}`);
     const dlBtn  = document.getElementById(`result-dl-${resultIdx}`);
     const result = document.getElementById(`script-result-${resultIdx}`);
 
     result.classList.add('visible');
-    errEl.style.display = 'none';
-    dlBtn.style.display = 'none';
-    bar.style.width = '5%';
-    status.textContent = 'Generating audio...';
+    dlBtn.classList.remove('show');
+    msg.className = 'result-msg';
+    fill.style.width = '5%';
+    msg.textContent  = 'Generating audio...';
 
     let prog = 5;
     const iv = setInterval(() => {
       if (prog < 85) {
         prog += Math.random() * 3;
-        bar.style.width = prog + '%';
-        if (prog < 25)      status.textContent = 'Generating audio...';
-        else if (prog < 50) status.textContent = 'Transcribing...';
-        else if (prog < 70) status.textContent = 'Building subtitles...';
-        else                status.textContent = 'Rendering video...';
+        fill.style.width = prog + '%';
+        if (prog < 25)      msg.textContent = 'Generating audio...';
+        else if (prog < 50) msg.textContent = 'Transcribing...';
+        else if (prog < 70) msg.textContent = 'Building subtitles...';
+        else                msg.textContent = 'Rendering video...';
       }
     }, 2000);
 
     try {
       const form = new FormData();
-      form.append('text',       text);
-      form.append('voice_id',   state.voiceId);
-      form.append('font',       state.font);
-      form.append('bg_color',   state.bgColor);
-      form.append('text_color', state.textColor);
-      form.append('font_size',  state.fontSize);
+      form.append('text',                text);
+      form.append('voice_id',            state.voiceId);
+      form.append('font',                state.font);
+      form.append('bg_color',            state.bgColor);
+      form.append('text_color',          state.textColor);
+      form.append('font_size',           state.fontSize);
+      form.append('use_christmas_frame', state.useFrame ? '1' : '0');
+
       const mf = document.getElementById('music-input').files[0];
       if (mf) form.append('music', mf);
+
+      if (state.bgType === 'photo') {
+        const bgFile = document.getElementById('bg-photo-input').files[0];
+        if (bgFile) form.append('bg_image', bgFile);
+      }
 
       const res = await fetch('/generate', { method: 'POST', body: form });
       clearInterval(iv);
       if (!res.ok) throw new Error(await res.text());
 
       const blob = await res.blob();
-      bar.style.width = '100%';
-      status.textContent = '✓ Done';
+      fill.style.width = '100%';
+      msg.textContent  = '✓ Done';
+      msg.classList.add('done');
       dlBtn.href = URL.createObjectURL(blob);
-      dlBtn.style.display = 'inline-flex';
+      dlBtn.classList.add('show');
     } catch(e) {
       clearInterval(iv);
-      bar.style.width = '0%';
-      status.textContent = 'Error';
-      errEl.textContent  = e.message?.slice(0, 200) || 'Unknown error';
-      errEl.style.display = 'block';
+      fill.style.width = '0%';
+      msg.textContent  = e.message?.slice(0, 180) || 'Unknown error';
+      msg.classList.add('error');
     }
   }
 
@@ -601,7 +736,7 @@ textarea::placeholder { color: #3a3a3a; }
       btn.textContent = scripts.length > 1
         ? `Generating ${i + 1}/${scripts.length}...`
         : 'Generating...';
-      await generateOne(i, scripts[i].text, scripts[i].id);
+      await generateOne(scripts[i].text, scripts[i].id);
     }
 
     btn.disabled = false;

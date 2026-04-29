@@ -28,7 +28,8 @@ VIDEO_HEIGHT      = 1280
 MAX_SUBTITLE_CHARS = 65
 OPENAI_MODEL      = "gpt-4o"
 
-FONT_DIR = Path("/usr/share/fonts/truetype/montserrat")
+FONT_DIR   = Path("/usr/share/fonts/truetype/montserrat")
+FRAMES_DIR = Path("/app/frames")
 FONT_MAP = {
     "montserrat":          FONT_DIR / "Montserrat-Bold.ttf",
     "montserrat bold":     FONT_DIR / "Montserrat-Bold.ttf",
@@ -59,6 +60,16 @@ def hex_to_rgb(hex_color: str) -> tuple:
     if len(h) == 3:
         h = "".join(c * 2 for c in h)
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _fit_image(img, w: int, h: int):
+    from PIL import Image
+    scale = max(w / img.width, h / img.height)
+    new_w, new_h = int(img.width * scale), int(img.height * scale)
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+    left = (new_w - w) // 2
+    top  = (new_h - h) // 2
+    return img.crop((left, top, left + w, top + h)).convert("RGB")
 
 
 def load_font(font_name: str, size: int):
@@ -389,9 +400,12 @@ async def split_text(text: str = Form(...)):
     return {"blocks": blocks}
 
 
-def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font) -> "Image":
+def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None) -> "Image":
     from PIL import Image, ImageDraw
-    img = Image.new("RGB", (VIDEO_WIDTH, VIDEO_HEIGHT), bg_rgb)
+    if bg_image_pil is not None:
+        img = _fit_image(bg_image_pil, VIDEO_WIDTH, VIDEO_HEIGHT)
+    else:
+        img = Image.new("RGB", (VIDEO_WIDTH, VIDEO_HEIGHT), bg_rgb)
     if not text.strip():
         return img
     draw = ImageDraw.Draw(img)
@@ -617,7 +631,9 @@ async def generate_video_web(
     bg_color:   str           = Form("#000000"),
     text_color: str           = Form("#FFFFFF"),
     font_size:  str           = Form("0"),
-    music:      Optional[UploadFile] = File(None),
+    music:                Optional[UploadFile] = File(None),
+    bg_image:             Optional[UploadFile] = File(None),
+    use_christmas_frame:  str = Form("0"),
 ):
     el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
     oai_key = os.environ.get("OPENAI_API_KEY", "")
@@ -628,6 +644,14 @@ async def generate_video_web(
 
     requested = int(font_size) if font_size.isdigit() and int(font_size) > 0 else 0
     font_size_int = requested if requested >= 36 else FONT_SIZES.get(font.lower(), 58)
+
+    bg_image_data = await bg_image.read() if bg_image else None
+
+    bg_image_pil = None
+    if bg_image_data:
+        from PIL import Image
+        import io
+        bg_image_pil = Image.open(io.BytesIO(bg_image_data))
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
@@ -713,7 +737,7 @@ async def generate_video_web(
         frame_paths = {}
         for idx, block in enumerate(transcript_data):
             fp = frames_dir / f"frame_{idx:04d}.png"
-            render_frame(block["text"], bg_rgb, text_rgb, pil_font).save(str(fp), "PNG")
+            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil).save(str(fp), "PNG")
             frame_paths[idx] = fp
 
         concat_lines = []
@@ -749,6 +773,26 @@ async def generate_video_web(
         else:
             shutil.copy(str(no_music), str(output))
 
+        # Optional: overlay Christmas lights frame
+        if use_christmas_frame == "1":
+            frame_src = FRAMES_DIR / "christmas.png"
+            if frame_src.exists():
+                framed = tmp_path / "output_framed.mp4"
+                cmd_frame = [
+                    "ffmpeg", "-y",
+                    "-i", str(output),
+                    "-i", str(frame_src),
+                    "-filter_complex",
+                    f"[1:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}[fr];[0:v][fr]overlay=0:0",
+                    "-c:v", "libx264", "-preset", "fast",
+                    "-crf", "23", "-pix_fmt", "yuv420p",
+                    "-c:a", "copy",
+                    str(framed),
+                ]
+                rf = subprocess.run(cmd_frame, capture_output=True, text=True, timeout=300)
+                if rf.returncode == 0:
+                    output = framed
+
         video_bytes = output.read_bytes()
 
     return Response(
@@ -756,6 +800,15 @@ async def generate_video_web(
         media_type="video/mp4",
         headers={"Content-Disposition": 'attachment; filename="video.mp4"'},
     )
+
+
+@app.get("/static-frames/{filename}")
+def serve_frame_asset(filename: str):
+    path = FRAMES_DIR / filename
+    if not path.exists():
+        raise HTTPException(404, "Frame not found")
+    return Response(content=path.read_bytes(), media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/fonts/{filename}")
