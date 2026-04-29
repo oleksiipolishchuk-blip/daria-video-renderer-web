@@ -720,6 +720,14 @@ textarea::placeholder { color: var(--text-3); }
     document.getElementById('music-name').textContent = e.target.files[0]?.name || 'No file';
   });
 
+  function makeFilename(text) {
+    const date  = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const slug  = text.trim().toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/).slice(0, 4).join('-');
+    return `${date}_${slug}.mp4`;
+  }
+
   // ── Generate ──────────────────────────────────────────
   async function generateOne(text, resultIdx) {
     const fill   = document.getElementById(`result-fill-${resultIdx}`);
@@ -769,7 +777,8 @@ textarea::placeholder { color: var(--text-3); }
       fill.style.width = '100%';
       msg.textContent  = '✓ Done';
       msg.classList.add('done');
-      dlBtn.href = URL.createObjectURL(blob);
+      dlBtn.href     = URL.createObjectURL(blob);
+      dlBtn.download = makeFilename(text);
       dlBtn.classList.add('show');
     } catch(e) {
       clearInterval(iv);
