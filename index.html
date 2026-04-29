@@ -85,6 +85,33 @@ textarea::placeholder { color: #3a3a3a; }
 .pill.active { border-color: #fff; color: #fff; background: #1c1c1c; }
 
 .font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.size-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.size-row label { font-size: 11px; color: #555; white-space: nowrap; }
+.size-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: #2a2a2a;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+.size-value {
+  font-size: 13px;
+  color: #ccc;
+  font-family: 'SF Mono', monospace;
+  min-width: 28px;
+  text-align: right;
+}
 .font-pill {
   padding: 10px 14px;
   border-radius: 10px;
@@ -275,6 +302,11 @@ textarea::placeholder { color: #3a3a3a; }
           <div class="font-pill-sample" style="font-family:'F-Bodyhand'">The way you love her.</div>
         </div>
       </div>
+      <div class="size-row">
+        <label>Size</label>
+        <input type="range" class="size-slider" id="font-size" min="36" max="80" value="58">
+        <span class="size-value" id="font-size-val">58</span>
+      </div>
     </div>
 
     <div class="card">
@@ -347,6 +379,7 @@ textarea::placeholder { color: #3a3a3a; }
     fontBold: true,
     bgColor: '#000000',
     textColor: '#FFFFFF',
+    fontSize: 58,
   };
 
   function updatePreview() {
@@ -355,6 +388,8 @@ textarea::placeholder { color: #3a3a3a; }
     pt.style.color      = state.textColor;
     pt.style.fontFamily = `'${state.fontFamily}'`;
     pt.style.fontWeight = state.fontBold ? 'bold' : 'normal';
+    // Scale font size to preview (preview ~300px wide vs 720px video)
+    pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
   }
 
   function applyColors(bg, txt) {
@@ -425,6 +460,13 @@ textarea::placeholder { color: #3a3a3a; }
     }
   });
 
+  // Font size slider
+  document.getElementById('font-size').addEventListener('input', e => {
+    state.fontSize = parseInt(e.target.value);
+    document.getElementById('font-size-val').textContent = state.fontSize;
+    updatePreview();
+  });
+
   // Music
   document.getElementById('music-input').addEventListener('change', e => {
     document.getElementById('music-name').textContent = e.target.files[0]?.name || 'No file';
@@ -469,6 +511,7 @@ textarea::placeholder { color: #3a3a3a; }
       form.append('font',       state.font);
       form.append('bg_color',   state.bgColor);
       form.append('text_color', state.textColor);
+      form.append('font_size',  state.fontSize);
       const mf = document.getElementById('music-input').files[0];
       if (mf) form.append('music', mf);
 

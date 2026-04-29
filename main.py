@@ -616,6 +616,7 @@ async def generate_video_web(
     font:       str           = Form("Montserrat"),
     bg_color:   str           = Form("#000000"),
     text_color: str           = Form("#FFFFFF"),
+    font_size:  str           = Form("0"),
     music:      Optional[UploadFile] = File(None),
 ):
     el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
@@ -625,7 +626,8 @@ async def generate_video_web(
     if not oai_key:
         raise HTTPException(500, "OPENAI_API_KEY not set")
 
-    font_size_int = FONT_SIZES.get(font.lower(), 58)
+    requested = int(font_size) if font_size.isdigit() and int(font_size) > 0 else 0
+    font_size_int = requested if requested >= 36 else FONT_SIZES.get(font.lower(), 58)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
