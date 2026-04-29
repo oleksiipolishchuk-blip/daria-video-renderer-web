@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Video Generator</title>
+<title>Easy MH — Video Generator</title>
 <style>
 @font-face { font-family: 'F-Montserrat'; src: url('/fonts/Montserrat-Bold.ttf'); font-weight: bold; }
 @font-face { font-family: 'F-Gilroy';     src: url('/fonts/Gilroy-Medium.ttf'); }
@@ -51,9 +51,32 @@ h1 span { color: #555; font-weight: 400; }
   margin-bottom: 14px;
 }
 
+/* Scripts */
+.script-item { margin-bottom: 12px; }
+.script-item:last-child { margin-bottom: 0; }
+
+.script-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.script-label { font-size: 11px; color: #555; }
+.script-remove {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.script-remove:hover { color: #e05252; }
+
 textarea {
   width: 100%;
-  min-height: 140px;
+  min-height: 120px;
   background: #0d0d0d;
   border: 1px solid #242424;
   border-radius: 8px;
@@ -69,6 +92,51 @@ textarea {
 textarea:focus { border-color: #3a3a3a; }
 textarea::placeholder { color: #3a3a3a; }
 
+/* Script result */
+.script-result {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  display: none;
+}
+.script-result.visible { display: block; }
+.result-progress-wrap { background: #1e1e1e; border-radius: 3px; height: 2px; overflow: hidden; margin-bottom: 8px; }
+.result-progress-bar { height: 100%; background: #fff; width: 0%; transition: width 0.5s ease; border-radius: 3px; }
+.result-status { font-size: 12px; color: #666; }
+.result-error { font-size: 12px; color: #e05252; margin-top: 4px; display: none; }
+.result-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #18a058;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.result-download:hover { background: #16924e; }
+
+.add-script-btn {
+  margin-top: 12px;
+  padding: 8px 14px;
+  background: none;
+  border: 1px dashed #2a2a2a;
+  border-radius: 8px;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.15s;
+}
+.add-script-btn:hover { border-color: #444; color: #aaa; }
+
+/* Pills */
 .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill {
   padding: 6px 13px;
@@ -84,34 +152,8 @@ textarea::placeholder { color: #3a3a3a; }
 .pill:hover { border-color: #3a3a3a; color: #ccc; }
 .pill.active { border-color: #fff; color: #fff; background: #1c1c1c; }
 
+/* Font pills */
 .font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-.size-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-.size-row label { font-size: 11px; color: #555; white-space: nowrap; }
-.size-slider {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 3px;
-  background: #2a2a2a;
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-}
-.size-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: #fff;
-  cursor: pointer;
-}
-.size-value {
-  font-size: 13px;
-  color: #ccc;
-  font-family: 'SF Mono', monospace;
-  min-width: 28px;
-  text-align: right;
-}
 .font-pill {
   padding: 10px 14px;
   border-radius: 10px;
@@ -126,18 +168,25 @@ textarea::placeholder { color: #3a3a3a; }
 .font-pill-label { font-size: 10px; color: #555; font-family: -apple-system, sans-serif; margin-bottom: 4px; }
 .font-pill-sample { font-size: 14px; color: #ccc; line-height: 1.3; }
 
+/* Size slider */
+.size-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.size-row label { font-size: 11px; color: #555; white-space: nowrap; }
+.size-slider {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 3px; background: #2a2a2a; border-radius: 2px; outline: none; cursor: pointer;
+}
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: #fff; cursor: pointer;
+}
+.size-value { font-size: 13px; color: #ccc; font-family: 'SF Mono', monospace; min-width: 28px; text-align: right; }
+
+/* Color presets */
 .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .preset-swatch {
-  aspect-ratio: 3/2;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  transition: all 0.15s;
+  aspect-ratio: 3/2; border-radius: 8px; border: 2px solid transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; transition: all 0.15s;
 }
 .preset-swatch:hover { transform: scale(1.05); }
 .preset-swatch.active { border-color: #fff; }
@@ -147,103 +196,52 @@ textarea::placeholder { color: #3a3a3a; }
 .custom-colors { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .color-row label { font-size: 11px; color: #555; display: block; margin-bottom: 6px; }
 .color-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #0d0d0d;
-  border: 1px solid #242424;
-  border-radius: 8px;
-  padding: 6px 10px;
-  transition: border-color 0.15s;
+  display: flex; align-items: center; gap: 8px;
+  background: #0d0d0d; border: 1px solid #242424; border-radius: 8px;
+  padding: 6px 10px; transition: border-color 0.15s;
 }
 .color-input-wrap:focus-within { border-color: #3a3a3a; }
 .color-input-wrap input[type="color"] {
-  width: 20px; height: 20px;
-  border: none; background: none; padding: 0;
-  cursor: pointer; border-radius: 3px; flex-shrink: 0;
+  width: 20px; height: 20px; border: none; background: none;
+  padding: 0; cursor: pointer; border-radius: 3px; flex-shrink: 0;
 }
 .color-input-wrap input[type="text"] {
   background: none; border: none; outline: none;
   color: #ccc; font-size: 13px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  width: 70px;
+  font-family: 'SF Mono', 'Fira Code', monospace; width: 70px;
 }
 
+/* Music */
 .music-upload { display: flex; align-items: center; gap: 10px; }
 .music-upload input[type="file"] { display: none; }
 .music-btn {
-  padding: 7px 14px;
-  background: #0d0d0d;
-  border: 1px solid #242424;
-  border-radius: 8px;
-  color: #777;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
+  padding: 7px 14px; background: #0d0d0d; border: 1px solid #242424;
+  border-radius: 8px; color: #777; font-size: 12px; cursor: pointer; transition: all 0.15s;
 }
 .music-btn:hover { border-color: #3a3a3a; color: #ccc; }
 .music-name { font-size: 12px; color: #555; }
 
+/* Generate */
 .generate-btn {
-  width: 100%;
-  padding: 15px;
-  background: #fff;
-  color: #000;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s;
-  margin-bottom: 14px;
+  width: 100%; padding: 15px; background: #fff; color: #000;
+  border: none; border-radius: 10px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 14px;
 }
 .generate-btn:hover { background: #e8e8e8; }
 .generate-btn:disabled { background: #1c1c1c; color: #444; cursor: not-allowed; }
 
+/* Preview */
 .preview-sticky { position: sticky; top: 40px; }
-
 .preview-frame-wrap {
-  width: 100%;
-  aspect-ratio: 9/16;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 14px;
-  border: 1px solid #222;
+  width: 100%; aspect-ratio: 9/16; border-radius: 12px;
+  overflow: hidden; margin-bottom: 14px; border: 1px solid #222;
 }
 .preview-frame {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-  transition: background 0.2s;
+  padding: 24px; transition: background 0.2s;
 }
-.preview-text {
-  text-align: center;
-  line-height: 1.35;
-  word-break: break-word;
-  transition: color 0.2s;
-}
-
-.status-card {
-  background: #161616;
-  border: 1px solid #222;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 14px;
-  display: none;
-}
-.status-card.visible { display: block; }
-.progress-wrap { background: #222; border-radius: 4px; height: 3px; overflow: hidden; margin-bottom: 10px; }
-.progress-bar { height: 100%; background: #fff; border-radius: 4px; width: 0%; transition: width 0.5s ease; }
-.status-text { font-size: 12px; color: #666; }
-.error-text { color: #e05252; font-size: 12px; margin-top: 8px; display: none; }
-
-.download-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 20px; background: #18a058; color: #fff;
-  border-radius: 8px; font-size: 13px; font-weight: 600;
-  text-decoration: none; transition: background 0.15s; margin-top: 10px;
-}
-.download-btn:hover { background: #16924e; }
+.preview-text { text-align: center; line-height: 1.35; word-break: break-word; transition: color 0.2s; }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
@@ -255,15 +253,19 @@ textarea::placeholder { color: #3a3a3a; }
 </head>
 <body>
 <div class="layout">
-  <h1>Video Generator <span>/ Daria MH</span></h1>
+  <h1>Easy MH <span>/ Video Generator</span></h1>
 
   <!-- LEFT -->
   <div>
+
+    <!-- Scripts -->
     <div class="card">
-      <div class="card-title">Script</div>
-      <textarea id="text" placeholder="Paste your script here..."></textarea>
+      <div class="card-title">Scripts</div>
+      <div id="scripts-list"></div>
+      <button class="add-script-btn" id="add-script-btn">+ Add script</button>
     </div>
 
+    <!-- Voice -->
     <div class="card">
       <div class="card-title">Voice</div>
       <div class="pill-group" id="voice-group">
@@ -274,6 +276,7 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
+    <!-- Font -->
     <div class="card">
       <div class="card-title">Font</div>
       <div class="font-grid" id="font-group">
@@ -309,6 +312,7 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
+    <!-- Colors -->
     <div class="card">
       <div class="card-title">Colors</div>
       <div class="preset-grid" id="preset-group">
@@ -340,6 +344,7 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
+    <!-- Music -->
     <div class="card">
       <div class="card-title">Music <span style="color:#333;font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></div>
       <div class="music-upload">
@@ -349,12 +354,6 @@ textarea::placeholder { color: #3a3a3a; }
       </div>
     </div>
 
-    <div class="status-card" id="status-card">
-      <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
-      <div class="status-text" id="status-text">Starting...</div>
-      <div class="error-text" id="error-text"></div>
-      <a class="download-btn" id="download-btn" style="display:none" download="video.mp4">↓ Download Video</a>
-    </div>
   </div>
 
   <!-- RIGHT — preview + button -->
@@ -362,13 +361,14 @@ textarea::placeholder { color: #3a3a3a; }
     <div class="preview-frame-wrap">
       <div class="preview-frame" id="preview-frame" style="background:#000">
         <div class="preview-text" id="preview-text"
-             style="font-family:'F-Montserrat';font-weight:bold;color:#fff;font-size:17px">
+             style="font-family:'F-Montserrat';font-weight:bold;color:#fff;font-size:22px">
           The way you love her matters.
         </div>
       </div>
     </div>
-    <button class="generate-btn" id="generate-btn">Generate Video</button>
+    <button class="generate-btn" id="generate-btn">Generate</button>
   </div>
+
 </div>
 
 <script>
@@ -382,19 +382,81 @@ textarea::placeholder { color: #3a3a3a; }
     fontSize: 58,
   };
 
+  let scriptCount = 0;
+
+  // ── Scripts ──────────────────────────────────────
+  function addScript() {
+    scriptCount++;
+    const idx = scriptCount;
+    const list = document.getElementById('scripts-list');
+
+    const item = document.createElement('div');
+    item.className = 'script-item';
+    item.id = `script-item-${idx}`;
+    item.innerHTML = `
+      <div class="script-header">
+        <span class="script-label">Script #${list.children.length + 1}</span>
+        <button class="script-remove" onclick="removeScript(${idx})">×</button>
+      </div>
+      <textarea class="script-text" id="script-text-${idx}" placeholder="Paste your script here..."></textarea>
+      <div class="script-result" id="script-result-${idx}">
+        <div class="result-progress-wrap"><div class="result-progress-bar" id="result-bar-${idx}"></div></div>
+        <div class="result-status" id="result-status-${idx}"></div>
+        <div class="result-error"  id="result-error-${idx}"></div>
+        <a class="result-download" id="result-dl-${idx}" style="display:none" download="video-${idx}.mp4">↓ Download #${list.children.length + 1}</a>
+      </div>`;
+    list.appendChild(item);
+    updateRemoveButtons();
+    updateGenerateLabel();
+  }
+
+  function removeScript(idx) {
+    const el = document.getElementById(`script-item-${idx}`);
+    if (el) el.remove();
+    reindexLabels();
+    updateRemoveButtons();
+    updateGenerateLabel();
+  }
+
+  function reindexLabels() {
+    document.querySelectorAll('#scripts-list .script-label').forEach((el, i) => {
+      el.textContent = `Script #${i + 1}`;
+    });
+    document.querySelectorAll('#scripts-list .result-download').forEach((el, i) => {
+      el.textContent = `↓ Download #${i + 1}`;
+      el.download = `video-${i + 1}.mp4`;
+    });
+  }
+
+  function updateRemoveButtons() {
+    const items = document.querySelectorAll('#scripts-list .script-item');
+    items.forEach(item => {
+      item.querySelector('.script-remove').style.display = items.length > 1 ? 'block' : 'none';
+    });
+  }
+
+  function updateGenerateLabel() {
+    const n = document.querySelectorAll('#scripts-list .script-item').length;
+    document.getElementById('generate-btn').textContent = n > 1 ? `Generate All (${n})` : 'Generate';
+  }
+
+  document.getElementById('add-script-btn').addEventListener('click', addScript);
+
+  // Init with one script
+  addScript();
+
+  // ── Preview ───────────────────────────────────────
   function updatePreview() {
     document.getElementById('preview-frame').style.background = state.bgColor;
     const pt = document.getElementById('preview-text');
     pt.style.color      = state.textColor;
     pt.style.fontFamily = `'${state.fontFamily}'`;
     pt.style.fontWeight = state.fontBold ? 'bold' : 'normal';
-    // Scale font size to preview (preview ~300px wide vs 720px video)
     pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
   }
 
   function applyColors(bg, txt) {
-    state.bgColor   = bg;
-    state.textColor = txt;
+    state.bgColor = bg; state.textColor = txt;
     document.getElementById('bg-picker').value   = bg;
     document.getElementById('bg-hex').value      = bg;
     document.getElementById('text-picker').value = txt;
@@ -402,7 +464,7 @@ textarea::placeholder { color: #3a3a3a; }
     updatePreview();
   }
 
-  // Voice
+  // ── Voice ─────────────────────────────────────────
   document.getElementById('voice-group').querySelectorAll('.pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
@@ -411,19 +473,23 @@ textarea::placeholder { color: #3a3a3a; }
     });
   });
 
-  // Font
+  // ── Font ──────────────────────────────────────────
   document.getElementById('font-group').querySelectorAll('.font-pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('font-group').querySelectorAll('.font-pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active');
-      state.font       = p.dataset.value;
-      state.fontFamily = p.dataset.family;
-      state.fontBold   = !!p.dataset.bold;
+      state.font = p.dataset.value; state.fontFamily = p.dataset.family; state.fontBold = !!p.dataset.bold;
       updatePreview();
     });
   });
 
-  // Color presets
+  document.getElementById('font-size').addEventListener('input', e => {
+    state.fontSize = parseInt(e.target.value);
+    document.getElementById('font-size-val').textContent = state.fontSize;
+    updatePreview();
+  });
+
+  // ── Colors ────────────────────────────────────────
   document.getElementById('preset-group').querySelectorAll('.preset-swatch').forEach(s => {
     s.addEventListener('click', () => {
       document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -432,7 +498,6 @@ textarea::placeholder { color: #3a3a3a; }
     });
   });
 
-  // Custom bg
   document.getElementById('bg-picker').addEventListener('input', e => {
     document.getElementById('bg-hex').value = e.target.value;
     document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -445,8 +510,6 @@ textarea::placeholder { color: #3a3a3a; }
       state.bgColor = e.target.value; updatePreview();
     }
   });
-
-  // Custom text
   document.getElementById('text-picker').addEventListener('input', e => {
     document.getElementById('text-hex').value = e.target.value;
     document.querySelectorAll('.preset-swatch').forEach(x => x.classList.remove('active'));
@@ -460,47 +523,34 @@ textarea::placeholder { color: #3a3a3a; }
     }
   });
 
-  // Font size slider
-  document.getElementById('font-size').addEventListener('input', e => {
-    state.fontSize = parseInt(e.target.value);
-    document.getElementById('font-size-val').textContent = state.fontSize;
-    updatePreview();
-  });
-
-  // Music
+  // ── Music ─────────────────────────────────────────
   document.getElementById('music-input').addEventListener('change', e => {
     document.getElementById('music-name').textContent = e.target.files[0]?.name || 'No file';
   });
 
-  // Generate
-  document.getElementById('generate-btn').addEventListener('click', async () => {
-    const text = document.getElementById('text').value.trim();
-    if (!text) { alert('Please enter a script.'); return; }
+  // ── Generate ──────────────────────────────────────
+  async function generateOne(scriptIdx, text, resultIdx) {
+    const bar    = document.getElementById(`result-bar-${resultIdx}`);
+    const status = document.getElementById(`result-status-${resultIdx}`);
+    const errEl  = document.getElementById(`result-error-${resultIdx}`);
+    const dlBtn  = document.getElementById(`result-dl-${resultIdx}`);
+    const result = document.getElementById(`script-result-${resultIdx}`);
 
-    const btn         = document.getElementById('generate-btn');
-    const statusCard  = document.getElementById('status-card');
-    const progressBar = document.getElementById('progress-bar');
-    const statusText  = document.getElementById('status-text');
-    const errorText   = document.getElementById('error-text');
-    const downloadBtn = document.getElementById('download-btn');
-
-    btn.disabled = true;
-    btn.textContent = 'Generating...';
-    statusCard.classList.add('visible');
-    errorText.style.display = 'none';
-    downloadBtn.style.display = 'none';
-    progressBar.style.width = '5%';
-    statusText.textContent = 'Generating audio...';
+    result.classList.add('visible');
+    errEl.style.display = 'none';
+    dlBtn.style.display = 'none';
+    bar.style.width = '5%';
+    status.textContent = 'Generating audio...';
 
     let prog = 5;
     const iv = setInterval(() => {
       if (prog < 85) {
-        prog += Math.random() * 2.5;
-        progressBar.style.width = prog + '%';
-        if (prog < 25)      statusText.textContent = 'Generating audio...';
-        else if (prog < 50) statusText.textContent = 'Transcribing...';
-        else if (prog < 70) statusText.textContent = 'Building subtitles...';
-        else                statusText.textContent = 'Rendering video...';
+        prog += Math.random() * 3;
+        bar.style.width = prog + '%';
+        if (prog < 25)      status.textContent = 'Generating audio...';
+        else if (prog < 50) status.textContent = 'Transcribing...';
+        else if (prog < 70) status.textContent = 'Building subtitles...';
+        else                status.textContent = 'Rendering video...';
       }
     }, 2000);
 
@@ -520,20 +570,42 @@ textarea::placeholder { color: #3a3a3a; }
       if (!res.ok) throw new Error(await res.text());
 
       const blob = await res.blob();
-      progressBar.style.width = '100%';
-      statusText.textContent = '✓ Done!';
-      downloadBtn.href = URL.createObjectURL(blob);
-      downloadBtn.style.display = 'inline-flex';
+      bar.style.width = '100%';
+      status.textContent = '✓ Done';
+      dlBtn.href = URL.createObjectURL(blob);
+      dlBtn.style.display = 'inline-flex';
     } catch(e) {
       clearInterval(iv);
-      progressBar.style.width = '0%';
-      statusText.textContent = 'Error';
-      errorText.textContent = e.message?.slice(0, 300) || 'Unknown error';
-      errorText.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Generate Video';
+      bar.style.width = '0%';
+      status.textContent = 'Error';
+      errEl.textContent  = e.message?.slice(0, 200) || 'Unknown error';
+      errEl.style.display = 'block';
     }
+  }
+
+  document.getElementById('generate-btn').addEventListener('click', async () => {
+    const items = document.querySelectorAll('#scripts-list .script-item');
+    const scripts = [];
+    items.forEach(item => {
+      const id   = item.id.replace('script-item-', '');
+      const text = document.getElementById(`script-text-${id}`)?.value.trim();
+      if (text) scripts.push({ id, text });
+    });
+
+    if (!scripts.length) { alert('Please enter at least one script.'); return; }
+
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+
+    for (let i = 0; i < scripts.length; i++) {
+      btn.textContent = scripts.length > 1
+        ? `Generating ${i + 1}/${scripts.length}...`
+        : 'Generating...';
+      await generateOne(i, scripts[i].text, scripts[i].id);
+    }
+
+    btn.disabled = false;
+    btn.textContent = scripts.length > 1 ? `Generate All (${scripts.length})` : 'Generate';
   });
 
   updatePreview();
