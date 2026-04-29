@@ -798,6 +798,8 @@ textarea::placeholder { color: var(--text-3); }
     });
     if (!scripts.length) { alert('Please enter at least one script.'); return; }
 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     const btn = document.getElementById('generate-btn');
     btn.disabled = true;
     for (let i = 0; i < scripts.length; i++) {
