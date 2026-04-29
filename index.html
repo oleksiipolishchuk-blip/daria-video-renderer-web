@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    color: #e8e8e8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 60px;
+  }
+
+  .container { width: 100%; max-width: 780px; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-bottom: 32px;
+    color: #fff;
+  }
+  h1 span { color: #666; font-weight: 400; }
+
+  .card {
+    background: #161616;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #555;
+    margin-bottom: 16px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #e8e8e8;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 14px 16px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  textarea:focus { border-color: #444; }
+  textarea::placeholder { color: #444; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .option-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .pill {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid #2a2a2a;
+    background: #0d0d0d;
+    color: #aaa;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .pill:hover { border-color: #444; color: #ddd; }
+  .pill.active { border-color: #fff; color: #fff; background: #1e1e1e; }
+
+  .style-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+  .style-swatch {
+    aspect-ratio: 9/5;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .style-swatch:hover { transform: scale(1.03); }
+  .style-swatch.active { border-color: #fff; }
+  .style-swatch span { z-index: 1; }
+
+  .music-upload {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .music-upload input[type="file"] { display: none; }
+  .music-btn {
+    padding: 8px 16px;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .music-btn:hover { border-color: #444; color: #ccc; }
+  .music-name { font-size: 13px; color: #666; }
+
+  .generate-btn {
+    width: 100%;
+    padding: 16px;
+    background: #fff;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: -0.2px;
+  }
+  .generate-btn:hover { background: #e8e8e8; }
+  .generate-btn:disabled { background: #1e1e1e; color: #444; cursor: not-allowed; }
+
+  .status-card {
+    background: #161616;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .status-card.visible { display: block; }
+
+  .progress-bar-wrap {
+    background: #222;
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #fff;
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  .status-text { font-size: 13px; color: #888; }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: #18a058;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.15s;
+    margin-top: 12px;
+  }
+  .download-btn:hover { background: #16924e; }
+
+  .error-text { color: #e05252; font-size: 13px; margin-top: 8px; }
+
+  @media (max-width: 560px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .style-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Video Generator <span>/ Daria MH</span></h1>
+
+  <!-- Text -->
+  <div class="card">
+    <div class="card-title">Script</div>
+    <textarea id="text" placeholder="Paste your script here..."></textarea>
+  </div>
+
+  <!-- Voice -->
+  <div class="card">
+    <div class="card-title">Voice</div>
+    <div class="pill-group" id="voice-group">
+      <div class="pill active" data-value="cm1VTuOWsFQRdZ5uDzSB">Тамера ♀</div>
+      <div class="pill" data-value="zIiblxeTGn5wMzcBul83">Хейлі ♀</div>
+      <div class="pill" data-value="F6d1zUrtT0hMMRrPcNx3">Micheal ♂</div>
+      <div class="pill" data-value="oBvxKpVhvq7xGdAVcOHG">Charles ♂</div>
+    </div>
+  </div>
+
+  <!-- Font -->
+  <div class="card">
+    <div class="card-title">Font</div>
+    <div class="pill-group" id="font-group">
+      <div class="pill active" data-value="Montserrat">Montserrat</div>
+      <div class="pill" data-value="Gilroy">Gilroy</div>
+      <div class="pill" data-value="Georgia">Georgia</div>
+      <div class="pill" data-value="LTCarpet">LT Carpet</div>
+      <div class="pill" data-value="Inter">Inter</div>
+      <div class="pill" data-value="Bodyhand">Bodyhand</div>
+    </div>
+  </div>
+
+  <!-- Style -->
+  <div class="card">
+    <div class="card-title">Style</div>
+    <div class="style-grid" id="style-group">
+      <div class="style-swatch active" data-bg="#000000" data-text="#FFFFFF" style="background:#000;color:#fff">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#1a1a3e" data-text="#FFFFFF" style="background:#1a1a3e;color:#fff">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#000000" data-text="#FFD700" style="background:#000;color:#FFD700">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#2a2a2a" data-text="#FFFFFF" style="background:#2a2a2a;color:#fff">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#FFFFFF" data-text="#000000" style="background:#fff;color:#000">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#5c1a1a" data-text="#FFFFFF" style="background:#5c1a1a;color:#fff">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#1a3e1a" data-text="#FFFFFF" style="background:#1a3e1a;color:#fff">
+        <span>Aa</span>
+      </div>
+      <div class="style-swatch" data-bg="#0047ab" data-text="#FFFFFF" style="background:#0047ab;color:#fff">
+        <span>Aa</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Music -->
+  <div class="card">
+    <div class="card-title">Background Music <span style="color:#444;font-size:10px;text-transform:none;letter-spacing:0">(optional)</span></div>
+    <div class="music-upload">
+      <label class="music-btn" for="music-input">Choose file</label>
+      <input type="file" id="music-input" accept="audio/*">
+      <span class="music-name" id="music-name">No file selected</span>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <button class="generate-btn" id="generate-btn">Generate Video</button>
+
+  <!-- Status -->
+  <div class="status-card" id="status-card">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="status-text" id="status-text">Starting...</div>
+    <div class="error-text" id="error-text" style="display:none"></div>
+    <a class="download-btn" id="download-btn" style="display:none" download="video.mp4">
+      ↓ Download Video
+    </a>
+  </div>
+</div>
+
+<script>
+  // Pill selectors
+  function initPills(groupId) {
+    document.getElementById(groupId).querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.getElementById(groupId).querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+      });
+    });
+  }
+  initPills('voice-group');
+  initPills('font-group');
+
+  // Style swatches
+  document.getElementById('style-group').querySelectorAll('.style-swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.getElementById('style-group').querySelectorAll('.style-swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+    });
+  });
+
+  // Music file
+  document.getElementById('music-input').addEventListener('change', e => {
+    const f = e.target.files[0];
+    document.getElementById('music-name').textContent = f ? f.name : 'No file selected';
+  });
+
+  // Generate
+  document.getElementById('generate-btn').addEventListener('click', async () => {
+    const text = document.getElementById('text').value.trim();
+    if (!text) { alert('Please enter a script.'); return; }
+
+    const voiceId   = document.querySelector('#voice-group .pill.active')?.dataset.value || 'cm1VTuOWsFQRdZ5uDzSB';
+    const font      = document.querySelector('#font-group .pill.active')?.dataset.value  || 'Montserrat';
+    const activeSw  = document.querySelector('#style-group .style-swatch.active');
+    const bgColor   = activeSw?.dataset.bg   || '#000000';
+    const textColor = activeSw?.dataset.text || '#FFFFFF';
+    const musicFile = document.getElementById('music-input').files[0];
+
+    const btn = document.getElementById('generate-btn');
+    const statusCard = document.getElementById('status-card');
+    const progressBar = document.getElementById('progress-bar');
+    const statusText  = document.getElementById('status-text');
+    const errorText   = document.getElementById('error-text');
+    const downloadBtn = document.getElementById('download-btn');
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    statusCard.classList.add('visible');
+    errorText.style.display = 'none';
+    downloadBtn.style.display = 'none';
+    progressBar.style.width = '5%';
+    statusText.textContent = 'Generating audio...';
+
+    // Fake progress animation
+    let prog = 5;
+    const progInterval = setInterval(() => {
+      if (prog < 85) {
+        prog += Math.random() * 3;
+        progressBar.style.width = prog + '%';
+        if (prog < 25)      statusText.textContent = 'Generating audio...';
+        else if (prog < 50) statusText.textContent = 'Transcribing with Whisper...';
+        else if (prog < 70) statusText.textContent = 'Building subtitles...';
+        else                statusText.textContent = 'Rendering video...';
+      }
+    }, 2000);
+
+    try {
+      const form = new FormData();
+      form.append('text', text);
+      form.append('voice_id', voiceId);
+      form.append('font', font);
+      form.append('bg_color', bgColor);
+      form.append('text_color', textColor);
+      if (musicFile) form.append('music', musicFile);
+
+      const res = await fetch('/generate', { method: 'POST', body: form });
+
+      clearInterval(progInterval);
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
+      }
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+
+      progressBar.style.width = '100%';
+      statusText.textContent = 'Done!';
+      downloadBtn.href = url;
+      downloadBtn.style.display = 'inline-flex';
+    } catch (e) {
+      clearInterval(progInterval);
+      progressBar.style.width = '0%';
+      statusText.textContent = 'Error';
+      errorText.textContent = e.message?.slice(0, 300) || 'Unknown error';
+      errorText.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate Video';
+    }
+  });
+</script>
+</body>
+</html>
