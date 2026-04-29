@@ -324,6 +324,17 @@ textarea::placeholder { color: var(--text-3); }
   transform: none; box-shadow: none;
 }
 
+.stop-btn {
+  width: 100%; padding: 15px;
+  background: rgba(255,69,58,0.12);
+  color: #ff453a; border: 1px solid rgba(255,69,58,0.25);
+  border-radius: 14px; font-size: 15px; font-weight: 600;
+  font-family: inherit; cursor: pointer; letter-spacing: -0.3px;
+  transition: all 0.2s var(--ease);
+  display: none; margin-bottom: 12px;
+}
+.stop-btn:hover { background: rgba(255,69,58,0.22); border-color: rgba(255,69,58,0.45); }
+
 /* ── Preview ── */
 .preview-sticky { position: sticky; top: 48px; }
 .preview-wrap {
@@ -518,6 +529,7 @@ textarea::placeholder { color: var(--text-3); }
       <img class="preview-overlay" id="preview-overlay" src="/static-frames/christmas.png" alt="">
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
+    <button class="stop-btn"     id="stop-btn">Stop generation</button>
   </div>
 
 </div>
@@ -536,6 +548,7 @@ textarea::placeholder { color: var(--text-3); }
   };
 
   let scriptCount = 0;
+  let abortController = null;
 
   // ── Scripts ──────────────────────────────────────────
   function addScript() {
@@ -710,6 +723,11 @@ textarea::placeholder { color: var(--text-3); }
     }
   });
 
+  // ── Stop ──────────────────────────────────────────────
+  document.getElementById('stop-btn').addEventListener('click', () => {
+    abortController?.abort();
+  });
+
   // ── Frame ─────────────────────────────────────────────
   document.getElementById('frame-enabled').addEventListener('change', e => {
     state.useFrame = e.target.checked; updatePreview();
@@ -769,7 +787,7 @@ textarea::placeholder { color: var(--text-3); }
         if (bgFile) form.append('bg_image', bgFile);
       }
 
-      const res = await fetch('/generate', { method: 'POST', body: form });
+      const res = await fetch('/generate', { method: 'POST', body: form, signal: abortController?.signal });
       clearInterval(iv);
       if (!res.ok) throw new Error(await res.text());
 
@@ -783,7 +801,11 @@ textarea::placeholder { color: var(--text-3); }
     } catch(e) {
       clearInterval(iv);
       fill.style.width = '0%';
-      msg.textContent  = e.message?.slice(0, 180) || 'Unknown error';
+      if (e.name === 'AbortError') {
+        msg.textContent = '⊘ Cancelled';
+      } else {
+        msg.textContent = e.message?.slice(0, 180) || 'Unknown error';
+      }
       msg.classList.add('error');
     }
   }
@@ -800,13 +822,23 @@ textarea::placeholder { color: var(--text-3); }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const btn = document.getElementById('generate-btn');
-    btn.disabled = true;
+    const btn     = document.getElementById('generate-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    abortController = new AbortController();
+
+    btn.style.display     = 'none';
+    stopBtn.style.display = 'block';
+
     for (let i = 0; i < scripts.length; i++) {
-      btn.textContent = scripts.length > 1 ? `Generating ${i + 1} of ${scripts.length}…` : 'Generating…';
+      if (abortController.signal.aborted) break;
+      stopBtn.textContent = scripts.length > 1
+        ? `Stop (${i + 1} of ${scripts.length})`
+        : 'Stop generation';
       await generateOne(scripts[i].text, scripts[i].id);
     }
-    btn.disabled = false;
+
+    btn.style.display     = 'block';
+    stopBtn.style.display = 'none';
     btn.textContent = scripts.length > 1 ? `Generate All (${scripts.length})` : 'Generate';
   });
 
