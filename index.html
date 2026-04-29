@@ -791,12 +791,21 @@ textarea::placeholder { color: var(--text-3); }
       clearInterval(iv);
       if (!res.ok) throw new Error(await res.text());
 
-      const blob = await res.blob();
-      fill.style.width = '100%';
-      msg.textContent  = '✓ Done';
+      const blob     = await res.blob();
+      const filename = makeFilename(text);
+      const url      = URL.createObjectURL(blob);
+
+      // Auto-download
+      const tmp = document.createElement('a');
+      tmp.href = url; tmp.download = filename;
+      tmp.click();
+
+      fill.style.width  = '100%';
+      msg.textContent   = '✓ Done';
       msg.classList.add('done');
-      dlBtn.href     = URL.createObjectURL(blob);
-      dlBtn.download = makeFilename(text);
+      dlBtn.href        = url;
+      dlBtn.download    = filename;
+      dlBtn.textContent = '✓ Downloaded';
       dlBtn.classList.add('show');
     } catch(e) {
       clearInterval(iv);
