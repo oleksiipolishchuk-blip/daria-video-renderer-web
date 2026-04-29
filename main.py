@@ -756,9 +756,20 @@ async def generate_video_web(
     )
 
 
+@app.get("/fonts/{filename}")
+def serve_font(filename: str):
+    path = FONT_DIR / filename
+    if not path.exists():
+        raise HTTPException(404, "Font not found")
+    mime = "font/otf" if filename.endswith(".otf") else "font/truetype"
+    return Response(content=path.read_bytes(), media_type=mime,
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/", response_class=HTMLResponse)
 def web_ui():
-    return HTMLResponse(content=open(Path(__file__).parent / "index.html").read() if (Path(__file__).parent / "index.html").exists() else "<h1>Not found</h1>")
+    p = Path(__file__).parent / "index.html"
+    return HTMLResponse(content=p.read_text() if p.exists() else "<h1>Not found</h1>")
 
 
 @app.get("/health")
