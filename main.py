@@ -828,7 +828,7 @@ async def generate_video_web(
         # TXT — continuous text, no paragraph breaks
         txt_content = " ".join(text.split())
 
-        # SRT — from transcript_data blocks
+        # SRT — seamless: each block runs until the next one starts (no gaps)
         def fmt_time(s: float) -> str:
             ms = int(round(s * 1000))
             h, ms = divmod(ms, 3_600_000)
@@ -837,9 +837,10 @@ async def generate_video_web(
             return f"{h:02d}:{m:02d}:{sec:02d},{ms:03d}"
 
         srt_lines = []
-        for i, block in enumerate(transcript_data, 1):
-            srt_lines.append(str(i))
-            srt_lines.append(f"{fmt_time(block['start'])} --> {fmt_time(block['end'])}")
+        for i, block in enumerate(transcript_data):
+            end_t = transcript_data[i + 1]["start"] if i + 1 < len(transcript_data) else audio_duration
+            srt_lines.append(str(i + 1))
+            srt_lines.append(f"{fmt_time(block['start'])} --> {fmt_time(end_t)}")
             srt_lines.append(block["text"])
             srt_lines.append("")
         srt_content = "\n".join(srt_lines)
