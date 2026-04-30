@@ -1136,10 +1136,18 @@ def serve_font(filename: str):
                     headers={"Cache-Control": "public, max-age=86400"})
 
 
-@app.get("/", response_class=HTMLResponse)
-def web_ui():
+def _serve_ui():
     p = Path(__file__).parent / "index.html"
     return HTMLResponse(content=p.read_text() if p.exists() else "<h1>Not found</h1>")
+
+@app.get("/",               response_class=HTMLResponse)
+def web_ui():          return _serve_ui()
+
+@app.get("/easy-mh",        response_class=HTMLResponse)
+def web_easy_mh():     return _serve_ui()
+
+@app.get("/voiceover",      response_class=HTMLResponse)
+def web_voiceover():   return _serve_ui()
 
 
 @app.get("/health")

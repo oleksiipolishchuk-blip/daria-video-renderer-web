@@ -543,7 +543,7 @@ textarea::placeholder { color: var(--text-3); }
         Marketing <span class="sidebar-arrow">▶</span>
       </div>
       <div class="sidebar-items open" id="section-marketing">
-        <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Easy MH">📹 Easy MH</button>
+        <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Easy MH" data-url="/easy-mh">📹 Easy MH</button>
       </div>
     </div>
     <div class="sidebar-section">
@@ -551,7 +551,7 @@ textarea::placeholder { color: var(--text-3); }
         Design <span class="sidebar-arrow">▶</span>
       </div>
       <div class="sidebar-items" id="section-design">
-        <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline">🎤 Voiceover Pipeline</button>
+        <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline" data-url="/voiceover">🎤 Voiceover Pipeline</button>
       </div>
     </div>
   </nav>
@@ -1266,6 +1266,26 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Sidebar navigation ────────────────────────────────
+  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline' };
+
+  function switchToPage(pageId, push = true) {
+    const item = document.querySelector(`.sidebar-item[data-page="${pageId}"]`);
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    if (item) {
+      item.classList.add('active');
+      const section = item.closest('.sidebar-items');
+      if (section && !section.classList.contains('open')) {
+        section.classList.add('open');
+        section.previousElementSibling?.classList.add('open');
+      }
+    }
+    document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+    document.getElementById('page-' + pageId).style.display = 'block';
+    document.getElementById('page-subtitle').textContent = item?.dataset.subtitle || '';
+    document.getElementById('preview-col').style.visibility = pageId === 'video-generator' ? '' : 'hidden';
+    if (push) history.pushState({ page: pageId }, '', item?.dataset.url || '/');
+  }
+
   document.querySelectorAll('.sidebar-section-header').forEach(header => {
     header.addEventListener('click', () => {
       header.classList.toggle('open');
@@ -1274,16 +1294,14 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   document.querySelectorAll('.sidebar-item').forEach(item => {
-    item.addEventListener('click', () => {
-      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      const page = item.dataset.page;
-      document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
-      document.getElementById('page-' + page).style.display = 'block';
-      document.getElementById('page-subtitle').textContent = item.dataset.subtitle;
-      document.getElementById('preview-col').style.visibility = page === 'video-generator' ? '' : 'hidden';
-    });
+    item.addEventListener('click', () => switchToPage(item.dataset.page));
   });
+
+  window.addEventListener('popstate', e => {
+    switchToPage(e.state?.page || URL_TO_PAGE[location.pathname] || 'video-generator', false);
+  });
+
+  switchToPage(URL_TO_PAGE[location.pathname] || 'video-generator', false);
 
   // ── localStorage ─────────────────────────────────────
   function saveToStorage() {
