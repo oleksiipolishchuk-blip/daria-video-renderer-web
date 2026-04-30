@@ -294,6 +294,21 @@ textarea::placeholder { color: var(--text-3); }
 #frame-enabled:checked ~ label { color: var(--text); }
 .frame-row:hover .frame-thumb { opacity: 1; }
 
+/* ── Disclaimer ── */
+.disclaimer-list { display: flex; flex-direction: column; }
+.disclaimer-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 0; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.disclaimer-row:last-child { border-bottom: none; }
+.disclaimer-row input[type="checkbox"] {
+  width: 15px; height: 15px; cursor: pointer; flex-shrink: 0;
+  accent-color: var(--accent); margin-top: 1px;
+}
+.disclaimer-row span { font-size: 12.5px; color: var(--text-2); letter-spacing: -0.1px; line-height: 1.4; }
+.disclaimer-row:has(input:checked) span { color: var(--text); }
+
 /* ── Music ── */
 .music-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; }
 .music-pill {
@@ -524,6 +539,25 @@ textarea::placeholder { color: var(--text-3); }
         <span style="font-size:13px;color:var(--text-2);letter-spacing:-0.1px;flex:1">Christmas lights</span>
         <img class="frame-thumb" src="/static-frames/christmas.png" alt="">
       </label>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="card">
+      <div class="card-label">Disclaimer <span style="color:var(--text-3);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
+      <div class="disclaimer-list">
+        <label class="disclaimer-row">
+          <input type="checkbox" class="disc-check" value="Generative AI used">
+          <span>Generative AI used</span>
+        </label>
+        <label class="disclaimer-row">
+          <input type="checkbox" class="disc-check" value="Actor portrayal. Individual results may vary.">
+          <span>Actor portrayal. Individual results may vary.</span>
+        </label>
+        <label class="disclaimer-row">
+          <input type="checkbox" class="disc-check" value="Individual results may vary.">
+          <span>Individual results may vary.</span>
+        </label>
+      </div>
     </div>
 
     <!-- Music -->
@@ -882,6 +916,8 @@ textarea::placeholder { color: var(--text-3); }
         const bgFile = document.getElementById('bg-photo-input').files[0];
         if (bgFile) form.append('bg_image', bgFile);
       }
+      const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+      if (discLines.length) form.append('disclaimer', discLines.join('\n'));
 
       const res = await fetch('/generate', { method: 'POST', body: form, signal: abortController?.signal });
       clearInterval(iv);

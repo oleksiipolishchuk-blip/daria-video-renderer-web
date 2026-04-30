@@ -400,27 +400,37 @@ async def split_text(text: str = Form(...)):
     return {"blocks": blocks}
 
 
-def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None) -> "Image":
+def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None, disclaimer_lines=None) -> "Image":
     from PIL import Image, ImageDraw
     if bg_image_pil is not None:
         img = _fit_image(bg_image_pil, VIDEO_WIDTH, VIDEO_HEIGHT)
     else:
         img = Image.new("RGB", (VIDEO_WIDTH, VIDEO_HEIGHT), bg_rgb)
-    if not text.strip():
-        return img
     draw = ImageDraw.Draw(img)
 
-    lines = wrap_lines(draw, text, font, int(VIDEO_WIDTH * 0.72))
-    lines = fix_typography(lines)
+    if text.strip():
+        lines = wrap_lines(draw, text, font, int(VIDEO_WIDTH * 0.72))
+        lines = fix_typography(lines)
+        line_h = int(font.size * 1.18)
+        total_h = len(lines) * line_h
+        y = (VIDEO_HEIGHT - total_h) // 2
+        for line in lines:
+            w = draw.textbbox((0, 0), line, font=font)[2]
+            draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=font, fill=text_rgb)
+            y += line_h
 
-    line_h = int(font.size * 1.18)
-    total_h = len(lines) * line_h
-    y = (VIDEO_HEIGHT - total_h) // 2
-
-    for line in lines:
-        w = draw.textbbox((0, 0), line, font=font)[2]
-        draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=font, fill=text_rgb)
-        y += line_h
+    if disclaimer_lines:
+        disc_font = load_font("montserrat", 24)
+        overlay   = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ov_draw   = ImageDraw.Draw(overlay)
+        disc_line_h = 32
+        total_disc_h = len(disclaimer_lines) * disc_line_h
+        y = VIDEO_HEIGHT - 90 - total_disc_h
+        for line in disclaimer_lines:
+            w = ov_draw.textbbox((0, 0), line, font=disc_font)[2]
+            ov_draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=disc_font, fill=(255, 255, 255, 155))
+            y += disc_line_h
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
     return img
 
@@ -637,6 +647,7 @@ async def generate_video_web(
     preset_music:         str = Form(""),
     bg_image:             Optional[UploadFile] = File(None),
     use_christmas_frame:  str = Form("0"),
+    disclaimer:           str = Form(""),
 ):
     el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
     oai_key = os.environ.get("OPENAI_API_KEY", "")
@@ -715,6 +726,7 @@ async def generate_video_web(
         all_texts   = [b["text"] for b in transcript_data]
         global_size = fit_font_size(all_texts, font, font_size_int)
         pil_font    = load_font(font, global_size)
+        disclaimer_lines = [l.strip() for l in disclaimer.split("\n") if l.strip()]
 
         if preset_music:
             preset_path = MUSIC_DIR / preset_music
@@ -743,7 +755,7 @@ async def generate_video_web(
         frame_paths = {}
         for idx, block in enumerate(transcript_data):
             fp = frames_dir / f"frame_{idx:04d}.png"
-            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil).save(str(fp), "PNG")
+            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil, disclaimer_lines=disclaimer_lines or None).save(str(fp), "PNG")
             frame_paths[idx] = fp
 
         concat_lines = []
