@@ -128,14 +128,13 @@ def fix_typography(lines: list[str]) -> list[str]:
     return fixed
 
 
-def split_long_blocks(transcript_data: list, font_name: str) -> list:
-    """Split blocks that still exceed MAX_LINES at minimum font size."""
+def split_long_blocks(transcript_data: list, font_name: str, font_size: int = 36) -> list:
+    """Split blocks that still exceed MAX_LINES at the given font size."""
     from PIL import Image, ImageDraw
     MAX_LINES = 4
-    MIN_SIZE  = 36
     max_width = int(VIDEO_WIDTH * 0.72)
     draw = ImageDraw.Draw(Image.new("RGB", (VIDEO_WIDTH, VIDEO_HEIGHT)))
-    font = load_font(font_name, MIN_SIZE)
+    font = load_font(font_name, font_size)
 
     result = []
     for block in transcript_data:
@@ -718,14 +717,12 @@ async def generate_video_web(
 
         # 6. Align (Whisper ran on clean audio, timestamps already correct — no adjust needed)
         transcript_data = align_timestamps_python(gpt_blocks, whisper_words)
-        transcript_data = split_long_blocks(transcript_data, font)
+        transcript_data = split_long_blocks(transcript_data, font, font_size_int)
 
         # 7. Render
         bg_rgb   = hex_to_rgb(bg_color   if bg_color.startswith("#")   else f"#{bg_color}")
         text_rgb = hex_to_rgb(text_color if text_color.startswith("#") else f"#{text_color}")
-        all_texts   = [b["text"] for b in transcript_data]
-        global_size = fit_font_size(all_texts, font, font_size_int)
-        pil_font    = load_font(font, global_size)
+        pil_font = load_font(font, font_size_int)
         disclaimer_lines = [l.strip() for l in disclaimer.split("\n") if l.strip()]
 
         if preset_music:
