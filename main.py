@@ -434,6 +434,45 @@ def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=N
     return img
 
 
+def render_hook_frame(text: str, font_name: str, font_size: int, text_rgb: tuple,
+                       style: str, box_rgb: tuple, position: str):
+    from PIL import Image, ImageDraw
+    img = Image.new("RGBA", (VIDEO_WIDTH, VIDEO_HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    font = load_font(font_name, font_size)
+    max_width = int(VIDEO_WIDTH * 0.85)
+    lines = wrap_lines(draw, text, font, max_width)
+    lines = fix_typography(lines)
+    line_h = int(font.size * 1.22)
+    total_h = len(lines) * line_h
+
+    y_start = int(VIDEO_HEIGHT * 0.10) if position == "top" else (VIDEO_HEIGHT - total_h) // 2
+
+    if style == "box":
+        pad_x, pad_y = 28, 18
+        line_widths = [draw.textbbox((0, 0), l, font=font)[2] for l in lines]
+        max_w = max(line_widths) if line_widths else 100
+        box_x1 = (VIDEO_WIDTH - max_w) // 2 - pad_x
+        box_x2 = (VIDEO_WIDTH + max_w) // 2 + pad_x
+        draw.rounded_rectangle(
+            [box_x1, y_start - pad_y, box_x2, y_start + total_h + pad_y],
+            radius=14, fill=(*box_rgb, 235)
+        )
+
+    y = y_start
+    for line in lines:
+        w = draw.textbbox((0, 0), line, font=font)[2]
+        x = (VIDEO_WIDTH - w) // 2
+        if style == "plain":
+            draw.text((x, y), line, font=font, fill=(*text_rgb, 255),
+                      stroke_width=3, stroke_fill=(0, 0, 0, 255))
+        else:
+            draw.text((x, y), line, font=font, fill=(*text_rgb, 255))
+        y += line_h
+
+    return img
+
+
 @app.post("/render")
 async def render_video(
     audio:      UploadFile           = File(...),
@@ -647,6 +686,15 @@ async def generate_video_web(
     bg_image:             Optional[UploadFile] = File(None),
     use_christmas_frame:  str = Form("0"),
     disclaimer:           str = Form(""),
+    hook_text:            str                  = Form(""),
+    hook_video:           Optional[UploadFile] = File(None),
+    hook_voice_id:        str                  = Form(""),
+    hook_font:            str                  = Form("Montserrat"),
+    hook_text_color:      str                  = Form("#FFFFFF"),
+    hook_font_size:       str                  = Form("72"),
+    hook_style:           str                  = Form("plain"),
+    hook_box_color:       str                  = Form("#FFFFFF"),
+    hook_position:        str                  = Form("top"),
 ):
     el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
     oai_key = os.environ.get("OPENAI_API_KEY", "")
@@ -666,8 +714,84 @@ async def generate_video_web(
         import io
         bg_image_pil = Image.open(io.BytesIO(bg_image_data))
 
+    hook_video_data = await hook_video.read() if hook_video else None
+    h_font_size_int = int(hook_font_size) if hook_font_size.isdigit() and int(hook_font_size) > 0 else 72
+
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
+
+        # 0. HOOK
+        hook_part = None
+        if hook_text.strip() and hook_video_data:
+            h_voice = hook_voice_id if hook_voice_id else voice_id
+            hook_audio_parts = []
+            async with httpx.AsyncClient(timeout=90.0) as hclient:
+                hr = await hclient.post(
+                    f"https://api.elevenlabs.io/v1/text-to-speech/{h_voice}",
+                    headers={"xi-api-key": el_key, "Content-Type": "application/json"},
+                    json={"text": _clean_text(hook_text), "model_id": "eleven_v3", "speed": 1.1,
+                          "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "style": 0.0, "use_speaker_boost": True}},
+                )
+                if hr.status_code == 200 and len(hr.content) >= 100:
+                    hook_audio_parts = [hr.content]
+
+            if hook_audio_parts:
+                hook_audio = tmp_path / "hook_audio.mp3"
+                hook_audio.write_bytes(b"".join(hook_audio_parts))
+
+                hook_norm = tmp_path / "hook_audio_norm.mp3"
+                rhn = subprocess.run(
+                    ["ffmpeg", "-y", "-i", str(hook_audio), "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+                     "-c:a", "libmp3lame", "-q:a", "2", str(hook_norm)],
+                    capture_output=True, text=True, timeout=120
+                )
+                if rhn.returncode == 0:
+                    hook_audio = hook_norm
+
+                try:
+                    hprobe = subprocess.run(
+                        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                         "-of", "default=noprint_wrappers=1:nokey=1", str(hook_audio)],
+                        capture_output=True, text=True
+                    )
+                    hook_duration = float(hprobe.stdout.strip())
+                except Exception:
+                    hook_duration = 10.0
+
+                hook_bg_path = tmp_path / "hook_bg.mp4"
+                hook_bg_path.write_bytes(hook_video_data)
+
+                h_text_rgb = hex_to_rgb(hook_text_color if hook_text_color.startswith("#") else f"#{hook_text_color}")
+                h_box_rgb  = hex_to_rgb(hook_box_color  if hook_box_color.startswith("#")  else f"#{hook_box_color}")
+                hook_overlay_img  = render_hook_frame(hook_text, hook_font, h_font_size_int, h_text_rgb,
+                                                       hook_style, h_box_rgb, hook_position)
+                hook_overlay_path = tmp_path / "hook_overlay.png"
+                hook_overlay_img.save(str(hook_overlay_path), "PNG")
+
+                hook_part = tmp_path / "hook_part.mp4"
+                cmd_hook = [
+                    "ffmpeg", "-y",
+                    "-stream_loop", "-1", "-i", str(hook_bg_path),
+                    "-i", str(hook_overlay_path),
+                    "-i", str(hook_audio),
+                    "-filter_complex",
+                    f"[0:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
+                    f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},setsar=1:1[v];"
+                    f"[v][1:v]overlay=0:0[out]",
+                    "-map", "[out]", "-map", "2:a",
+                    "-t", str(hook_duration),
+                    "-vsync", "cfr", "-r", "30",
+                    "-c:v", "libx264", "-preset", "fast",
+                    "-profile:v", "high", "-level", "4.0",
+                    "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
+                    "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                    "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+                    str(hook_part),
+                ]
+                rh = subprocess.run(cmd_hook, capture_output=True, text=True, timeout=300)
+                if rh.returncode != 0:
+                    print(f"[Hook FFmpeg] {rh.stderr[-500:]}", file=sys.stderr)
+                    hook_part = None
 
         # 1. TTS
         clean = _clean_text(text)
@@ -776,6 +900,29 @@ async def generate_video_web(
         r1 = subprocess.run(cmd1, capture_output=True, text=True, timeout=600)
         if r1.returncode != 0:
             raise HTTPException(500, f"FFmpeg: {r1.stderr[-1000:]}")
+
+        # Concat hook + body
+        if hook_part and hook_part.exists():
+            combined = tmp_path / "combined.mp4"
+            cmd_concat = [
+                "ffmpeg", "-y",
+                "-i", str(hook_part),
+                "-i", str(no_music),
+                "-filter_complex",
+                "[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1[outv][outa]",
+                "-map", "[outv]", "-map", "[outa]",
+                "-c:v", "libx264", "-preset", "fast",
+                "-profile:v", "high", "-level", "4.0",
+                "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
+                "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
+                str(combined),
+            ]
+            rc = subprocess.run(cmd_concat, capture_output=True, text=True, timeout=600)
+            if rc.returncode == 0:
+                no_music = combined
+            else:
+                print(f"[Concat] failed: {rc.stderr[-500:]}", file=sys.stderr)
 
         if music_path:
             cmd2 = ["ffmpeg", "-y", "-i", str(no_music), "-stream_loop", "-1", "-i", str(music_path),

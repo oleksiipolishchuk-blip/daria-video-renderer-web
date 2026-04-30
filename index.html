@@ -294,6 +294,51 @@ textarea::placeholder { color: var(--text-3); }
 #frame-enabled:checked ~ label { color: var(--text); }
 .frame-row:hover .frame-thumb { opacity: 1; }
 
+/* ── Hook toggle ── */
+.hook-header { display: flex; align-items: center; gap: 12px; }
+.toggle-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { display: none; }
+.toggle-track {
+  position: absolute; inset: 0; background: rgba(255,255,255,0.08);
+  border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border);
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.toggle-track::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  transition: transform 0.2s var(--ease);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.toggle-switch input:checked + .toggle-track { background: var(--green); border-color: transparent; }
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+.hook-title { font-size: 14px; font-weight: 500; color: var(--text); letter-spacing: -0.2px; }
+.hook-badge { font-size: 10px; color: var(--text-3); letter-spacing: 0.1px; }
+
+.hook-body {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.4s var(--ease), opacity 0.3s var(--ease);
+  opacity: 0;
+}
+.hook-body.open { max-height: 3000px; opacity: 1; }
+
+.hook-section-label {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--text-3); margin: 18px 0 10px;
+}
+
+.hook-video-drop {
+  display: block; border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 12px; cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+.hook-video-drop:hover { border-color: var(--border-2); }
+.hook-video-inner { padding: 20px 16px; text-align: center; }
+.hook-video-inner p { font-size: 13px; color: var(--text-3); pointer-events: none; letter-spacing: -0.1px; }
+.hook-video-inner span { font-size: 11px; color: var(--text-3); opacity: 0.55; pointer-events: none; }
+.hook-video-drop input[type="file"] { display: none; }
+.hook-video-selected { font-size: 12px; color: var(--green); margin-top: 8px; text-align: center; display: none; }
+
 /* ── Disclaimer ── */
 .disclaimer-list { display: flex; flex-direction: column; }
 .disclaimer-row {
@@ -423,6 +468,105 @@ textarea::placeholder { color: var(--text-3); }
 
   <!-- ── LEFT ── -->
   <div>
+
+    <!-- Hook -->
+    <div class="card">
+      <div class="hook-header">
+        <label class="toggle-switch">
+          <input type="checkbox" id="hook-enabled">
+          <span class="toggle-track"></span>
+        </label>
+        <span class="hook-title">Hook</span>
+        <span class="hook-badge">before body</span>
+      </div>
+      <div class="hook-body" id="hook-body">
+
+        <div class="hook-section-label">Background video</div>
+        <label class="hook-video-drop" for="hook-video-input">
+          <div class="hook-video-inner" id="hook-video-inner">
+            <p>Click to upload background video</p>
+            <span>Trimmed to hook TTS duration</span>
+          </div>
+          <input type="file" id="hook-video-input" accept="video/*">
+        </label>
+        <div class="hook-video-selected" id="hook-video-selected"></div>
+
+        <div class="hook-section-label">Hook text</div>
+        <textarea id="hook-text" placeholder="Hook text shown over the video…" style="min-height:80px"></textarea>
+
+        <div class="hook-section-label">Voice</div>
+        <div class="pill-group" id="hook-voice-group">
+          <button class="pill active" data-value="cm1VTuOWsFQRdZ5uDzSB">Тамера ♀</button>
+          <button class="pill" data-value="zIiblxeTGn5wMzcBul83">Хейлі ♀</button>
+          <button class="pill" data-value="F6d1zUrtT0hMMRrPcNx3">Micheal ♂</button>
+          <button class="pill" data-value="oBvxKpVhvq7xGdAVcOHG">Charles ♂</button>
+          <button class="pill" data-value="RRu00uLS5NYF6NBtUWv0">Олег ♂</button>
+        </div>
+
+        <div class="hook-section-label">Font</div>
+        <div class="font-grid" id="hook-font-group">
+          <div class="font-pill active" data-value="Montserrat" data-family="F-Montserrat" data-bold="1">
+            <div class="font-pill-label">Montserrat</div>
+            <div class="font-pill-sample" style="font-family:'F-Montserrat';font-weight:bold">Hook text.</div>
+          </div>
+          <div class="font-pill" data-value="Gilroy" data-family="F-Gilroy">
+            <div class="font-pill-label">Gilroy</div>
+            <div class="font-pill-sample" style="font-family:'F-Gilroy'">Hook text.</div>
+          </div>
+          <div class="font-pill" data-value="Georgia" data-family="F-Georgia">
+            <div class="font-pill-label">Georgia</div>
+            <div class="font-pill-sample" style="font-family:'F-Georgia'">Hook text.</div>
+          </div>
+          <div class="font-pill" data-value="LTCarpet" data-family="F-LTCarpet">
+            <div class="font-pill-label">LT Carpet</div>
+            <div class="font-pill-sample" style="font-family:'F-LTCarpet'">Hook text.</div>
+          </div>
+          <div class="font-pill" data-value="Inter" data-family="F-Inter">
+            <div class="font-pill-label">Inter</div>
+            <div class="font-pill-sample" style="font-family:'F-Inter'">Hook text.</div>
+          </div>
+          <div class="font-pill" data-value="Bodyhand" data-family="F-Bodyhand">
+            <div class="font-pill-label">Bodyhand</div>
+            <div class="font-pill-sample" style="font-family:'F-Bodyhand'">Hook text.</div>
+          </div>
+        </div>
+        <div class="size-row">
+          <label>Size</label>
+          <input type="range" class="size-slider" id="hook-font-size" min="36" max="100" value="72">
+          <span class="size-value" id="hook-font-size-val">72</span>
+        </div>
+
+        <div class="hook-section-label">Text style</div>
+        <div class="seg-control">
+          <button class="seg-btn active" id="hook-style-plain">Plain</button>
+          <button class="seg-btn" id="hook-style-box">Box</button>
+        </div>
+
+        <div class="color-pair" style="margin-top:0">
+          <div class="color-field">
+            <label>Text color</label>
+            <div class="color-input">
+              <input type="color" id="hook-text-picker" value="#FFFFFF">
+              <input type="text"  id="hook-text-hex"    value="#FFFFFF" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="color-field" id="hook-box-color-field" style="display:none">
+            <label>Box color</label>
+            <div class="color-input">
+              <input type="color" id="hook-box-picker" value="#FFFFFF">
+              <input type="text"  id="hook-box-hex"    value="#FFFFFF" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+        </div>
+
+        <div class="hook-section-label">Text position</div>
+        <div class="seg-control">
+          <button class="seg-btn active" id="hook-pos-top">Top</button>
+          <button class="seg-btn" id="hook-pos-center">Center</button>
+        </div>
+
+      </div>
+    </div>
 
     <!-- Scripts -->
     <div class="card">
@@ -889,6 +1033,94 @@ textarea::placeholder { color: var(--text-3); }
     document.getElementById('music-name').textContent = file.name;
   });
 
+  // ── Hook ─────────────────────────────────────────────
+  const hookState = {
+    enabled: false, voiceId: 'cm1VTuOWsFQRdZ5uDzSB',
+    font: 'Montserrat', fontSize: 72,
+    textColor: '#FFFFFF', style: 'plain', boxColor: '#FFFFFF', position: 'top',
+  };
+  const HOOK_FONT_DEFAULTS = { montserrat:72, gilroy:70, georgia:68, ltcarpet:66, inter:72, bodyhand:64 };
+
+  document.getElementById('hook-enabled').addEventListener('change', e => {
+    hookState.enabled = e.target.checked;
+    document.getElementById('hook-body').classList.toggle('open', hookState.enabled);
+  });
+
+  document.getElementById('hook-video-input').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const sel = document.getElementById('hook-video-selected');
+    sel.textContent = '✓ ' + f.name; sel.style.display = 'block';
+    document.getElementById('hook-video-inner').querySelector('p').textContent = 'Video selected';
+  });
+
+  document.getElementById('hook-voice-group').querySelectorAll('.pill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.getElementById('hook-voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active'); hookState.voiceId = p.dataset.value;
+    });
+  });
+
+  document.getElementById('hook-font-group').querySelectorAll('.font-pill').forEach(p => {
+    p.addEventListener('click', () => {
+      document.getElementById('hook-font-group').querySelectorAll('.font-pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active'); hookState.font = p.dataset.value;
+      const def = HOOK_FONT_DEFAULTS[hookState.font.toLowerCase()] || 72;
+      hookState.fontSize = def;
+      document.getElementById('hook-font-size').value = def;
+      document.getElementById('hook-font-size-val').textContent = def;
+    });
+  });
+
+  document.getElementById('hook-font-size').addEventListener('input', e => {
+    hookState.fontSize = parseInt(e.target.value);
+    document.getElementById('hook-font-size-val').textContent = hookState.fontSize;
+  });
+
+  document.getElementById('hook-style-plain').addEventListener('click', () => {
+    hookState.style = 'plain';
+    document.getElementById('hook-style-plain').classList.add('active');
+    document.getElementById('hook-style-box').classList.remove('active');
+    document.getElementById('hook-box-color-field').style.display = 'none';
+  });
+  document.getElementById('hook-style-box').addEventListener('click', () => {
+    hookState.style = 'box';
+    document.getElementById('hook-style-box').classList.add('active');
+    document.getElementById('hook-style-plain').classList.remove('active');
+    document.getElementById('hook-box-color-field').style.display = '';
+  });
+
+  document.getElementById('hook-text-picker').addEventListener('input', e => {
+    document.getElementById('hook-text-hex').value = e.target.value;
+    hookState.textColor = e.target.value;
+  });
+  document.getElementById('hook-text-hex').addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+      document.getElementById('hook-text-picker').value = e.target.value;
+      hookState.textColor = e.target.value;
+    }
+  });
+  document.getElementById('hook-box-picker').addEventListener('input', e => {
+    document.getElementById('hook-box-hex').value = e.target.value;
+    hookState.boxColor = e.target.value;
+  });
+  document.getElementById('hook-box-hex').addEventListener('input', e => {
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+      document.getElementById('hook-box-picker').value = e.target.value;
+      hookState.boxColor = e.target.value;
+    }
+  });
+
+  document.getElementById('hook-pos-top').addEventListener('click', () => {
+    hookState.position = 'top';
+    document.getElementById('hook-pos-top').classList.add('active');
+    document.getElementById('hook-pos-center').classList.remove('active');
+  });
+  document.getElementById('hook-pos-center').addEventListener('click', () => {
+    hookState.position = 'center';
+    document.getElementById('hook-pos-center').classList.add('active');
+    document.getElementById('hook-pos-top').classList.remove('active');
+  });
+
   // ── Disclaimer preview ────────────────────────────────
   function updateDisclaimerPreview() {
     const lines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
@@ -957,6 +1189,19 @@ textarea::placeholder { color: var(--text-3); }
       }
       const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
       if (discLines.length) form.append('disclaimer', discLines.join('\n'));
+      if (hookState.enabled) {
+        const hookTextVal  = document.getElementById('hook-text')?.value.trim();
+        const hookVideoFile = document.getElementById('hook-video-input')?.files[0];
+        if (hookTextVal)    form.append('hook_text', hookTextVal);
+        if (hookVideoFile)  form.append('hook_video', hookVideoFile);
+        form.append('hook_voice_id',   hookState.voiceId);
+        form.append('hook_font',       hookState.font);
+        form.append('hook_text_color', hookState.textColor);
+        form.append('hook_font_size',  hookState.fontSize);
+        form.append('hook_style',      hookState.style);
+        form.append('hook_box_color',  hookState.boxColor);
+        form.append('hook_position',   hookState.position);
+      }
 
       const res = await fetch('/generate', { method: 'POST', body: form, signal: abortController?.signal });
       clearInterval(iv);
