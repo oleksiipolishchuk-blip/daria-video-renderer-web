@@ -425,9 +425,21 @@ def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=N
         disc_line_h = 26
         total_disc_h = len(disclaimer_lines) * disc_line_h
         y = VIDEO_HEIGHT - 160 - total_disc_h
+        # Pick text color based on bg brightness; photo bg → white with stroke
+        if bg_image_pil is not None:
+            disc_fill   = (255, 255, 255, 140)
+            disc_stroke = (0, 0, 0, 120)
+            disc_stroke_w = 2
+        else:
+            lum = (bg_rgb[0] * 299 + bg_rgb[1] * 587 + bg_rgb[2] * 114) // 1000
+            disc_fill   = (0, 0, 0, 150) if lum > 160 else (255, 255, 255, 140)
+            disc_stroke = None
+            disc_stroke_w = 0
         for line in disclaimer_lines:
             w = ov_draw.textbbox((0, 0), line, font=disc_font)[2]
-            ov_draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=disc_font, fill=(255, 255, 255, 140))
+            x = (VIDEO_WIDTH - w) // 2
+            ov_draw.text((x, y), line, font=disc_font, fill=disc_fill,
+                         stroke_width=disc_stroke_w, stroke_fill=disc_stroke)
             y += disc_line_h
         img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
