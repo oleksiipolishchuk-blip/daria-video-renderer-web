@@ -295,6 +295,26 @@ textarea::placeholder { color: var(--text-3); }
 .frame-row:hover .frame-thumb { opacity: 1; }
 
 /* ── Music ── */
+.music-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; }
+.music-pill {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+  cursor: pointer; transition: all 0.18s var(--ease); user-select: none; gap: 6px;
+}
+.music-pill:hover { border-color: var(--border-2); background: rgba(255,255,255,0.04); }
+.music-pill.active { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+.music-pill-name { font-size: 12px; color: var(--text-2); letter-spacing: -0.1px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.music-pill.active .music-pill-name { color: var(--text); }
+.music-play-btn {
+  background: none; border: none; cursor: pointer; padding: 2px;
+  color: var(--text-3); font-size: 13px; flex-shrink: 0; line-height: 1;
+  transition: color 0.15s; border-radius: 50%;
+}
+.music-play-btn:hover { color: var(--text); }
+.music-pill.playing .music-play-btn { color: var(--green); }
+
+.music-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
 .music-upload { display: flex; align-items: center; gap: 10px; }
 .music-upload input[type="file"] { display: none; }
 .file-btn {
@@ -304,6 +324,7 @@ textarea::placeholder { color: var(--text-3); }
   cursor: pointer; transition: all 0.18s var(--ease); letter-spacing: -0.1px;
 }
 .file-btn:hover { background: rgba(255,255,255,0.09); border-color: var(--border-2); color: var(--text); }
+.file-btn.active { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); color: var(--text); }
 .file-name { font-size: 12px; color: var(--text-3); letter-spacing: -0.1px; }
 
 /* ── Generate button ── */
@@ -508,10 +529,27 @@ textarea::placeholder { color: var(--text-3); }
     <!-- Music -->
     <div class="card">
       <div class="card-label">Music <span style="color:var(--text-3);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
+      <div class="music-grid" id="music-grid">
+        <div class="music-pill active" data-file="">
+          <span class="music-pill-name">No music</span>
+        </div>
+        <div class="music-pill" data-file="CO.mp3"><span class="music-pill-name">CO</span><button class="music-play-btn" data-file="CO.mp3">▶</button></div>
+        <div class="music-pill" data-file="EX.mp3"><span class="music-pill-name">EX</span><button class="music-play-btn" data-file="EX.mp3">▶</button></div>
+        <div class="music-pill" data-file="Interstellar.mp3"><span class="music-pill-name">Interstellar</span><button class="music-play-btn" data-file="Interstellar.mp3">▶</button></div>
+        <div class="music-pill" data-file="Liven.mp3"><span class="music-pill-name">Liven</span><button class="music-play-btn" data-file="Liven.mp3">▶</button></div>
+        <div class="music-pill" data-file="MI.mp3"><span class="music-pill-name">MI</span><button class="music-play-btn" data-file="MI.mp3">▶</button></div>
+        <div class="music-pill" data-file="PE sport.mp3"><span class="music-pill-name">PE sport</span><button class="music-play-btn" data-file="PE sport.mp3">▶</button></div>
+        <div class="music-pill" data-file="Pianino.mp3"><span class="music-pill-name">Pianino</span><button class="music-play-btn" data-file="Pianino.mp3">▶</button></div>
+        <div class="music-pill" data-file="Sad.mp3"><span class="music-pill-name">Sad</span><button class="music-play-btn" data-file="Sad.mp3">▶</button></div>
+        <div class="music-pill" data-file="Super popular.mp3"><span class="music-pill-name">Super popular</span><button class="music-play-btn" data-file="Super popular.mp3">▶</button></div>
+        <div class="music-pill" data-file="acoustic emotional.mp3"><span class="music-pill-name">Acoustic emotional</span><button class="music-play-btn" data-file="acoustic emotional.mp3">▶</button></div>
+        <div class="music-pill" data-file="drama.mp3"><span class="music-pill-name">Drama</span><button class="music-play-btn" data-file="drama.mp3">▶</button></div>
+      </div>
+      <hr class="music-divider">
       <div class="music-upload">
-        <label class="file-btn" for="music-input">Choose file</label>
+        <label class="file-btn" id="custom-music-btn" for="music-input">↑ Upload own</label>
         <input type="file" id="music-input" accept="audio/*">
-        <span class="file-name" id="music-name">No file</span>
+        <span class="file-name" id="music-name"></span>
       </div>
     </div>
 
@@ -542,9 +580,11 @@ textarea::placeholder { color: var(--text-3); }
     bgColor:    '#000000',
     textColor:  '#FFFFFF',
     fontSize:   58,
-    bgType:     'color',
-    bgImageURL: null,
-    useFrame:   false,
+    bgType:      'color',
+    bgImageURL:  null,
+    useFrame:    false,
+    musicChoice: 'none',
+    presetMusic: '',
   };
 
   let scriptCount = 0;
@@ -734,8 +774,60 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Music ─────────────────────────────────────────────
+  let currentAudio = null;
+  let playingFile  = null;
+
+  function stopPreview() {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    document.querySelectorAll('.music-pill.playing').forEach(p => p.classList.remove('playing'));
+    document.querySelectorAll('.music-play-btn').forEach(b => b.textContent = '▶');
+    playingFile = null;
+  }
+
+  function togglePreview(file, btn, pill) {
+    if (playingFile === file) { stopPreview(); return; }
+    stopPreview();
+    playingFile = file;
+    pill.classList.add('playing');
+    btn.textContent = '■';
+    currentAudio = new Audio(`/static-music/${encodeURIComponent(file)}`);
+    currentAudio.volume = 0.4;
+    currentAudio.play();
+    currentAudio.onended = () => { pill.classList.remove('playing'); btn.textContent = '▶'; playingFile = null; };
+  }
+
+  document.getElementById('music-grid').querySelectorAll('.music-pill').forEach(pill => {
+    const file = pill.dataset.file;
+    const playBtn = pill.querySelector('.music-play-btn');
+
+    // Play button — preview only, don't select
+    if (playBtn) {
+      playBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        togglePreview(file, playBtn, pill);
+      });
+    }
+
+    // Pill click — select track
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#music-grid .music-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      state.presetMusic = file;
+      state.musicChoice = file ? 'preset' : 'none';
+      document.getElementById('custom-music-btn').classList.remove('active');
+      document.getElementById('music-name').textContent = '';
+      document.getElementById('music-input').value = '';
+    });
+  });
+
   document.getElementById('music-input').addEventListener('change', e => {
-    document.getElementById('music-name').textContent = e.target.files[0]?.name || 'No file';
+    const file = e.target.files[0];
+    if (!file) return;
+    document.querySelectorAll('#music-grid .music-pill').forEach(p => p.classList.remove('active'));
+    state.musicChoice = 'custom';
+    state.presetMusic = '';
+    document.getElementById('custom-music-btn').classList.add('active');
+    document.getElementById('music-name').textContent = file.name;
   });
 
   function makeFilename(text) {
@@ -780,8 +872,12 @@ textarea::placeholder { color: var(--text-3); }
       form.append('text_color',          state.textColor);
       form.append('font_size',           state.fontSize);
       form.append('use_christmas_frame', state.useFrame ? '1' : '0');
-      const mf = document.getElementById('music-input').files[0];
-      if (mf) form.append('music', mf);
+      if (state.musicChoice === 'preset' && state.presetMusic) {
+        form.append('preset_music', state.presetMusic);
+      } else if (state.musicChoice === 'custom') {
+        const mf = document.getElementById('music-input').files[0];
+        if (mf) form.append('music', mf);
+      }
       if (state.bgType === 'photo') {
         const bgFile = document.getElementById('bg-photo-input').files[0];
         if (bgFile) form.append('bg_image', bgFile);

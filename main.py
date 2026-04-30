@@ -30,6 +30,7 @@ OPENAI_MODEL      = "gpt-4o"
 
 FONT_DIR   = Path("/usr/share/fonts/truetype/montserrat")
 FRAMES_DIR = Path("/app/frames")
+MUSIC_DIR  = Path("/app/music")
 FONT_MAP = {
     "montserrat":          FONT_DIR / "Montserrat-Bold.ttf",
     "montserrat bold":     FONT_DIR / "Montserrat-Bold.ttf",
@@ -633,6 +634,7 @@ async def generate_video_web(
     text_color: str           = Form("#FFFFFF"),
     font_size:  str           = Form("0"),
     music:                Optional[UploadFile] = File(None),
+    preset_music:         str = Form(""),
     bg_image:             Optional[UploadFile] = File(None),
     use_christmas_frame:  str = Form("0"),
 ):
@@ -714,7 +716,11 @@ async def generate_video_web(
         global_size = fit_font_size(all_texts, font, font_size_int)
         pil_font    = load_font(font, global_size)
 
-        music_data = await music.read() if music else None
+        if preset_music:
+            preset_path = MUSIC_DIR / preset_music
+            music_data = preset_path.read_bytes() if preset_path.exists() else None
+        else:
+            music_data = await music.read() if music else None
         frames_dir = tmp_path / "frames"
         no_music   = tmp_path / "no_music.mp4"
         output     = tmp_path / "output.mp4"
@@ -800,6 +806,15 @@ async def generate_video_web(
         media_type="video/mp4",
         headers={"Content-Disposition": 'attachment; filename="video.mp4"'},
     )
+
+
+@app.get("/static-music/{filename}")
+def serve_music_asset(filename: str):
+    path = MUSIC_DIR / filename
+    if not path.exists():
+        raise HTTPException(404, "Music not found")
+    return Response(content=path.read_bytes(), media_type="audio/mpeg",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/static-frames/{filename}")
