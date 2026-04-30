@@ -449,7 +449,6 @@ textarea::placeholder { color: var(--text-3); }
 /* ── Tool header ── */
 .tool-header {
   text-align: center; padding: 4px 0 20px;
-  position: relative;
 }
 .tool-header-icon { font-size: 30px; margin-bottom: 8px; display: block; }
 .tool-header-title {
@@ -462,13 +461,13 @@ textarea::placeholder { color: var(--text-3); }
   letter-spacing: 1.4px; text-transform: uppercase;
 }
 .reset-btn {
-  position: absolute; top: 4px; right: 0;
+  width: 100%; padding: 11px;
   background: none; border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text-3); font-size: 12px;
-  padding: 5px 11px; cursor: pointer; font-family: inherit;
-  letter-spacing: -0.1px; transition: all 0.18s var(--ease);
+  border-radius: 12px; color: var(--text-3); font-size: 13px;
+  cursor: pointer; font-family: inherit; letter-spacing: -0.1px;
+  transition: all 0.18s var(--ease); margin-top: 4px;
 }
-.reset-btn:hover { color: var(--text-2); border-color: var(--border-2); }
+.reset-btn:hover { color: var(--text-2); border-color: var(--border-2); background: rgba(255,255,255,0.03); }
 
 /* ── Voiceover Pipeline (scoped) ── */
 #page-voiceover-pipeline {
@@ -589,7 +588,6 @@ textarea::placeholder { color: var(--text-3); }
       <div class="tool-header-icon">💬</div>
       <div class="tool-header-title">Easy MH</div>
       <div class="tool-header-desc">Script → Generation → Creo</div>
-      <button class="reset-btn" onclick="clearAll()">↺ Reset</button>
     </div>
 
     <!-- Scripts -->
@@ -841,6 +839,7 @@ textarea::placeholder { color: var(--text-3); }
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
     <button class="stop-btn"     id="stop-btn">Stop generation</button>
+    <button class="reset-btn"    onclick="clearAll()">↺ Reset all</button>
   </div>
 
 </div>
