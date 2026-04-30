@@ -398,6 +398,12 @@ textarea::placeholder { color: var(--text-3); }
   display: none;
 }
 .preview-overlay.show { display: block; }
+.preview-disc {
+  position: absolute; bottom: 10%; left: 0; right: 0;
+  text-align: center; font-size: 7px; color: rgba(255,255,255,0.6);
+  padding: 0 8px; line-height: 1.6; pointer-events: none;
+  font-family: -apple-system, sans-serif; letter-spacing: 0.1px;
+}
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
@@ -599,6 +605,7 @@ textarea::placeholder { color: var(--text-3); }
         </div>
       </div>
       <img class="preview-overlay" id="preview-overlay" src="/static-frames/christmas.png" alt="">
+      <div class="preview-disc" id="preview-disc"></div>
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
     <button class="stop-btn"     id="stop-btn">Stop generation</button>
@@ -736,11 +743,17 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Font ──────────────────────────────────────────────
+  const FONT_DEFAULTS = { montserrat: 58, gilroy: 56, georgia: 54, ltcarpet: 52, inter: 58, bodyhand: 50 };
+
   document.getElementById('font-group').querySelectorAll('.font-pill').forEach(p => {
     p.addEventListener('click', () => {
       document.getElementById('font-group').querySelectorAll('.font-pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active');
       state.font = p.dataset.value; state.fontFamily = p.dataset.family; state.fontBold = !!p.dataset.bold;
+      const def = FONT_DEFAULTS[state.font.toLowerCase()] || 58;
+      state.fontSize = def;
+      document.getElementById('font-size').value = def;
+      document.getElementById('font-size-val').textContent = def;
       updatePreview();
     });
   });
@@ -863,6 +876,13 @@ textarea::placeholder { color: var(--text-3); }
     document.getElementById('custom-music-btn').classList.add('active');
     document.getElementById('music-name').textContent = file.name;
   });
+
+  // ── Disclaimer preview ────────────────────────────────
+  function updateDisclaimerPreview() {
+    const lines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+    document.getElementById('preview-disc').innerHTML = lines.join('<br>');
+  }
+  document.querySelectorAll('.disc-check').forEach(c => c.addEventListener('change', updateDisclaimerPreview));
 
   function makeFilename(text) {
     const date  = new Date().toISOString().slice(0,10).replace(/-/g,'');
