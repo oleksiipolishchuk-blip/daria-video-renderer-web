@@ -582,7 +582,8 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
 
     result, cursor = [], 0
     for block in gpt_blocks:
-        b_norm = [norm(w) for w in block.split() if norm(w)]
+        b_words = block.split()
+        b_norm = [norm(w) for w in b_words if norm(w)]
         if not b_norm:
             continue
         start_idx = None
@@ -610,7 +611,8 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
             if result:
                 result[-1]['text'] += ' ' + block
             continue
-        end_idx = min(start_idx + len(b_norm) - 1, n - 1)
+        # Use original word count (not filtered) for accurate end position
+        end_idx = min(start_idx + len(b_words) - 1, n - 1)
         fixed = re.sub(r'\b(Releyshio|RelayShow|Relay\s*Show|Rilaysho)\b', 'Relatio', block, flags=re.IGNORECASE)
         result.append({'text': fixed, 'start': round(words[start_idx]['start'], 3), 'end': round(words[end_idx]['end'], 3)})
         cursor = end_idx + 1
@@ -702,9 +704,8 @@ async def generate_video_web(
         # 5. GPT subtitle split
         gpt_blocks = split_text_into_subtitle_blocks(wresult.text, oai)
 
-        # 6. Align + adjust timestamps
+        # 6. Align (Whisper ran on clean audio, timestamps already correct — no adjust needed)
         transcript_data = align_timestamps_python(gpt_blocks, whisper_words)
-        transcript_data = adjust_timestamps(transcript_data, silence_intervals)
         transcript_data = split_long_blocks(transcript_data, font)
 
         # 7. Render
