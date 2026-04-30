@@ -552,7 +552,7 @@ async def render_video(
             "-f", "concat", "-safe", "0", "-i", str(concat_file),
             "-i", str(audio_path),
             "-vsync", "cfr", "-r", "30",
-            "-c:v", "libx264", "-preset", "fast",
+            "-c:v", "libx264", "-preset", "ultrafast",
             "-profile:v", "high", "-level", "4.0",
             "-crf", "23",
             "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
@@ -693,24 +693,54 @@ async def generate_video_web(
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
 
-        # 1. TTS
+        # 1. TTS with-timestamps (returns audio + word timing, no separate Whisper needed)
         clean = _clean_text(text)
         chunks = _split_chunks(clean, 1500)
-        parts = []
+        audio_parts = []
+        all_words: list[dict] = []
+        time_offset = 0.0
         async with httpx.AsyncClient(timeout=90.0) as client:
             for i, chunk in enumerate(chunks):
                 r = await client.post(
-                    f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+                    f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps",
                     headers={"xi-api-key": el_key, "Content-Type": "application/json"},
                     json={"text": chunk, "model_id": "eleven_v3", "speed": 1.1,
                           "voice_settings": {"stability": 0.5, "similarity_boost": 0.75, "style": 0.0, "use_speaker_boost": True}},
                 )
-                if r.status_code != 200 or len(r.content) < 100:
+                if r.status_code != 200:
                     raise HTTPException(500, f"TTS error chunk {i+1}: {r.text[:200]}")
-                parts.append(r.content)
+                data = r.json()
+                chunk_audio = base64.b64decode(data["audio_base64"])
+                if len(chunk_audio) < 100:
+                    raise HTTPException(500, f"TTS error chunk {i+1}: audio too short")
+                audio_parts.append(chunk_audio)
+
+                alignment  = data.get("alignment", {})
+                chars      = alignment.get("characters", [])
+                char_starts = alignment.get("character_start_times_seconds", [])
+                char_ends   = alignment.get("character_end_times_seconds", [])
+
+                j = 0
+                while j < len(chars):
+                    if chars[j] in (" ", "\n", "\t"):
+                        j += 1
+                        continue
+                    k = j
+                    while k < len(chars) and chars[k] not in (" ", "\n", "\t"):
+                        k += 1
+                    if k > j and j < len(char_starts) and k - 1 < len(char_ends):
+                        all_words.append({
+                            "word":  "".join(chars[j:k]),
+                            "start": round(char_starts[j] + time_offset, 3),
+                            "end":   round(char_ends[k - 1] + time_offset, 3),
+                        })
+                    j = k
+
+                if char_ends:
+                    time_offset += char_ends[-1]
 
         audio_path = tmp_path / "audio.mp3"
-        audio_path.write_bytes(b"".join(parts))
+        audio_path.write_bytes(b"".join(audio_parts))
 
         # 2. Loudnorm
         norm_path = tmp_path / "audio_norm.mp3"
@@ -722,25 +752,22 @@ async def generate_video_web(
         if rn.returncode == 0:
             audio_path = norm_path
 
-        # 3. Remove silence + adjust timestamps
+        # 3. Remove silence; adjust EL word timestamps to match cleaned audio
         audio_path, silence_intervals = remove_silence(audio_path, tmp_path)
+        if silence_intervals:
+            adjusted = adjust_timestamps(
+                [{"text": w["word"], "start": w["start"], "end": w["end"]} for w in all_words],
+                silence_intervals,
+            )
+            all_words = [{"word": b["text"], "start": b["start"], "end": b["end"]} for b in adjusted]
 
-        # 4. Whisper
+        # 4. GPT subtitle split (uses original clean text — no Whisper transcription needed)
         from openai import OpenAI
         oai = OpenAI(api_key=oai_key)
-        with open(audio_path, 'rb') as f:
-            wresult = oai.audio.transcriptions.create(
-                model="whisper-1", file=f,
-                response_format="verbose_json",
-                timestamp_granularities=["word"]
-            )
-        whisper_words = [{"word": w.word, "start": w.start, "end": w.end} for w in (wresult.words or [])]
+        gpt_blocks = split_text_into_subtitle_blocks(clean, oai)
 
-        # 5. GPT subtitle split
-        gpt_blocks = split_text_into_subtitle_blocks(wresult.text, oai)
-
-        # 6. Align (Whisper ran on clean audio, timestamps already correct — no adjust needed)
-        transcript_data = align_timestamps_python(gpt_blocks, whisper_words)
+        # 5. Align GPT blocks with EL word timestamps
+        transcript_data = align_timestamps_python(gpt_blocks, all_words)
         transcript_data = split_long_blocks(transcript_data, font, font_size_int)
 
         # 7. Render
@@ -793,7 +820,7 @@ async def generate_video_web(
 
         cmd1 = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
                 "-i", str(audio_path), "-vsync", "cfr", "-r", "30",
-                "-c:v", "libx264", "-preset", "fast", "-profile:v", "high", "-level", "4.0",
+                "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "high", "-level", "4.0",
                 "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
                 "-pix_fmt", "yuv420p", "-vf", "setsar=1:1", "-movflags", "+faststart",
                 "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-shortest", str(no_music)]
@@ -824,7 +851,7 @@ async def generate_video_web(
                     "-i", str(frame_src),
                     "-filter_complex",
                     f"[1:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}[fr];[0:v][fr]overlay=0:0",
-                    "-c:v", "libx264", "-preset", "fast",
+                    "-c:v", "libx264", "-preset", "ultrafast",
                     "-crf", "23", "-pix_fmt", "yuv420p",
                     "-c:a", "copy",
                     str(framed),
