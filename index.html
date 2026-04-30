@@ -446,6 +446,20 @@ textarea::placeholder { color: var(--text-3); }
   .font-grid { grid-template-columns: 1fr; }
 }
 
+/* ── Tool header ── */
+.tool-header {
+  text-align: center; padding: 28px 24px 22px;
+}
+.tool-header-icon { font-size: 28px; margin-bottom: 10px; }
+.tool-header-title {
+  font-size: 20px; font-weight: 700; letter-spacing: -0.4px;
+  color: var(--text); margin-bottom: 6px;
+}
+.tool-header-desc {
+  font-size: 12px; color: var(--text-3);
+  letter-spacing: 0.3px;
+}
+
 /* ── Voiceover Pipeline (scoped) ── */
 #page-voiceover-pipeline {
   --vp-bg: #0b0d14; --vp-surface: #12151f;
@@ -462,8 +476,8 @@ textarea::placeholder { color: var(--text-3); }
 #page-voiceover-pipeline .vp-header h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.3px; color:#fff; }
 #page-voiceover-pipeline .vp-header p  { font-size:10px; color:var(--vp-muted); letter-spacing:1.4px; text-transform:uppercase; }
 
-#page-voiceover-pipeline .card { background:var(--vp-surface); border:1px solid var(--vp-border); border-radius:14px; padding:18px 20px; backdrop-filter:none; -webkit-backdrop-filter:none; margin-bottom:0; }
-#page-voiceover-pipeline .card-label { font-size:10px; font-weight:500; color:var(--vp-muted); letter-spacing:1.6px; text-transform:uppercase; margin-bottom:12px; }
+#page-voiceover-pipeline .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:22px 24px; backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); margin-bottom:0; }
+#page-voiceover-pipeline .card-label { font-size:11px; font-weight:600; color:var(--text-3); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:16px; }
 
 #page-voiceover-pipeline textarea { width:100%; min-height:180px; max-height:420px; background:#080a10; border:1px solid var(--vp-border); border-radius:10px; padding:14px 16px; color:#c9d1e8; font-family:'DM Mono',monospace; font-size:13px; line-height:1.7; resize:vertical; outline:none; transition:border-color .2s; }
 #page-voiceover-pipeline textarea:focus { border-color:var(--vp-border2); }
@@ -506,21 +520,21 @@ textarea::placeholder { color: var(--text-3); }
 #page-voiceover-pipeline .vp-log-box::-webkit-scrollbar-thumb { background:var(--vp-border2); border-radius:2px; }
 
 #page-voiceover-pipeline .vp-action-bar { display:flex; align-items:center; gap:12px; }
-#page-voiceover-pipeline .vp-badge { display:flex; align-items:center; gap:7px; padding:6px 12px; background:var(--vp-surface); border:1px solid var(--vp-border); border-radius:8px; font-size:12px; color:var(--vp-muted2); }
+#page-voiceover-pipeline .vp-badge { display:flex; align-items:center; gap:7px; padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:12px; color:var(--text-2); font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,sans-serif; }
 #page-voiceover-pipeline .vp-badge-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 #page-voiceover-pipeline .vp-spacer { flex:1; }
 
-#page-voiceover-pipeline .vp-btn { display:inline-flex; align-items:center; gap:6px; padding:9px 22px; border-radius:10px; border:none; cursor:pointer; font-family:'DM Mono',monospace; font-size:13px; font-weight:500; transition:opacity .15s,transform .1s; white-space:nowrap; }
-#page-voiceover-pipeline .vp-btn:active { transform:scale(.97); }
+#page-voiceover-pipeline .vp-btn { display:inline-flex; align-items:center; gap:6px; padding:9px 20px; border-radius:12px; border:none; cursor:pointer; font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:13px; font-weight:500; transition:all .18s var(--ease); white-space:nowrap; letter-spacing:-0.1px; }
+#page-voiceover-pipeline .vp-btn:active { transform:scale(.98); }
 #page-voiceover-pipeline .vp-btn:disabled { opacity:.35; cursor:not-allowed; transform:none !important; }
-#page-voiceover-pipeline .vp-btn-primary { background:linear-gradient(135deg,#4f8ef7,#6366f1); color:#fff; box-shadow:0 4px 18px #4f8ef730; }
-#page-voiceover-pipeline .vp-btn-primary:hover:not(:disabled) { opacity:.9; }
-#page-voiceover-pipeline .vp-btn-danger { background:#ef444420; color:var(--vp-red); border:1px solid #ef444433; }
-#page-voiceover-pipeline .vp-btn-danger:hover { background:#ef444430; }
-#page-voiceover-pipeline .vp-btn-txt { background:#4f8ef718; color:var(--vp-accent); border:1px solid #4f8ef733; }
-#page-voiceover-pipeline .vp-btn-txt:hover { background:#4f8ef728; }
-#page-voiceover-pipeline .vp-btn-ghost { background:#ffffff0a; color:var(--vp-muted2); border:1px solid var(--vp-border2); }
-#page-voiceover-pipeline .vp-btn-ghost:hover { background:#ffffff14; color:var(--vp-text); }
+#page-voiceover-pipeline .vp-btn-primary { background:var(--vp-accent); color:#fff; box-shadow:0 4px 18px #4f8ef730; }
+#page-voiceover-pipeline .vp-btn-primary:hover:not(:disabled) { opacity:.88; transform:scale(1.01); }
+#page-voiceover-pipeline .vp-btn-danger { background:rgba(239,68,68,0.1); color:var(--vp-red); border:1px solid rgba(239,68,68,0.25); }
+#page-voiceover-pipeline .vp-btn-danger:hover { background:rgba(239,68,68,0.18); }
+#page-voiceover-pipeline .vp-btn-txt { background:rgba(79,142,247,0.08); color:var(--vp-accent); border:1px solid rgba(79,142,247,0.2); }
+#page-voiceover-pipeline .vp-btn-txt:hover { background:rgba(79,142,247,0.14); }
+#page-voiceover-pipeline .vp-btn-ghost { background:rgba(255,255,255,0.05); color:var(--text-2); border:1px solid var(--border-2); }
+#page-voiceover-pipeline .vp-btn-ghost:hover { background:rgba(255,255,255,0.08); color:var(--text); }
 
 #page-voiceover-pipeline .vp-spinner { width:18px; height:18px; border:2px solid var(--vp-border2); border-top-color:var(--vp-accent); border-radius:50%; animation:vpSpin .7s linear infinite; flex-shrink:0; }
 @keyframes vpSpin { to{transform:rotate(360deg)} }
@@ -559,6 +573,13 @@ textarea::placeholder { color: var(--text-3); }
   <!-- ── LEFT ── -->
   <div>
   <div id="page-video-generator" class="page-content">
+
+    <!-- Tool header -->
+    <div class="card tool-header">
+      <div class="tool-header-icon">💬</div>
+      <div class="tool-header-title">Easy MH</div>
+      <div class="tool-header-desc">Script → Generation → Creo</div>
+    </div>
 
     <!-- Scripts -->
     <div class="card">
