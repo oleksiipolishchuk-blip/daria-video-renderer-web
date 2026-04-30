@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Easy MH</title>
+<title>Auto Generation</title>
 <style>
 @font-face { font-family: 'F-Montserrat'; src: url('/fonts/Montserrat-Bold.ttf'); font-weight: bold; }
 @font-face { font-family: 'F-Gilroy';    src: url('/fonts/Gilroy-Medium.ttf'); }
@@ -48,12 +48,19 @@ body {
 
 /* ── Sidebar ── */
 .sidebar { position: sticky; top: 48px; }
-.sidebar-section { margin-bottom: 24px; }
-.sidebar-section-label {
-  display: block; font-size: 10px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--text-3); padding: 0 10px; margin-bottom: 4px;
+.sidebar-section { margin-bottom: 6px; }
+.sidebar-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 10px; cursor: pointer; border-radius: 10px;
+  font-size: 15px; font-weight: 600; color: var(--text-2);
+  letter-spacing: -0.3px; transition: all 0.18s var(--ease); user-select: none;
 }
+.sidebar-section-header:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.sidebar-section-header.open { color: var(--text); }
+.sidebar-arrow { font-size: 9px; transition: transform 0.2s var(--ease); opacity: 0.4; }
+.sidebar-section-header.open .sidebar-arrow { transform: rotate(90deg); }
+.sidebar-items { overflow: hidden; max-height: 0; transition: max-height 0.25s var(--ease); }
+.sidebar-items.open { max-height: 300px; }
 .sidebar-item {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 10px; border-radius: 10px;
@@ -430,9 +437,8 @@ textarea::placeholder { color: var(--text-3); }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
-  .sidebar { position: static; display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
-  .sidebar-section { margin-bottom: 0; }
-  .sidebar-section-label { display: none; }
+  .sidebar { position: static; margin-bottom: 8px; }
+  .sidebar-section-header { font-size: 13px; padding: 7px 10px; }
   .preview-sticky { position: static; }
   .preview-wrap { max-width: 200px; margin: 0 auto 14px; }
   .font-grid { grid-template-columns: 1fr; }
@@ -443,19 +449,27 @@ textarea::placeholder { color: var(--text-3); }
 <div class="layout">
 
   <div class="page-header">
-    <span class="page-title">Easy MH</span>
+    <span class="page-title">Auto Generation</span>
     <span class="page-subtitle" id="page-subtitle">/ Video Generator</span>
   </div>
 
   <!-- ── SIDEBAR ── -->
   <nav class="sidebar">
     <div class="sidebar-section">
-      <span class="sidebar-section-label">Marketing</span>
-      <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Video Generator">📹 Video Generator</button>
+      <div class="sidebar-section-header open" data-section="marketing">
+        Marketing <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items open" id="section-marketing">
+        <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Video Generator">📹 Video Generator</button>
+      </div>
     </div>
     <div class="sidebar-section">
-      <span class="sidebar-section-label">Design</span>
-      <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline">🎤 Voiceover Pipeline</button>
+      <div class="sidebar-section-header" data-section="design">
+        Design <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items" id="section-design">
+        <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline">🎤 Voiceover Pipeline</button>
+      </div>
     </div>
   </nav>
 
@@ -739,7 +753,6 @@ textarea::placeholder { color: var(--text-3); }
   document.getElementById('scripts-list').addEventListener('input', e => {
     if (e.target.classList.contains('script-text')) updatePreview();
   });
-  addScript();
 
   // ── Preview ───────────────────────────────────────────
   function getPreviewText() {
@@ -762,6 +775,7 @@ textarea::placeholder { color: var(--text-3); }
     pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
     document.getElementById('preview-overlay').classList.toggle('show', state.useFrame);
     updateDisclaimerPreview();
+    saveToStorage();
   }
 
   function applyColors(bg, txt) {
@@ -806,6 +820,7 @@ textarea::placeholder { color: var(--text-3); }
     p.addEventListener('click', () => {
       document.getElementById('voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active'); state.voiceId = p.dataset.value;
+      saveToStorage();
     });
   });
 
@@ -942,6 +957,7 @@ textarea::placeholder { color: var(--text-3); }
       document.getElementById('custom-music-btn').classList.remove('active');
       document.getElementById('music-name').textContent = '';
       document.getElementById('music-input').value = '';
+      saveToStorage();
     });
   });
 
@@ -979,6 +995,7 @@ textarea::placeholder { color: var(--text-3); }
         document.querySelectorAll('.disc-results').forEach(o => { if (o !== c) o.checked = false; });
       }
       updateDisclaimerPreview();
+      saveToStorage();
     });
   });
 
@@ -1117,6 +1134,13 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Sidebar navigation ────────────────────────────────
+  document.querySelectorAll('.sidebar-section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.classList.toggle('open');
+      document.getElementById('section-' + header.dataset.section).classList.toggle('open');
+    });
+  });
+
   document.querySelectorAll('.sidebar-item').forEach(item => {
     item.addEventListener('click', () => {
       document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -1129,6 +1153,73 @@ textarea::placeholder { color: var(--text-3); }
     });
   });
 
+  // ── localStorage ─────────────────────────────────────
+  function saveToStorage() {
+    try {
+      const scripts = [...document.querySelectorAll('.script-text')].map(t => t.value);
+      localStorage.setItem('ag_scripts', JSON.stringify(scripts));
+      localStorage.setItem('ag_state', JSON.stringify({
+        voiceId: state.voiceId, font: state.font, fontFamily: state.fontFamily,
+        fontBold: state.fontBold, bgColor: state.bgColor, textColor: state.textColor,
+        fontSize: state.fontSize, bgType: state.bgType,
+        useFrame: state.useFrame, frameFile: state.frameFile,
+        musicChoice: state.musicChoice, presetMusic: state.presetMusic,
+      }));
+      const discs = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+      localStorage.setItem('ag_disclaimers', JSON.stringify(discs));
+    } catch(e) {}
+  }
+
+  function restoreFromStorage() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ag_state') || 'null');
+      if (saved) Object.assign(state, saved);
+
+      const scripts = JSON.parse(localStorage.getItem('ag_scripts') || '[""]');
+      scripts.forEach(() => addScript());
+      document.querySelectorAll('#scripts-list .script-text').forEach((ta, i) => {
+        ta.value = scripts[i] || '';
+      });
+      updateRemoveButtons(); updateGenerateLabel();
+
+      document.querySelectorAll('#voice-group .pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.value === state.voiceId));
+
+      document.querySelectorAll('#font-group .font-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.value === state.font));
+      document.getElementById('font-size').value = state.fontSize;
+      document.getElementById('font-size-val').textContent = state.fontSize;
+
+      document.getElementById('bg-picker').value   = state.bgColor;
+      document.getElementById('bg-hex').value       = state.bgColor;
+      document.getElementById('text-picker').value  = state.textColor;
+      document.getElementById('text-hex').value     = state.textColor;
+
+      if (state.bgType === 'photo') {
+        document.getElementById('bg-tab-color').classList.remove('active');
+        document.getElementById('bg-tab-photo').classList.add('active');
+        document.getElementById('bg-color-section').style.display = 'none';
+        document.getElementById('bg-photo-section').style.display = '';
+      }
+
+      if (state.useFrame && state.frameFile) {
+        document.querySelectorAll('.frame-check').forEach(cb => {
+          cb.checked = cb.dataset.file === state.frameFile;
+        });
+        document.getElementById('preview-overlay').src = `/static-frames/${state.frameFile}`;
+      }
+
+      if (state.musicChoice === 'preset') {
+        document.querySelectorAll('#music-grid .music-pill').forEach(p =>
+          p.classList.toggle('active', p.dataset.file === state.presetMusic));
+      }
+
+      const discs = JSON.parse(localStorage.getItem('ag_disclaimers') || '[]');
+      document.querySelectorAll('.disc-check').forEach(c => { c.checked = discs.includes(c.value); });
+    } catch(e) { addScript(); }
+  }
+
+  restoreFromStorage();
   updatePreview();
 </script>
 </body>
