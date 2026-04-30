@@ -646,6 +646,7 @@ async def generate_video_web(
     preset_music:         str = Form(""),
     bg_image:             Optional[UploadFile] = File(None),
     use_christmas_frame:  str = Form("0"),
+    frame_file:           str = Form("christmas.png"),
     disclaimer:           str = Form(""),
 ):
     el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
@@ -790,7 +791,8 @@ async def generate_video_web(
 
         # Optional: overlay Christmas lights frame
         if use_christmas_frame == "1":
-            frame_src = FRAMES_DIR / "christmas.png"
+            safe_frame = Path(frame_file).name
+            frame_src = FRAMES_DIR / safe_frame
             if frame_src.exists():
                 framed = tmp_path / "output_framed.mp4"
                 cmd_frame = [

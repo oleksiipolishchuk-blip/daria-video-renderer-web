@@ -541,10 +541,15 @@ textarea::placeholder { color: var(--text-3); }
     <!-- Frame -->
     <div class="card">
       <div class="card-label">Frame <span style="color:var(--text-3);font-size:9px;text-transform:none;letter-spacing:0;font-weight:400">optional</span></div>
-      <label class="frame-row">
-        <input type="checkbox" id="frame-enabled">
+      <label class="frame-row" style="margin-bottom:10px">
+        <input type="checkbox" id="frame-enabled" class="frame-check" data-file="christmas.png">
         <span style="font-size:13px;color:var(--text-2);letter-spacing:-0.1px;flex:1">Christmas lights</span>
         <img class="frame-thumb" src="/static-frames/christmas.png" alt="">
+      </label>
+      <label class="frame-row">
+        <input type="checkbox" id="frame-condoms" class="frame-check" data-file="condoms.png">
+        <span style="font-size:13px;color:var(--text-2);letter-spacing:-0.1px;flex:1">Condoms</span>
+        <img class="frame-thumb" src="/static-frames/condoms.png" alt="">
       </label>
     </div>
 
@@ -625,6 +630,7 @@ textarea::placeholder { color: var(--text-3); }
     bgType:      'color',
     bgImageURL:  null,
     useFrame:    false,
+    frameFile:   'christmas.png',
     musicChoice: 'none',
     presetMusic: '',
   };
@@ -828,8 +834,19 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Frame ─────────────────────────────────────────────
-  document.getElementById('frame-enabled').addEventListener('change', e => {
-    state.useFrame = e.target.checked; updatePreview();
+  document.querySelectorAll('.frame-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) {
+        document.querySelectorAll('.frame-check').forEach(o => { if (o !== cb) o.checked = false; });
+        state.useFrame = true;
+        state.frameFile = cb.dataset.file;
+      } else {
+        state.useFrame = false;
+        state.frameFile = '';
+      }
+      document.getElementById('preview-overlay').src = state.useFrame ? `/static-frames/${state.frameFile}` : '/static-frames/christmas.png';
+      updatePreview();
+    });
   });
 
   // ── Music ─────────────────────────────────────────────
@@ -945,6 +962,7 @@ textarea::placeholder { color: var(--text-3); }
       form.append('text_color',          state.textColor);
       form.append('font_size',           state.fontSize);
       form.append('use_christmas_frame', state.useFrame ? '1' : '0');
+      if (state.useFrame) form.append('frame_file', state.frameFile);
       if (state.musicChoice === 'preset' && state.presetMusic) {
         form.append('preset_music', state.presetMusic);
       } else if (state.musicChoice === 'custom') {
