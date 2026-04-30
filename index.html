@@ -449,6 +449,7 @@ textarea::placeholder { color: var(--text-3); }
 /* ── Tool header ── */
 .tool-header {
   text-align: center; padding: 4px 0 20px;
+  position: relative;
 }
 .tool-header-icon { font-size: 30px; margin-bottom: 8px; display: block; }
 .tool-header-title {
@@ -460,6 +461,14 @@ textarea::placeholder { color: var(--text-3); }
   font-size: 10px; color: var(--text-3);
   letter-spacing: 1.4px; text-transform: uppercase;
 }
+.reset-btn {
+  position: absolute; top: 4px; right: 0;
+  background: none; border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-3); font-size: 12px;
+  padding: 5px 11px; cursor: pointer; font-family: inherit;
+  letter-spacing: -0.1px; transition: all 0.18s var(--ease);
+}
+.reset-btn:hover { color: var(--text-2); border-color: var(--border-2); }
 
 /* ── Voiceover Pipeline (scoped) ── */
 #page-voiceover-pipeline {
@@ -580,6 +589,7 @@ textarea::placeholder { color: var(--text-3); }
       <div class="tool-header-icon">💬</div>
       <div class="tool-header-title">Easy MH</div>
       <div class="tool-header-desc">Script → Generation → Creo</div>
+      <button class="reset-btn" onclick="clearAll()">↺ Reset</button>
     </div>
 
     <!-- Scripts -->
@@ -1528,6 +1538,56 @@ textarea::placeholder { color: var(--text-3); }
     const t = document.getElementById("vpToast");
     t.textContent = msg; t.classList.add("show");
     setTimeout(() => t.classList.remove("show"), 3500);
+  }
+
+  // ── Reset all ─────────────────────────────────────────
+  function clearAll() {
+    if (!confirm('Скинути всі налаштування?\nСкрипти та вибір будуть видалені.')) return;
+
+    localStorage.removeItem('ag_scripts');
+    localStorage.removeItem('ag_state');
+    localStorage.removeItem('ag_disclaimers');
+
+    Object.assign(state, {
+      voiceId: 'cm1VTuOWsFQRdZ5uDzSB',
+      font: 'Montserrat', fontFamily: 'F-Montserrat', fontBold: true,
+      bgColor: '#000000', textColor: '#FFFFFF', fontSize: 58,
+      bgType: 'color', bgImageURL: null,
+      useFrame: false, frameFile: 'christmas.png',
+      musicChoice: 'none', presetMusic: '',
+    });
+
+    document.getElementById('scripts-list').innerHTML = '';
+    scriptCount = 0;
+    addScript();
+
+    document.querySelectorAll('#voice-group .pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+
+    document.querySelectorAll('#font-group .font-pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+    document.getElementById('font-size').value = 58;
+    document.getElementById('font-size-val').textContent = 58;
+
+    document.getElementById('bg-picker').value   = '#000000';
+    document.getElementById('bg-hex').value       = '#000000';
+    document.getElementById('text-picker').value  = '#FFFFFF';
+    document.getElementById('text-hex').value     = '#FFFFFF';
+
+    document.getElementById('bg-tab-color').classList.add('active');
+    document.getElementById('bg-tab-photo').classList.remove('active');
+    document.getElementById('bg-color-section').style.display = '';
+    document.getElementById('bg-photo-section').style.display = 'none';
+
+    document.querySelectorAll('.frame-check').forEach(cb => cb.checked = false);
+    document.getElementById('preview-overlay').src = '/static-frames/christmas.png';
+
+    document.querySelectorAll('#music-grid .music-pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+    document.getElementById('custom-music-btn').classList.remove('active');
+    document.getElementById('music-name').textContent = '';
+
+    document.querySelectorAll('.disc-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.preset-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
+
+    updatePreview();
   }
 
   vpInit();
