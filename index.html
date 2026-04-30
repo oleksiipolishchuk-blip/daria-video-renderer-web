@@ -142,14 +142,18 @@ textarea::placeholder { color: var(--text-3); }
 .result-msg.done  { color: var(--green); }
 .result-msg.error { color: #ff453a; }
 .result-dl {
-  display: none; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 13px; background: var(--green); color: #000;
   border-radius: 20px; font-size: 11px; font-weight: 600;
   text-decoration: none; letter-spacing: -0.1px;
   transition: opacity 0.15s var(--ease);
 }
-.result-dl.show { display: inline-flex; }
 .result-dl:hover { opacity: 0.85; }
+.result-dl.secondary {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
+  color: var(--text-2);
+}
 
 .add-script-btn {
   margin-top: 14px; padding: 9px 16px;
@@ -657,7 +661,7 @@ textarea::placeholder { color: var(--text-3); }
         <div class="result-track"><div class="result-fill" id="result-fill-${idx}"></div></div>
         <div class="result-row">
           <span class="result-msg" id="result-msg-${idx}"></span>
-          <a class="result-dl" id="result-dl-${idx}" download="video-${num}.mp4">↓ Download</a>
+          <div class="result-btns" id="result-btns-${idx}" style="display:none;gap:6px;flex-wrap:wrap;justify-content:flex-end"></div>
         </div>
       </div>`;
     list.appendChild(item);
@@ -672,7 +676,7 @@ textarea::placeholder { color: var(--text-3); }
 
   function reindexLabels() {
     document.querySelectorAll('#scripts-list .script-index').forEach((el, i) => el.textContent = `Script ${i + 1}`);
-    document.querySelectorAll('#scripts-list .result-dl').forEach((el, i) => { el.download = `video-${i + 1}.mp4`; });
+    // download buttons are rebuilt dynamically after generation
   }
 
   function updateRemoveButtons() {
@@ -946,11 +950,10 @@ textarea::placeholder { color: var(--text-3); }
   async function generateOne(text, resultIdx) {
     const fill   = document.getElementById(`result-fill-${resultIdx}`);
     const msg    = document.getElementById(`result-msg-${resultIdx}`);
-    const dlBtn  = document.getElementById(`result-dl-${resultIdx}`);
     const result = document.getElementById(`script-result-${resultIdx}`);
 
     result.classList.add('visible');
-    dlBtn.classList.remove('show');
+    document.getElementById(`result-btns-${resultIdx}`).style.display = 'none';
     msg.className = 'result-msg';
     fill.style.width = '5%';
     msg.textContent  = 'Generating audio…';
@@ -994,22 +997,37 @@ textarea::placeholder { color: var(--text-3); }
       clearInterval(iv);
       if (!res.ok) throw new Error(await res.text());
 
-      const blob     = await res.blob();
-      const filename = makeFilename(text);
-      const url      = URL.createObjectURL(blob);
+      const data     = await res.json();
+      const basename = makeFilename(text).replace('.mp4', '');
 
-      // Auto-download
-      const tmp = document.createElement('a');
-      tmp.href = url; tmp.download = filename;
-      tmp.click();
+      // Auto-download video
+      const videoBlob = new Blob([Uint8Array.from(atob(data.video), c => c.charCodeAt(0))], { type: 'video/mp4' });
+      const videoUrl  = URL.createObjectURL(videoBlob);
+      const tmpA = document.createElement('a');
+      tmpA.href = videoUrl; tmpA.download = basename + '.mp4'; tmpA.click();
 
-      fill.style.width  = '100%';
-      msg.textContent   = '✓ Done';
+      fill.style.width = '100%';
+      msg.textContent  = '✓ Done';
       msg.classList.add('done');
-      dlBtn.href        = url;
-      dlBtn.download    = filename;
-      dlBtn.textContent = '✓ Downloaded';
-      dlBtn.classList.add('show');
+
+      // Build download buttons
+      const btns = document.getElementById(`result-btns-${resultIdx}`);
+      btns.style.display = 'flex';
+      btns.innerHTML = '';
+
+      function makeBtn(label, blobContent, mime, filename) {
+        const blob = new Blob([blobContent], { type: mime });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.className = 'result-dl' + (mime === 'video/mp4' ? '' : ' secondary');
+        a.href = url; a.download = filename; a.textContent = label;
+        return a;
+      }
+
+      btns.appendChild(makeBtn('✓ Video', videoBlob, 'video/mp4', basename + '.mp4'));
+      btns.appendChild(makeBtn('↓ MP3',  new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))]), 'audio/mpeg', basename + '.mp3'));
+      btns.appendChild(makeBtn('↓ TXT',  data.txt,  'text/plain', basename + '.txt'));
+      btns.appendChild(makeBtn('↓ SRT',  data.srt,  'text/plain', basename + '.srt'));
     } catch(e) {
       clearInterval(iv);
       fill.style.width = '0%';

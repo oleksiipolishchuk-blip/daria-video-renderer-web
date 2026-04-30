@@ -823,12 +823,33 @@ async def generate_video_web(
                     output = framed
 
         video_bytes = output.read_bytes()
+        audio_bytes = audio_path.read_bytes()
 
-    return Response(
-        content=video_bytes,
-        media_type="video/mp4",
-        headers={"Content-Disposition": 'attachment; filename="video.mp4"'},
-    )
+        # TXT — continuous text, no paragraph breaks
+        txt_content = " ".join(text.split())
+
+        # SRT — from transcript_data blocks
+        def fmt_time(s: float) -> str:
+            ms = int(round(s * 1000))
+            h, ms = divmod(ms, 3_600_000)
+            m, ms = divmod(ms, 60_000)
+            sec, ms = divmod(ms, 1000)
+            return f"{h:02d}:{m:02d}:{sec:02d},{ms:03d}"
+
+        srt_lines = []
+        for i, block in enumerate(transcript_data, 1):
+            srt_lines.append(str(i))
+            srt_lines.append(f"{fmt_time(block['start'])} --> {fmt_time(block['end'])}")
+            srt_lines.append(block["text"])
+            srt_lines.append("")
+        srt_content = "\n".join(srt_lines)
+
+    return JSONResponse({
+        "video": base64.b64encode(video_bytes).decode(),
+        "audio": base64.b64encode(audio_bytes).decode(),
+        "txt":   txt_content,
+        "srt":   srt_content,
+    })
 
 
 @app.get("/static-music/{filename}")
