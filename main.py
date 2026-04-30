@@ -420,15 +420,15 @@ def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=N
             y += line_h
 
     if disclaimer_lines:
-        disc_font = load_font("montserrat", 24)
+        disc_font = load_font("montserrat regular", 18)
         overlay   = Image.new("RGBA", img.size, (0, 0, 0, 0))
         ov_draw   = ImageDraw.Draw(overlay)
-        disc_line_h = 32
+        disc_line_h = 26
         total_disc_h = len(disclaimer_lines) * disc_line_h
-        y = VIDEO_HEIGHT - 90 - total_disc_h
+        y = VIDEO_HEIGHT - 80 - total_disc_h
         for line in disclaimer_lines:
             w = ov_draw.textbbox((0, 0), line, font=disc_font)[2]
-            ov_draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=disc_font, fill=(255, 255, 255, 155))
+            ov_draw.text(((VIDEO_WIDTH - w) // 2, y), line, font=disc_font, fill=(255, 255, 255, 140))
             y += disc_line_h
         img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
