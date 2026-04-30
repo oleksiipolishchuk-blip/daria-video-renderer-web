@@ -11,8 +11,17 @@ import json
 import sys
 import re
 import httpx
+import threading
+import time
+import requests as _req
 from pathlib import Path
 import shutil
+
+try:
+    from gradio_client import Client as GradioClient, handle_file as gradio_handle_file
+    GRADIO_AVAILABLE = True
+except ImportError:
+    GRADIO_AVAILABLE = False
 
 app = FastAPI()
 
@@ -851,6 +860,252 @@ async def generate_video_web(
         "txt":   txt_content,
         "srt":   srt_content,
     })
+
+
+# ─── Voiceover Pipeline ──────────────────────────────────────────────────────
+
+ELEVENLABS_API_KEY_VP = os.environ.get("ELEVENLABS_API_KEY", "")
+OPENAI_API_KEY_VP     = os.environ.get("OPENAI_API_KEY", "")
+
+VP_VOICE_COLORS = ["#4F8EF7","#A78BFA","#F472B6","#34D399","#FBBF24",
+                   "#F87171","#38BDF8","#FB923C","#A3E635","#E879F9"]
+VP_ELEVENLABS_MODEL  = "eleven_v3"
+VP_VOICE_SETTINGS    = {"stability": 0.5, "similarity_boost": 0.75, "style": 0.0, "use_speaker_boost": True}
+VP_OPENAI_MODEL      = "gpt-4o"
+VP_CHUNK_SIZE        = 5000
+VP_SILENCE_THRESHOLD = 0.10
+VP_OUTPUT_DIR        = Path("/tmp/audio")
+VP_FAV_FILE          = Path("/tmp/vp_favorites.json")
+
+vp_voices:    list  = []
+vp_favorites: set   = set()
+vp_log_lines: list  = []
+vp_is_running: bool = False
+vp_last_file:  str  = None
+vp_last_txt:   str  = None
+vp_last_txt_name: str = "formatted.txt"
+vp_stop_flag:  bool = False
+
+
+def vp_load_favorites():
+    global vp_favorites
+    try:
+        if VP_FAV_FILE.exists():
+            vp_favorites = set(json.loads(VP_FAV_FILE.read_text()))
+    except: pass
+
+def vp_save_favorites():
+    try: VP_FAV_FILE.write_text(json.dumps(list(vp_favorites), ensure_ascii=False))
+    except: pass
+
+def vp_fetch_voices():
+    global vp_voices
+    try:
+        resp = _req.get("https://api.elevenlabs.io/v1/voices",
+                        headers={"xi-api-key": ELEVENLABS_API_KEY_VP}, timeout=15)
+        if resp.status_code != 200:
+            return False
+        data = resp.json().get("voices", [])
+        data.sort(key=lambda v: (v.get("category","") not in ("cloned","professional"), v["name"].lower()))
+        vp_voices = [
+            {"id": v["voice_id"], "voice_id": v["voice_id"], "name": v["name"],
+             "category": v.get("category",""), "color": VP_VOICE_COLORS[i % len(VP_VOICE_COLORS)]}
+            for i, v in enumerate(data)
+        ]
+        return True
+    except: return False
+
+def vp_log(msg): vp_log_lines.append(msg + "\n")
+
+def vp_format_text(text: str) -> str:
+    from openai import OpenAI
+    client = OpenAI(api_key=OPENAI_API_KEY_VP)
+    vp_log("🔄 Форматуємо текст через ChatGPT...")
+    resp = client.chat.completions.create(
+        model=VP_OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": (
+                "You are a text formatter. Apply these rules and return ONLY the result:\n"
+                "1. Remove all paragraph breaks — join into a single continuous text.\n"
+                "2. Ensure exactly one space before and after each long dash (– —). "
+                "Short hyphens (-) stay unchanged.\n"
+                "Return ONLY the formatted text."
+            )},
+            {"role": "user", "content": text}
+        ],
+        temperature=0.0
+    )
+    return resp.choices[0].message.content.strip()
+
+def vp_replace_relatio(text: str) -> str:
+    return re.sub(r'\bRelatio\b', 'Releyshio', text)
+
+def vp_remove_silence(audio_path, output_path) -> bool:
+    try:
+        gradio = GradioClient("CDari/Remove-Silence-From-Audio_public2")
+        result = gradio.predict(audio_file=gradio_handle_file(str(audio_path)),
+                                seconds=VP_SILENCE_THRESHOLD, api_name="/predict")
+        path = result[0] if isinstance(result, tuple) else result
+        if path:
+            shutil.move(str(path), str(output_path)); return True
+        return False
+    except Exception as e:
+        vp_log(f"⚠️  Не вдалось видалити паузи: {e}"); return False
+
+def vp_split_chunks(text: str) -> list:
+    if len(text) <= VP_CHUNK_SIZE: return [text]
+    pattern = re.compile(r'(?<=[.])\s+|(?<=[,])\s+|(?<=[–—])\s+')
+    chunks, start = [], 0
+    while start < len(text):
+        rest = text[start:]
+        if len(rest) <= VP_CHUNK_SIZE: chunks.append(rest.strip()); break
+        sub = text[start: start + VP_CHUNK_SIZE]
+        best = None
+        for m in pattern.finditer(sub): best = m
+        if best:
+            end = start + best.end()
+        else:
+            sp = None
+            for m in re.finditer(r'\s+', sub): sp = m
+            end = start + (sp.end() if sp else VP_CHUNK_SIZE)
+        chunks.append(text[start:end].strip()); start = end
+    return [c for c in chunks if c]
+
+def vp_tts_chunk(text: str, voice_id: str, path: Path) -> bool:
+    resp = _req.post(
+        f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+        headers={"xi-api-key": ELEVENLABS_API_KEY_VP, "Content-Type": "application/json"},
+        json={"text": text, "model_id": VP_ELEVENLABS_MODEL, "voice_settings": VP_VOICE_SETTINGS},
+        timeout=600)
+    if resp.status_code == 200: path.write_bytes(resp.content); return True
+    vp_log(f"❌ ElevenLabs {resp.status_code}: {resp.text[:200]}"); return False
+
+def vp_run_pipeline(text: str, voice: dict, task_id: str = ""):
+    global vp_is_running, vp_last_file, vp_last_txt, vp_last_txt_name, vp_stop_flag, vp_log_lines
+    vp_is_running = True; vp_stop_flag = False
+    vp_last_file = None; vp_last_txt = None
+    vp_last_txt_name = "formatted.txt"; vp_log_lines = []
+    try:
+        vp_log(f"▶  Голос: {voice['name']}")
+        vp_log(f"📝 Символів у тексті: {len(text)}\n")
+
+        try:
+            formatted = vp_format_text(text)
+            vp_log(f"✅ Відформатовано ({len(formatted)} символів)")
+            vp_last_txt = formatted
+            vp_last_txt_name = f"{(task_id+'_') if task_id else ''}{voice['name']}_{VP_ELEVENLABS_MODEL.replace('-','_')}_formatted.txt".replace(' ','_')
+        except Exception as e:
+            vp_log(f"❌ Помилка форматування: {e}"); return
+
+        if vp_stop_flag: vp_log("⛔ Зупинено"); return
+        prepared = vp_replace_relatio(formatted)
+        if prepared != formatted: vp_log("🔤 Замінено: Relatio → Releyshio")
+        if vp_stop_flag: vp_log("⛔ Зупинено"); return
+
+        VP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        task_part = f"{task_id}_" if task_id else ""
+        filename = f"{task_part}{voice['name']}_{VP_ELEVENLABS_MODEL.replace('-','_')}_{int(time.time())}.mp3"
+        filename = filename.replace(" ","_").replace("/","_")
+        out_path = VP_OUTPUT_DIR / filename
+
+        chunks = vp_split_chunks(prepared)
+        if len(chunks) == 1:
+            vp_log(f"\n🎙  Озвучуємо через ElevenLabs...")
+            if not vp_tts_chunk(prepared, voice["voice_id"], out_path): return
+        else:
+            vp_log(f"\n📦 Текст розбито на {len(chunks)} частин")
+            tmp_dir = VP_OUTPUT_DIR / "_tmp"; tmp_dir.mkdir(exist_ok=True)
+            parts = []
+            for i, chunk in enumerate(chunks, 1):
+                if vp_stop_flag: vp_log("⛔ Зупинено"); return
+                vp_log(f"  🎙  Чанк {i}/{len(chunks)} ({len(chunk)} символів)...")
+                tmp = tmp_dir / f"chunk_{i:03d}.mp3"
+                if not vp_tts_chunk(chunk, voice["voice_id"], tmp): return
+                parts.append(tmp); time.sleep(0.5)
+            vp_log("🔗 Склеюємо частини...")
+            with open(out_path, "wb") as f:
+                for p in parts: f.write(p.read_bytes())
+            for p in parts: p.unlink(missing_ok=True)
+            try: tmp_dir.rmdir()
+            except: pass
+
+        size_kb = out_path.stat().st_size // 1024
+        vp_log(f"\n✅ Аудіо збережено ({size_kb} KB)")
+        if vp_stop_flag: vp_log("⛔ Зупинено"); return
+
+        vp_log(f"🔇 Видаляємо паузи (поріг {VP_SILENCE_THRESHOLD}с)...")
+        clean_path = out_path.with_name(out_path.stem + "_clean.mp3")
+        if GRADIO_AVAILABLE and vp_remove_silence(out_path, clean_path):
+            size_kb = clean_path.stat().st_size // 1024
+            vp_last_file = str(clean_path)
+            vp_log(f"✅ Готово! ({size_kb} KB)")
+        else:
+            vp_last_file = str(out_path)
+            vp_log(f"✅ Готово (без чистки пауз): {size_kb} KB")
+    except Exception as e:
+        vp_log(f"\n❌ Помилка: {e}")
+    finally:
+        vp_is_running = False
+
+
+vp_load_favorites()
+threading.Thread(target=vp_fetch_voices, daemon=True).start()
+
+
+@app.get("/api/voices")
+def vp_get_voices():
+    return JSONResponse([{**v, "fav": v["id"] in vp_favorites} for v in vp_voices])
+
+@app.get("/api/voices/refresh")
+def vp_refresh_voices():
+    vp_fetch_voices()
+    return JSONResponse({"ok": True, "count": len(vp_voices)})
+
+@app.get("/api/log")
+def vp_get_log():
+    return JSONResponse({"log": "".join(vp_log_lines), "running": vp_is_running,
+                         "file": vp_last_file, "txt": bool(vp_last_txt)})
+
+@app.get("/api/download")
+def vp_download():
+    if not vp_last_file: raise HTTPException(404, "No file")
+    p = Path(vp_last_file)
+    return Response(content=p.read_bytes(), media_type="audio/mpeg",
+                    headers={"Content-Disposition": f'attachment; filename="{p.name}"'})
+
+@app.get("/api/download_txt")
+def vp_download_txt():
+    if not vp_last_txt: raise HTTPException(404, "No txt")
+    return Response(content=vp_last_txt.encode("utf-8"), media_type="text/plain; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{vp_last_txt_name}"'})
+
+@app.post("/api/run")
+async def vp_run(request: Request):
+    if vp_is_running:
+        return JSONResponse({"ok": False, "error": "Вже виконується"})
+    body = await request.json()
+    text = body.get("text", "").strip()
+    if not text: return JSONResponse({"ok": False, "error": "Текст порожній"})
+    voice = next((v for v in vp_voices if v["id"] == body.get("voice_id")), None)
+    if not voice: return JSONResponse({"ok": False, "error": "Голос не знайдено"})
+    task_id = body.get("task_id", "").strip().lstrip("#")
+    threading.Thread(target=vp_run_pipeline, args=(text, voice, task_id), daemon=True).start()
+    return JSONResponse({"ok": True})
+
+@app.post("/api/stop")
+async def vp_stop(request: Request):
+    global vp_stop_flag
+    vp_stop_flag = True
+    return JSONResponse({"ok": True})
+
+@app.post("/api/favorites/toggle")
+async def vp_favorites_toggle(request: Request):
+    body = await request.json()
+    vid = body.get("voice_id", "")
+    if vid in vp_favorites: vp_favorites.discard(vid)
+    else: vp_favorites.add(vid)
+    vp_save_favorites()
+    return JSONResponse({"ok": True, "fav": vid in vp_favorites})
 
 
 @app.get("/static-music/{filename}")
