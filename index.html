@@ -556,11 +556,11 @@ textarea::placeholder { color: var(--text-3); }
           <span>Generative AI used</span>
         </label>
         <label class="disclaimer-row">
-          <input type="checkbox" class="disc-check" value="Actor portrayal. Individual results may vary.">
+          <input type="checkbox" class="disc-check disc-results" value="Actor portrayal. Individual results may vary.">
           <span>Actor portrayal. Individual results may vary.</span>
         </label>
         <label class="disclaimer-row">
-          <input type="checkbox" class="disc-check" value="Individual results may vary.">
+          <input type="checkbox" class="disc-check disc-results" value="Individual results may vary.">
           <span>Individual results may vary.</span>
         </label>
       </div>
@@ -882,7 +882,14 @@ textarea::placeholder { color: var(--text-3); }
     const lines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
     document.getElementById('preview-disc').innerHTML = lines.join('<br>');
   }
-  document.querySelectorAll('.disc-check').forEach(c => c.addEventListener('change', updateDisclaimerPreview));
+  document.querySelectorAll('.disc-check').forEach(c => {
+    c.addEventListener('change', () => {
+      if (c.classList.contains('disc-results') && c.checked) {
+        document.querySelectorAll('.disc-results').forEach(o => { if (o !== c) o.checked = false; });
+      }
+      updateDisclaimerPreview();
+    });
+  });
 
   function makeFilename(text) {
     const date  = new Date().toISOString().slice(0,10).replace(/-/g,'');
