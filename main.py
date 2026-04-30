@@ -362,12 +362,11 @@ def split_text_into_subtitle_blocks(text: str, client, max_chars: int = MAX_SUBT
 
 RULES:
 1. Each block must be maximum {max_chars} characters (including spaces)
-2. Each block must be maximum 9 words — this is critical
-3. Never put more than 9 words in one block
-4. Prefer splitting at: sentence endings (. ? !), commas, or em dashes
-5. Each block must feel like a complete thought or natural pause
-6. Do NOT change, add, or remove any words - only split
-7. Return ONLY the blocks, one per line, no numbering, no extra text
+2. ALWAYS split at sentence endings (. ? ! ." .') — every sentence must be its own block, never combine two sentences into one block
+3. If a sentence is longer than {max_chars} characters, split at a comma, em dash (— or –), or any other punctuation mark
+4. Never cut mid-thought — each block must feel like a complete phrase or natural pause
+5. Do NOT change, add, or remove any words — only split
+6. Return ONLY the blocks, one per line, no numbering, no extra text
 
 TEXT:
 {flat_text}"""
