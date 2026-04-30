@@ -682,15 +682,26 @@ textarea::placeholder { color: var(--text-3); }
   }
 
   document.getElementById('add-script-btn').addEventListener('click', addScript);
+  document.getElementById('scripts-list').addEventListener('input', e => {
+    if (e.target.classList.contains('script-text')) updatePreview();
+  });
   addScript();
 
   // ── Preview ───────────────────────────────────────────
+  function getPreviewText() {
+    const ta = document.querySelector('#scripts-list .script-text');
+    if (!ta) return 'The way you love her matters.';
+    const words = ta.value.trim().split(/\s+/).filter(Boolean);
+    return words.length ? words.slice(0, 6).join(' ') : 'The way you love her matters.';
+  }
+
   function updatePreview() {
     const frame = document.getElementById('preview-frame');
     frame.style.background = (state.bgType === 'photo' && state.bgImageURL)
       ? `url(${state.bgImageURL}) center/cover no-repeat`
       : state.bgColor;
     const pt = document.getElementById('preview-text');
+    pt.textContent      = getPreviewText();
     pt.style.color      = state.textColor;
     pt.style.fontFamily = `'${state.fontFamily}'`;
     pt.style.fontWeight = state.fontBold ? 'bold' : 'normal';
