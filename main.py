@@ -25,28 +25,8 @@ try:
 except ImportError:
     GRADIO_AVAILABLE = False
 
-AUTH_USER     = os.environ.get("AUTH_USER",     "designers")
-AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "3083#")
-
 app = FastAPI()
 
-class BasicAuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        if request.url.path == "/health":
-            return await call_next(request)
-        auth = request.headers.get("Authorization", "")
-        if auth.startswith("Basic "):
-            try:
-                decoded = base64.b64decode(auth[6:]).decode("utf-8")
-                user, pwd = decoded.split(":", 1)
-                if (secrets.compare_digest(user, AUTH_USER) and
-                        secrets.compare_digest(pwd, AUTH_PASSWORD)):
-                    return await call_next(request)
-            except: pass
-        return Response(status_code=401,
-                        headers={"WWW-Authenticate": 'Basic realm="Iron Woman"'})
-
-app.add_middleware(BasicAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
