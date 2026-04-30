@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Easy MH — Video Generator</title>
+<title>Easy MH</title>
 <style>
 @font-face { font-family: 'F-Montserrat'; src: url('/fonts/Montserrat-Bold.ttf'); font-weight: bold; }
 @font-face { font-family: 'F-Gilroy';    src: url('/fonts/Gilroy-Medium.ttf'); }
@@ -38,13 +38,32 @@ body {
 }
 
 .layout {
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 290px;
+  grid-template-columns: 150px 1fr 290px;
   gap: 20px;
   align-items: start;
 }
+
+/* ── Sidebar ── */
+.sidebar { position: sticky; top: 48px; }
+.sidebar-section { margin-bottom: 24px; }
+.sidebar-section-label {
+  display: block; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-3); padding: 0 10px; margin-bottom: 4px;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  cursor: pointer; color: var(--text-2); font-size: 13px;
+  letter-spacing: -0.1px; transition: all 0.18s var(--ease);
+  user-select: none; background: none; border: none;
+  width: 100%; text-align: left; font-family: inherit;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.sidebar-item.active { background: rgba(255,255,255,0.08); color: var(--text); font-weight: 500; }
 
 /* ── Header ── */
 .page-header {
@@ -411,6 +430,9 @@ textarea::placeholder { color: var(--text-3); }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .sidebar-section { margin-bottom: 0; }
+  .sidebar-section-label { display: none; }
   .preview-sticky { position: static; }
   .preview-wrap { max-width: 200px; margin: 0 auto 14px; }
   .font-grid { grid-template-columns: 1fr; }
@@ -422,11 +444,24 @@ textarea::placeholder { color: var(--text-3); }
 
   <div class="page-header">
     <span class="page-title">Easy MH</span>
-    <span class="page-subtitle">/ Video Generator</span>
+    <span class="page-subtitle" id="page-subtitle">/ Video Generator</span>
   </div>
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <span class="sidebar-section-label">Marketing</span>
+      <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Video Generator">📹 Video Generator</button>
+    </div>
+    <div class="sidebar-section">
+      <span class="sidebar-section-label">Design</span>
+      <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline">🎤 Voiceover Pipeline</button>
+    </div>
+  </nav>
 
   <!-- ── LEFT ── -->
   <div>
+  <div id="page-video-generator" class="page-content">
 
     <!-- Scripts -->
     <div class="card">
@@ -603,10 +638,19 @@ textarea::placeholder { color: var(--text-3); }
       </div>
     </div>
 
+  </div><!-- /page-video-generator -->
+
+  <div id="page-voiceover-pipeline" class="page-content" style="display:none">
+    <div class="card">
+      <div class="card-label">Voiceover Pipeline</div>
+      <p style="color:var(--text-3);font-size:14px;letter-spacing:-0.1px;line-height:1.6">Coming soon…</p>
+    </div>
   </div>
 
+  </div><!-- /left col -->
+
   <!-- ── RIGHT ── -->
-  <div class="preview-sticky">
+  <div class="preview-sticky" id="preview-col">
     <div class="preview-wrap">
       <div class="preview-bg" id="preview-frame" style="background:#000">
         <div class="preview-text" id="preview-text"
@@ -1070,6 +1114,19 @@ textarea::placeholder { color: var(--text-3); }
     btn.style.display     = 'block';
     stopBtn.style.display = 'none';
     btn.textContent = scripts.length > 1 ? `Generate All (${scripts.length})` : 'Generate';
+  });
+
+  // ── Sidebar navigation ────────────────────────────────
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      const page = item.dataset.page;
+      document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+      document.getElementById('page-' + page).style.display = 'block';
+      document.getElementById('page-subtitle').textContent = item.dataset.subtitle;
+      document.getElementById('preview-col').style.visibility = page === 'video-generator' ? '' : 'hidden';
+    });
   });
 
   updatePreview();
