@@ -736,8 +736,20 @@ async def generate_video_web(
                         })
                     j = k
 
-                if char_ends:
-                    time_offset += char_ends[-1]
+                # Probe actual MP3 duration for accurate time_offset (trailing silence
+                # makes char_ends[-1] shorter than the real audio length)
+                chunk_file = tmp_path / f"chunk_{i}.mp3"
+                chunk_file.write_bytes(chunk_audio)
+                dur_probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                     "-of", "default=noprint_wrappers=1:nokey=1", str(chunk_file)],
+                    capture_output=True, text=True,
+                )
+                try:
+                    time_offset += float(dur_probe.stdout.strip())
+                except Exception:
+                    if char_ends:
+                        time_offset += char_ends[-1]
 
         audio_path = tmp_path / "audio.mp3"
         audio_path.write_bytes(b"".join(audio_parts))
