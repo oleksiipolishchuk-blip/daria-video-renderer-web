@@ -357,6 +357,8 @@ async def text_to_speech(
 
 def split_text_into_subtitle_blocks(text: str, client, max_chars: int = MAX_SUBTITLE_CHARS) -> list[str]:
     flat_text = " ".join(text.split())
+    # Normalize dashes: em/en dash → hyphen (some fonts lack em-dash glyph)
+    flat_text = flat_text.replace("—", " - ").replace("–", " - ")
 
     prompt = f"""You are a subtitle editor. Split the following text into subtitle blocks for a vertical video.
 
@@ -399,7 +401,10 @@ async def split_text(text: str = Form(...)):
     return {"blocks": blocks}
 
 
-def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None, disclaimer_lines=None) -> "Image":
+def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None, disclaimer_lines=None, font_name="") -> "Image":
+    # LT Carpet lacks em/en dash glyphs — replace as safety net
+    if "ltcarpet" in font_name.lower().replace(" ", "").replace("-", ""):
+        text = text.replace("—", "-").replace("–", "-")
     from PIL import Image, ImageDraw
     if bg_image_pil is not None:
         img = _fit_image(bg_image_pil, VIDEO_WIDTH, VIDEO_HEIGHT)
@@ -765,7 +770,7 @@ async def generate_video_web(
         frame_paths = {}
         for idx, block in enumerate(transcript_data):
             fp = frames_dir / f"frame_{idx:04d}.png"
-            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil, disclaimer_lines=disclaimer_lines or None).save(str(fp), "PNG")
+            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil, disclaimer_lines=disclaimer_lines or None, font_name=font).save(str(fp), "PNG")
             frame_paths[idx] = fp
 
         concat_lines = []
