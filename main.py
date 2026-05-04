@@ -1262,6 +1262,7 @@ async def generate_start(
 async def generation_events(job_id: str):
     async def stream():
         sent = 0
+        tick = 0
         while True:
             job = _jobs.get(job_id)
             if not job:
@@ -1275,6 +1276,9 @@ async def generation_events(job_id: str):
             if job["status"] in ("done", "error"):
                 yield "data: __DONE__\n\n"
                 return
+            tick += 1
+            if tick % 30 == 0:          # keep-alive ping every ~9 s
+                yield ": ping\n\n"
             await asyncio.sleep(0.3)
     return StreamingResponse(stream(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
@@ -1286,11 +1290,12 @@ async def generation_result(job_id: str):
     if not job:
         raise HTTPException(404, "Job not found")
     if job["status"] == "running":
-        raise HTTPException(202, "Still processing")
+        return JSONResponse({"status": "running"})
     if job["status"] == "error":
-        raise HTTPException(500, job.get("error", "Unknown error"))
+        return JSONResponse({"status": "error", "error": job.get("error", "Unknown error")})
     result = job.pop("result")
     _jobs.pop(job_id, None)
+    result["status"] = "done"
     return JSONResponse(result)
 
 

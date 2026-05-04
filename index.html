@@ -1316,14 +1316,25 @@ textarea::placeholder { color: var(--text-3); }
         };
       });
 
-      // 3. Fetch result
+      // 3. Poll result (handles SSE drop on Railway proxies)
       fill.style.width = '95%';
       msg.textContent  = 'Завантажуємо…';
-      const resResp = await fetch(`/result/${job_id}`,
-                                   { signal: abortController?.signal });
-      if (!resResp.ok) throw new Error(await resResp.text());
-
-      const data     = await resResp.json();
+      let data;
+      const deadline = Date.now() + 360_000; // 6 min max
+      while (Date.now() < deadline) {
+        const r = await fetch(`/result/${job_id}`,
+                              { signal: abortController?.signal });
+        if (!r.ok) throw new Error(await r.text());
+        const body = await r.json();
+        if (body.status === 'running') {
+          await new Promise(res => setTimeout(res, 2000));
+          continue;
+        }
+        if (body.status === 'error') throw new Error(body.error || 'Generation failed');
+        data = body;
+        break;
+      }
+      if (!data) throw new Error('Generation timed out');
       const basename = makeFilename(text).replace('.mp4', '');
 
       // Auto-download video
