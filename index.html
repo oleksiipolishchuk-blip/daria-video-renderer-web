@@ -469,6 +469,39 @@ textarea::placeholder { color: var(--text-3); }
 }
 .reset-btn:hover { color: var(--text-2); border-color: var(--border-2); background: rgba(255,255,255,0.03); }
 
+/* ── Generation log panel ── */
+.gen-log {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.gen-log summary {
+  padding: 9px 14px;
+  cursor: pointer;
+  color: var(--text-3);
+  list-style: none;
+  display: flex; align-items: center; gap: 6px;
+  user-select: none;
+}
+.gen-log summary::before { content: '▶'; font-size: 9px; transition: transform 0.15s; }
+.gen-log[open] summary::before { transform: rotate(90deg); }
+.gen-log-body {
+  padding: 8px 12px 10px;
+  max-height: 200px; overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.25);
+}
+.gen-log-line {
+  font-family: 'DM Mono', monospace;
+  color: var(--text-2);
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.gen-log-line.error { color: #ff6b6b; }
+
 /* ── Voiceover Pipeline (scoped) ── */
 #page-voiceover-pipeline {
   --vp-bg: #0b0d14; --vp-surface: #12151f;
@@ -840,6 +873,10 @@ textarea::placeholder { color: var(--text-3); }
     <button class="generate-btn" id="generate-btn">Generate</button>
     <button class="stop-btn"     id="stop-btn">Stop generation</button>
     <button class="reset-btn"    onclick="clearAll()">↺ Reset all</button>
+    <details class="gen-log" id="gen-log-panel" style="display:none">
+      <summary>Лог генерації</summary>
+      <div class="gen-log-body" id="gen-log-body"></div>
+    </details>
   </div>
 
 </div>
@@ -1171,6 +1208,53 @@ textarea::placeholder { color: var(--text-3); }
   }
 
   // ── Generate ──────────────────────────────────────────
+  // ── Log panel helpers ────────────────────────────────────────────────────
+  const logPanel = document.getElementById('gen-log-panel');
+  const logBody  = document.getElementById('gen-log-body');
+  let   activeSSE = null;
+
+  function logAppend(text, isError = false) {
+    logPanel.style.display = '';
+    logPanel.open = true;
+    const line = document.createElement('div');
+    line.className = 'gen-log-line' + (isError ? ' error' : '');
+    line.textContent = text;
+    logBody.appendChild(line);
+    logBody.scrollTop = logBody.scrollHeight;
+  }
+
+  function logClear() {
+    logBody.innerHTML = '';
+    logPanel.style.display = 'none';
+    logPanel.open = false;
+  }
+
+  // ── Build FormData helper ─────────────────────────────────────────────────
+  function buildForm(text) {
+    const form = new FormData();
+    form.append('text',                text);
+    form.append('voice_id',            state.voiceId);
+    form.append('font',                state.font);
+    form.append('bg_color',            state.bgColor);
+    form.append('text_color',          state.textColor);
+    form.append('font_size',           state.fontSize);
+    form.append('use_christmas_frame', state.useFrame ? '1' : '0');
+    if (state.useFrame) form.append('frame_file', state.frameFile);
+    if (state.musicChoice === 'preset' && state.presetMusic) {
+      form.append('preset_music', state.presetMusic);
+    } else if (state.musicChoice === 'custom') {
+      const mf = document.getElementById('music-input').files[0];
+      if (mf) form.append('music', mf);
+    }
+    if (state.bgType === 'photo') {
+      const bgFile = document.getElementById('bg-photo-input').files[0];
+      if (bgFile) form.append('bg_image', bgFile);
+    }
+    const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+    if (discLines.length) form.append('disclaimer', discLines.join('\n'));
+    return form;
+  }
+
   async function generateOne(text, resultIdx) {
     const fill   = document.getElementById(`result-fill-${resultIdx}`);
     const msg    = document.getElementById(`result-msg-${resultIdx}`);
@@ -1178,50 +1262,68 @@ textarea::placeholder { color: var(--text-3); }
 
     result.classList.add('visible');
     document.getElementById(`result-btns-${resultIdx}`).style.display = 'none';
-    msg.className = 'result-msg';
+    msg.className    = 'result-msg';
     fill.style.width = '5%';
-    msg.textContent  = 'Generating audio…';
+    msg.textContent  = 'Запускаємо…';
+    logClear();
 
-    let prog = 5;
-    const iv = setInterval(() => {
-      if (prog < 85) {
-        prog += Math.random() * 3;
-        fill.style.width = prog + '%';
-        if      (prog < 25) msg.textContent = 'Generating audio…';
-        else if (prog < 50) msg.textContent = 'Transcribing…';
-        else if (prog < 70) msg.textContent = 'Building subtitles…';
-        else                msg.textContent = 'Rendering video…';
+    // Step labels mapped to rough progress %
+    const STEPS = {
+      '🎙': 10, '✅ Голос': 30, '🔊': 40, '✂️': 50,
+      '📝': 60, '✅': 70, '🖼': 75, '🎬': 88, '🎵': 94,
+    };
+
+    function stepProgress(line) {
+      for (const [key, pct] of Object.entries(STEPS)) {
+        if (line.startsWith(key)) return pct;
       }
-    }, 2000);
+      return null;
+    }
 
     try {
-      const form = new FormData();
-      form.append('text',                text);
-      form.append('voice_id',            state.voiceId);
-      form.append('font',                state.font);
-      form.append('bg_color',            state.bgColor);
-      form.append('text_color',          state.textColor);
-      form.append('font_size',           state.fontSize);
-      form.append('use_christmas_frame', state.useFrame ? '1' : '0');
-      if (state.useFrame) form.append('frame_file', state.frameFile);
-      if (state.musicChoice === 'preset' && state.presetMusic) {
-        form.append('preset_music', state.presetMusic);
-      } else if (state.musicChoice === 'custom') {
-        const mf = document.getElementById('music-input').files[0];
-        if (mf) form.append('music', mf);
-      }
-      if (state.bgType === 'photo') {
-        const bgFile = document.getElementById('bg-photo-input').files[0];
-        if (bgFile) form.append('bg_image', bgFile);
-      }
-      const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
-      if (discLines.length) form.append('disclaimer', discLines.join('\n'));
+      // 1. Start generation
+      const startRes = await fetch('/generate/start', {
+        method: 'POST', body: buildForm(text),
+        signal: abortController?.signal,
+      });
+      if (!startRes.ok) throw new Error(await startRes.text());
+      const { job_id } = await startRes.json();
 
-      const res = await fetch('/generate', { method: 'POST', body: form, signal: abortController?.signal });
-      clearInterval(iv);
-      if (!res.ok) throw new Error(await res.text());
+      // 2. Subscribe to SSE log
+      await new Promise((resolve, reject) => {
+        if (activeSSE) { activeSSE.close(); activeSSE = null; }
+        const sse = new EventSource(`/events/${job_id}`);
+        activeSSE = sse;
 
-      const data     = await res.json();
+        abortController?.signal?.addEventListener('abort', () => {
+          sse.close(); activeSSE = null; reject(new DOMException('', 'AbortError'));
+        });
+
+        sse.onmessage = (e) => {
+          if (e.data === '__DONE__') {
+            sse.close(); activeSSE = null; resolve();
+            return;
+          }
+          const line = e.data;
+          logAppend(line, line.startsWith('❌'));
+          msg.textContent = line.replace(/^[^\s]+ /, '');  // strip leading emoji
+          const pct = stepProgress(line);
+          if (pct) fill.style.width = pct + '%';
+        };
+
+        sse.onerror = () => {
+          sse.close(); activeSSE = null; resolve();  // will check status on /result
+        };
+      });
+
+      // 3. Fetch result
+      fill.style.width = '95%';
+      msg.textContent  = 'Завантажуємо…';
+      const resResp = await fetch(`/result/${job_id}`,
+                                   { signal: abortController?.signal });
+      if (!resResp.ok) throw new Error(await resResp.text());
+
+      const data     = await resResp.json();
       const basename = makeFilename(text).replace('.mp4', '');
 
       // Auto-download video
@@ -1248,17 +1350,19 @@ textarea::placeholder { color: var(--text-3); }
         return a;
       }
 
-      btns.appendChild(makeBtn('✓ Video', videoBlob, 'video/mp4', basename + '.mp4'));
-      btns.appendChild(makeBtn('↓ MP3',  new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))]), 'audio/mpeg', basename + '.mp3'));
-      btns.appendChild(makeBtn('↓ TXT',  data.txt,  'text/plain', basename + '.txt'));
-      btns.appendChild(makeBtn('↓ SRT',  data.srt,  'text/plain', basename + '.srt'));
+      btns.appendChild(makeBtn('✓ Video',    videoBlob, 'video/mp4', basename + '.mp4'));
+      btns.appendChild(makeBtn('↓ MP3',      new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))]), 'audio/mpeg', basename + '.mp3'));
+      btns.appendChild(makeBtn('↓ TXT',      data.txt,      'text/plain', basename + '.txt'));
+      btns.appendChild(makeBtn('↓ SRT',      data.srt,      'text/plain', basename + '.srt'));
+      btns.appendChild(makeBtn('↓ Settings', data.settings, 'text/plain', basename + '_settings.txt'));
+
     } catch(e) {
-      clearInterval(iv);
       fill.style.width = '0%';
       if (e.name === 'AbortError') {
         msg.textContent = '⊘ Cancelled';
       } else {
         msg.textContent = e.message?.slice(0, 180) || 'Unknown error';
+        logAppend('❌ ' + (e.message || 'Unknown error'), true);
       }
       msg.classList.add('error');
     }

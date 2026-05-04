@@ -1,7 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, HTMLResponse
+from fastapi.responses import JSONResponse, Response, HTMLResponse, StreamingResponse
+import asyncio
 from typing import Optional
 import base64
 import secrets
@@ -26,6 +27,14 @@ except ImportError:
     GRADIO_AVAILABLE = False
 
 app = FastAPI()
+
+# ── Job store for async generation ───────────────────────────────────────────
+_jobs: dict[str, dict] = {}
+
+def _job_log(job_id: str, msg: str):
+    if job_id in _jobs:
+        _jobs[job_id]["logs"].append(msg)
+        print(f"[job:{job_id}] {msg}", flush=True)
 
 app.add_middleware(
     CORSMiddleware,
@@ -410,8 +419,11 @@ async def split_text(text: str = Form(...)):
     return {"blocks": blocks}
 
 
-def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None, disclaimer_lines=None) -> "Image":
+def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=None, disclaimer_lines=None, font_name="") -> "Image":
     from PIL import Image, ImageDraw
+    # LT Carpet lacks em/en dash glyphs — render as hyphens
+    if "ltcarpet" in font_name.lower().replace(" ", "").replace("-", ""):
+        text = text.replace("—", "-").replace("–", "-")
     if bg_image_pil is not None:
         img = _fit_image(bg_image_pil, VIDEO_WIDTH, VIDEO_HEIGHT)
     else:
@@ -815,7 +827,7 @@ async def generate_video_web(
         frame_paths = {}
         for idx, block in enumerate(transcript_data):
             fp = frames_dir / f"frame_{idx:04d}.png"
-            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil, disclaimer_lines=disclaimer_lines or None).save(str(fp), "PNG")
+            render_frame(block["text"], bg_rgb, text_rgb, pil_font, bg_image_pil=bg_image_pil, disclaimer_lines=disclaimer_lines or None, font_name=font).save(str(fp), "PNG")
             frame_paths[idx] = fp
 
         concat_lines = []
@@ -895,12 +907,391 @@ async def generate_video_web(
             srt_lines.append("")
         srt_content = "\n".join(srt_lines)
 
+        bg_label    = "Photo" if bg_image_data else bg_color
+        frame_label = frame_file.replace(".png", "") if use_christmas_frame == "1" else "None"
+        music_label = (preset_music.replace(".mp3", "").replace(".m4a", "") if preset_music
+                       else ("Custom file" if music_data else "None"))
+        disc_label  = disclaimer.replace("\n", " | ") if disclaimer.strip() else "None"
+        settings_content = (
+            f"Font: {font}\n"
+            f"Font Size: {font_size_int}\n"
+            f"Text Color: {text_color}\n"
+            f"Background: {bg_label}\n"
+            f"Frame: {frame_label}\n"
+            f"Disclaimer: {disc_label}\n"
+            f"Music: {music_label}\n"
+        )
+
     return JSONResponse({
-        "video": base64.b64encode(video_bytes).decode(),
-        "audio": base64.b64encode(audio_bytes).decode(),
-        "txt":   txt_content,
-        "srt":   srt_content,
+        "video":    base64.b64encode(video_bytes).decode(),
+        "audio":    base64.b64encode(audio_bytes).decode(),
+        "txt":      txt_content,
+        "srt":      srt_content,
+        "settings": settings_content,
     })
+
+
+# ─── Async generation (SSE log) ──────────────────────────────────────────────
+
+def _generate_core_sync(log, params: dict) -> dict:
+    """Sync version of the generate pipeline. Called from background thread."""
+    el_key              = params["el_key"]
+    oai_key             = params["oai_key"]
+    text                = params["text"]
+    voice_id            = params["voice_id"]
+    font                = params["font"]
+    bg_color            = params["bg_color"]
+    text_color          = params["text_color"]
+    font_size_int       = params["font_size_int"]
+    music_data          = params.get("music_data")
+    preset_music        = params.get("preset_music", "")
+    bg_image_data       = params.get("bg_image_data")
+    use_christmas_frame = params.get("use_christmas_frame", "0")
+    frame_file          = params.get("frame_file", "christmas.png")
+    disclaimer          = params.get("disclaimer", "")
+
+    bg_image_pil = None
+    if bg_image_data:
+        from PIL import Image
+        import io as _io
+        bg_image_pil = Image.open(_io.BytesIO(bg_image_data))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        # 1. TTS with-timestamps (sync via requests)
+        clean  = _clean_text(text)
+        chunks = _split_chunks(clean, 1500)
+        audio_parts: list[bytes] = []
+        all_words: list[dict]    = []
+        time_offset = 0.0
+
+        log(f"🎙 TTS: {len(chunks)} чанк{'и' if len(chunks) > 1 else ''}…")
+        for i, chunk in enumerate(chunks):
+            r = _req.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps",
+                headers={"xi-api-key": el_key, "Content-Type": "application/json"},
+                json={"text": chunk, "model_id": "eleven_v3", "speed": 1.1,
+                      "voice_settings": {"stability": 0.5, "similarity_boost": 0.75,
+                                         "style": 0.0, "use_speaker_boost": True}},
+                timeout=90,
+            )
+            if r.status_code != 200:
+                raise ValueError(f"TTS error chunk {i+1}: {r.text[:200]}")
+            data = r.json()
+            chunk_audio = base64.b64decode(data["audio_base64"])
+            if len(chunk_audio) < 100:
+                raise ValueError(f"TTS error chunk {i+1}: audio too short")
+            audio_parts.append(chunk_audio)
+
+            alignment   = data.get("alignment", {})
+            chars       = alignment.get("characters", [])
+            char_starts = alignment.get("character_start_times_seconds", [])
+            char_ends   = alignment.get("character_end_times_seconds", [])
+
+            j = 0
+            while j < len(chars):
+                if chars[j] in (" ", "\n", "\t"):
+                    j += 1; continue
+                k = j
+                while k < len(chars) and chars[k] not in (" ", "\n", "\t"):
+                    k += 1
+                if k > j and j < len(char_starts) and k - 1 < len(char_ends):
+                    all_words.append({
+                        "word":  "".join(chars[j:k]),
+                        "start": round(char_starts[j] + time_offset, 3),
+                        "end":   round(char_ends[k - 1] + time_offset, 3),
+                    })
+                j = k
+
+            chunk_file = tmp_path / f"chunk_{i}.mp3"
+            chunk_file.write_bytes(chunk_audio)
+            dur_probe = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", str(chunk_file)],
+                capture_output=True, text=True,
+            )
+            try:
+                time_offset += float(dur_probe.stdout.strip())
+            except Exception:
+                if char_ends:
+                    time_offset += char_ends[-1]
+
+        audio_path = tmp_path / "audio.mp3"
+        audio_path.write_bytes(b"".join(audio_parts))
+        log("✅ Голос готовий")
+
+        # 2. Loudnorm
+        log("🔊 Нормалізація гучності…")
+        norm_path = tmp_path / "audio_norm.mp3"
+        rn = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(audio_path),
+             "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+             "-c:a", "libmp3lame", "-q:a", "2", str(norm_path)],
+            capture_output=True, text=True, timeout=120,
+        )
+        if rn.returncode == 0:
+            audio_path = norm_path
+
+        # 3. Remove silence
+        log("✂️ Видалення пауз…")
+        audio_path, silence_intervals = remove_silence(audio_path, tmp_path)
+        if silence_intervals:
+            adjusted = adjust_timestamps(
+                [{"text": w["word"], "start": w["start"], "end": w["end"]} for w in all_words],
+                silence_intervals,
+            )
+            all_words = [{"word": b["text"], "start": b["start"], "end": b["end"]} for b in adjusted]
+
+        # 4. GPT subtitle split
+        log("📝 Розбивка на субтитри…")
+        from openai import OpenAI
+        oai = OpenAI(api_key=oai_key)
+        gpt_blocks = split_text_into_subtitle_blocks(clean, oai)
+
+        # 5. Align
+        transcript_data = align_timestamps_python(gpt_blocks, all_words)
+        transcript_data = split_long_blocks(transcript_data, font, font_size_int)
+        log(f"✅ {len(transcript_data)} субтитр-блоків")
+
+        # 6. Prepare render
+        bg_rgb   = hex_to_rgb(bg_color   if bg_color.startswith("#")   else f"#{bg_color}")
+        text_rgb = hex_to_rgb(text_color if text_color.startswith("#") else f"#{text_color}")
+        pil_font = load_font(font, font_size_int)
+        disclaimer_lines = [l.strip() for l in disclaimer.split("\n") if l.strip()]
+
+        if preset_music:
+            preset_path_obj = MUSIC_DIR / preset_music
+            music_data = preset_path_obj.read_bytes() if preset_path_obj.exists() else None
+
+        frames_dir = tmp_path / "frames"
+        no_music   = tmp_path / "no_music.mp4"
+        output     = tmp_path / "output.mp4"
+        frames_dir.mkdir()
+
+        music_path = None
+        if music_data:
+            music_path = tmp_path / "music.mp3"
+            music_path.write_bytes(music_data)
+
+        try:
+            probe = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", str(audio_path)],
+                capture_output=True, text=True)
+            audio_duration = float(probe.stdout.strip())
+        except Exception:
+            audio_duration = transcript_data[-1]["end"] if transcript_data else 0
+
+        # 7. Render frames
+        log(f"🖼 Рендеримо {len(transcript_data)} кадрів…")
+        frame_paths = {}
+        for idx, block in enumerate(transcript_data):
+            fp = frames_dir / f"frame_{idx:04d}.png"
+            render_frame(block["text"], bg_rgb, text_rgb, pil_font,
+                         bg_image_pil=bg_image_pil,
+                         disclaimer_lines=disclaimer_lines or None,
+                         font_name=font).save(str(fp), "PNG")
+            frame_paths[idx] = fp
+
+        concat_lines = []
+        for idx, block in enumerate(transcript_data):
+            dur = round(
+                (transcript_data[idx + 1]["start"] if idx + 1 < len(transcript_data) else audio_duration)
+                - block["start"], 3
+            )
+            if dur <= 0:
+                continue
+            concat_lines += [f"file '{frame_paths[idx]}'", f"duration {dur}"]
+        if concat_lines:
+            concat_lines.append(concat_lines[-2])
+
+        concat_file = tmp_path / "concat.txt"
+        concat_file.write_text("\n".join(concat_lines))
+
+        # 8. FFmpeg encode
+        log("🎬 Кодуємо відео…")
+        cmd1 = [
+            "ffmpeg", "-y",
+            "-f", "concat", "-safe", "0", "-i", str(concat_file),
+            "-i", str(audio_path),
+            "-vsync", "cfr", "-r", "30",
+            "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "high", "-level", "4.0",
+            "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
+            "-pix_fmt", "yuv420p", "-vf", "setsar=1:1", "-movflags", "+faststart",
+            "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-shortest",
+            str(no_music),
+        ]
+        r1 = subprocess.run(cmd1, capture_output=True, text=True, timeout=600)
+        if r1.returncode != 0:
+            raise ValueError(f"FFmpeg: {r1.stderr[-800:]}")
+
+        if music_path:
+            log("🎵 Мікс з музикою…")
+            cmd2 = [
+                "ffmpeg", "-y", "-i", str(no_music),
+                "-stream_loop", "-1", "-i", str(music_path),
+                "-filter_complex",
+                "[1:a]volume=0.1[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=2[aout]",
+                "-map", "0:v", "-map", "[aout]", "-c:v", "copy",
+                "-c:a", "aac", "-ar", "48000", "-ac", "2", "-shortest", str(output),
+            ]
+            r2 = subprocess.run(cmd2, capture_output=True, text=True, timeout=600)
+            if r2.returncode != 0:
+                shutil.copy(str(no_music), str(output))
+        else:
+            shutil.copy(str(no_music), str(output))
+
+        if use_christmas_frame == "1":
+            safe_frame = Path(frame_file).name
+            frame_src  = FRAMES_DIR / safe_frame
+            if frame_src.exists():
+                framed   = tmp_path / "output_framed.mp4"
+                cmd_frame = [
+                    "ffmpeg", "-y", "-i", str(output), "-i", str(frame_src),
+                    "-filter_complex",
+                    f"[1:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}[fr];[0:v][fr]overlay=0:0",
+                    "-c:v", "libx264", "-preset", "ultrafast",
+                    "-crf", "23", "-pix_fmt", "yuv420p", "-c:a", "copy", str(framed),
+                ]
+                rf = subprocess.run(cmd_frame, capture_output=True, text=True, timeout=300)
+                if rf.returncode == 0:
+                    output = framed
+
+        video_bytes = output.read_bytes()
+        audio_bytes = audio_path.read_bytes()
+        txt_content = " ".join(text.split())
+
+        def fmt_time(s: float) -> str:
+            ms = int(round(s * 1000))
+            h, ms = divmod(ms, 3_600_000)
+            m, ms = divmod(ms, 60_000)
+            sec, ms = divmod(ms, 1000)
+            return f"{h:02d}:{m:02d}:{sec:02d},{ms:03d}"
+
+        srt_lines = []
+        for i, block in enumerate(transcript_data):
+            end_t = transcript_data[i + 1]["start"] if i + 1 < len(transcript_data) else audio_duration
+            srt_lines += [str(i + 1),
+                          f"{fmt_time(block['start'])} --> {fmt_time(end_t)}",
+                          block["text"], ""]
+        srt_content = "\n".join(srt_lines)
+
+        bg_label    = "Photo" if bg_image_data else bg_color
+        frame_label = frame_file.replace(".png", "") if use_christmas_frame == "1" else "None"
+        music_label = (preset_music.replace(".mp3", "").replace(".m4a", "") if preset_music
+                       else ("Custom file" if params.get("music_data") else "None"))
+        disc_label  = disclaimer.replace("\n", " | ") if disclaimer.strip() else "None"
+        settings_content = (
+            f"Font: {font}\n"
+            f"Font Size: {font_size_int}\n"
+            f"Text Color: {text_color}\n"
+            f"Background: {bg_label}\n"
+            f"Frame: {frame_label}\n"
+            f"Disclaimer: {disc_label}\n"
+            f"Music: {music_label}\n"
+        )
+
+        log("✅ Готово!")
+        return {
+            "video":    base64.b64encode(video_bytes).decode(),
+            "audio":    base64.b64encode(audio_bytes).decode(),
+            "txt":      txt_content,
+            "srt":      srt_content,
+            "settings": settings_content,
+        }
+
+
+def _run_generate(job_id: str, params: dict):
+    try:
+        result = _generate_core_sync(lambda msg: _job_log(job_id, msg), params)
+        _jobs[job_id]["result"] = result
+        _jobs[job_id]["status"] = "done"
+    except Exception as e:
+        _jobs[job_id]["error"]  = str(e)
+        _jobs[job_id]["status"] = "error"
+        _job_log(job_id, f"❌ {str(e)[:300]}")
+
+
+@app.post("/generate/start")
+async def generate_start(
+    text:                 str           = Form(...),
+    voice_id:             str           = Form("cm1VTuOWsFQRdZ5uDzSB"),
+    font:                 str           = Form("Montserrat"),
+    bg_color:             str           = Form("#000000"),
+    text_color:           str           = Form("#FFFFFF"),
+    font_size:            str           = Form("0"),
+    music:                Optional[UploadFile] = File(None),
+    preset_music:         str           = Form(""),
+    bg_image:             Optional[UploadFile] = File(None),
+    use_christmas_frame:  str           = Form("0"),
+    frame_file:           str           = Form("christmas.png"),
+    disclaimer:           str           = Form(""),
+):
+    el_key  = os.environ.get("ELEVENLABS_API_KEY", "")
+    oai_key = os.environ.get("OPENAI_API_KEY", "")
+    if not el_key:
+        raise HTTPException(500, "ELEVENLABS_API_KEY not set")
+    if not oai_key:
+        raise HTTPException(500, "OPENAI_API_KEY not set")
+
+    requested     = int(font_size) if font_size.isdigit() and int(font_size) > 0 else 0
+    font_size_int = requested if requested >= 36 else FONT_SIZES.get(font.lower(), 58)
+
+    bg_image_data = await bg_image.read() if bg_image else None
+    music_data    = await music.read()    if music    else None
+
+    job_id = secrets.token_hex(8)
+    _jobs[job_id] = {"status": "running", "logs": [], "result": None, "error": None}
+
+    params = {
+        "el_key": el_key, "oai_key": oai_key,
+        "text": text, "voice_id": voice_id,
+        "font": font, "bg_color": bg_color, "text_color": text_color,
+        "font_size_int": font_size_int,
+        "music_data": music_data, "preset_music": preset_music,
+        "bg_image_data": bg_image_data,
+        "use_christmas_frame": use_christmas_frame,
+        "frame_file": frame_file, "disclaimer": disclaimer,
+    }
+    threading.Thread(target=_run_generate, args=(job_id, params), daemon=True).start()
+    return JSONResponse({"job_id": job_id})
+
+
+@app.get("/events/{job_id}")
+async def generation_events(job_id: str):
+    async def stream():
+        sent = 0
+        while True:
+            job = _jobs.get(job_id)
+            if not job:
+                yield "data: ❌ Job not found\n\n"
+                yield "data: __DONE__\n\n"
+                return
+            logs = job["logs"]
+            while sent < len(logs):
+                yield f"data: {logs[sent]}\n\n"
+                sent += 1
+            if job["status"] in ("done", "error"):
+                yield "data: __DONE__\n\n"
+                return
+            await asyncio.sleep(0.3)
+    return StreamingResponse(stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.get("/result/{job_id}")
+async def generation_result(job_id: str):
+    job = _jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    if job["status"] == "running":
+        raise HTTPException(202, "Still processing")
+    if job["status"] == "error":
+        raise HTTPException(500, job.get("error", "Unknown error"))
+    result = job.pop("result")
+    _jobs.pop(job_id, None)
+    return JSONResponse(result)
 
 
 # ─── Voiceover Pipeline ──────────────────────────────────────────────────────
