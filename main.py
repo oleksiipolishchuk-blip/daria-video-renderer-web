@@ -565,7 +565,7 @@ async def render_video(
             "-i", str(audio_path),
             "-vsync", "cfr", "-r", "30",
             "-c:v", "libx264", "-preset", "ultrafast",
-            "-profile:v", "high", "-level", "4.0",
+            "-profile:v", "baseline", "-level", "4.0",
             "-crf", "23",
             "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
             "-pix_fmt", "yuv420p",
@@ -844,7 +844,7 @@ async def generate_video_web(
 
         cmd1 = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat_file),
                 "-i", str(audio_path), "-vsync", "cfr", "-r", "30",
-                "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "high", "-level", "4.0",
+                "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "baseline", "-level", "4.0",
                 "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
                 "-pix_fmt", "yuv420p", "-vf", "setsar=1:1", "-movflags", "+faststart",
                 "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-shortest", str(no_music)]
@@ -1116,7 +1116,7 @@ def _generate_core_sync(log, params: dict) -> dict:
             "-f", "concat", "-safe", "0", "-i", str(concat_file),
             "-i", str(audio_path),
             "-vsync", "cfr", "-r", "30",
-            "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "high", "-level", "4.0",
+            "-c:v", "libx264", "-preset", "ultrafast", "-profile:v", "baseline", "-level", "4.0",
             "-crf", "23", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0",
             "-pix_fmt", "yuv420p", "-vf", "setsar=1:1", "-movflags", "+faststart",
             "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", "-shortest",
