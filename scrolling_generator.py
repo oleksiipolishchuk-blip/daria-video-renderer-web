@@ -1,5 +1,6 @@
 import os
 import subprocess
+import threading
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
@@ -287,6 +288,7 @@ def generate_video(
 
     cmd_v = [
         "ffmpeg", "-y",
+        "-loglevel", "error",
         "-f", "rawvideo", "-vcodec", "rawvideo",
         "-s", f"{WIDTH}x{HEIGHT}", "-pix_fmt", "rgb24", "-r", str(FPS),
         "-i", "pipe:0",
@@ -297,6 +299,17 @@ def generate_video(
 
     proc = subprocess.Popen(cmd_v, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    # Drain stderr in background thread to prevent pipe buffer deadlock
+    stderr_buf: list[bytes] = []
+    def _drain() -> None:
+        try:
+            stderr_buf.append(proc.stderr.read())
+        except Exception:
+            pass
+    drain_thread = threading.Thread(target=_drain, daemon=True)
+    drain_thread.start()
+
+    write_error: list[Exception] = []
     try:
         for fi in range(n_frames):
             t = fi / FPS
@@ -337,14 +350,24 @@ def generate_video(
 
             proc.stdin.write(frame.tobytes())
 
-        proc.stdin.close()
-        _, stderr = proc.communicate()
-        if proc.returncode != 0:
-            raise RuntimeError(f"FFmpeg video error: {stderr.decode(errors='replace')}")
-    except Exception:
-        proc.stdin.close()
-        proc.wait()
-        raise
+    except Exception as exc:
+        write_error.append(exc)
+    finally:
+        try:
+            proc.stdin.close()
+        except Exception:
+            pass
+
+    proc.wait()
+    drain_thread.join(timeout=10)
+    ffmpeg_err = (stderr_buf[0] if stderr_buf else b"").decode(errors="replace").strip()
+    if ffmpeg_err:
+        print(f"[scrolling ffmpeg] {ffmpeg_err}", flush=True)
+
+    if write_error:
+        raise RuntimeError(f"FFmpeg pipe write failed: {write_error[0]}. ffmpeg stderr: {ffmpeg_err}")
+    if proc.returncode != 0:
+        raise RuntimeError(f"FFmpeg video encode failed (rc={proc.returncode}): {ffmpeg_err}")
 
     # Mux audio if needed
     audio_inputs: list[str] = []
