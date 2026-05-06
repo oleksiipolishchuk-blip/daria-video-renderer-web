@@ -1343,6 +1343,23 @@ SV_RESULTS_DIR.mkdir(exist_ok=True)
 SV_UPLOADS_DIR.mkdir(exist_ok=True)
 _SV_FAVS_FILE = Path("/tmp/sv_favorites.json")
 
+
+def _sv_daily_cleanup():
+    """Delete scrolling video files older than 23 hours. Runs every 24 h."""
+    while True:
+        time.sleep(86400)
+        cutoff = time.time() - 82800  # 23 h
+        for d in (SV_RESULTS_DIR, SV_UPLOADS_DIR):
+            try:
+                for f in d.iterdir():
+                    if f.is_file() and f.stat().st_mtime < cutoff:
+                        f.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+
+threading.Thread(target=_sv_daily_cleanup, daemon=True).start()
+
 _SV_VOICE_COLORS = ["#4f8ef7","#f75f4f","#4ff7a0","#f7d24f","#c24ff7",
                     "#f74fbe","#4ff7f7","#f7944f"]
 

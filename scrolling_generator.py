@@ -1,11 +1,11 @@
 import os
+import subprocess
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
-from moviepy.editor import AudioFileClip, CompositeAudioClip, VideoClip
-import moviepy.audio.fx.all as afx
+from moviepy.editor import VideoClip
 
 WIDTH = 1080
 HEIGHT = 1920
@@ -176,6 +176,18 @@ HOLD_SECS = 4.0
 DISCLAIMER_BOTTOM_PAD = 380
 
 
+def _audio_duration(path: str) -> float:
+    try:
+        r = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", path],
+            capture_output=True, text=True,
+        )
+        return float(r.stdout.strip())
+    except Exception:
+        return 0.0
+
+
 def generate_video(
     text: str,
     title: str = "",
@@ -258,25 +270,18 @@ def generate_video(
     y_end      = SAFE_BOTTOM - text_h
     total_dist = max(0, y_start - y_end)
 
-    tts_clip = None
-    if audio_path and os.path.exists(audio_path):
-        tts_clip   = AudioFileClip(audio_path)
-        scroll_dur = tts_clip.duration if tts_clip.duration > 0 else 1.0
+    has_tts   = bool(audio_path and os.path.exists(audio_path))
+    has_music = bool(music_path and os.path.exists(music_path))
+
+    if has_tts:
+        scroll_dur = _audio_duration(audio_path)
+        scroll_dur = scroll_dur if scroll_dur > 0 else 1.0
         px_per_sec = total_dist / scroll_dur if scroll_dur > 0 else 0
     else:
         px_per_sec = max(1, scroll_speed)
         scroll_dur = total_dist / px_per_sec if px_per_sec > 0 else 1.0
 
     duration = max(1.0, scroll_dur + HOLD_SECS)
-
-    music_clip = None
-    if music_path and os.path.exists(music_path):
-        raw = AudioFileClip(music_path)
-        music_vol = 0.1 if (audio_path and os.path.exists(audio_path)) else 1.0
-        if raw.duration < duration:
-            music_clip = afx.audio_loop(raw, duration=duration).volumex(music_vol)
-        else:
-            music_clip = raw.subclip(0, duration).volumex(music_vol)
 
     def make_frame(t: float) -> np.ndarray:
         try:
@@ -320,26 +325,55 @@ def generate_video(
             print(f"[make_frame] error at t={t:.2f}: {e}", flush=True)
             return bg_base.copy()
 
+    # Write video-only (no audio loaded into RAM)
+    tmp_video = output_path + ".silent.mp4"
     clip = VideoClip(make_frame, duration=duration)
-
-    if tts_clip and music_clip:
-        clip = clip.set_audio(CompositeAudioClip([tts_clip, music_clip]))
-    elif tts_clip:
-        clip = clip.set_audio(tts_clip)
-    elif music_clip:
-        clip = clip.set_audio(music_clip)
-
     try:
         clip.write_videofile(
-            output_path, fps=FPS, codec="libx264", audio_codec="aac", logger=None,
+            tmp_video, fps=FPS, codec="libx264", audio=False, logger=None,
             ffmpeg_params=["-preset", "ultrafast", "-crf", "28", "-threads", "1"],
         )
     finally:
         clip.close()
-        if tts_clip:
-            tts_clip.close()
-        if music_clip:
-            music_clip.close()
+
+    # Validate the silent video before proceeding
+    probe = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", tmp_video],
+        capture_output=True, text=True,
+    )
+    if probe.returncode != 0 or not probe.stdout.strip():
+        raise RuntimeError(f"Video encoding failed or produced invalid file: {probe.stderr.strip()}")
+
+    # Mux audio with subprocess (no RAM overhead from loading audio)
+    if has_tts or has_music:
+        cmd_a = ["ffmpeg", "-y", "-loglevel", "error", "-i", tmp_video]
+        if has_tts:
+            cmd_a += ["-i", audio_path]
+        if has_music:
+            cmd_a += ["-i", music_path]
+
+        if has_tts and has_music:
+            cmd_a += [
+                "-filter_complex",
+                f"[1:a]volume=1.0[tts];[2:a]volume=0.1,aloop=loop=-1:size=2e9,atrim=duration={duration}[mus];[tts][mus]amix=inputs=2:duration=first[aout]",
+                "-map", "0:v", "-map", "[aout]",
+                "-c:v", "copy", "-c:a", "aac",
+            ]
+        elif has_tts:
+            cmd_a += ["-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-shortest"]
+        else:
+            cmd_a += ["-map", "0:v", "-map", "1:a",
+                      "-af", f"aloop=loop=-1:size=2e9,atrim=duration={duration},volume=1.0",
+                      "-c:v", "copy", "-c:a", "aac", "-shortest"]
+
+        cmd_a.append(output_path)
+        r = subprocess.run(cmd_a, capture_output=True, timeout=120)
+        os.remove(tmp_video)
+        if r.returncode != 0:
+            raise RuntimeError(f"Audio mux failed: {r.stderr.decode(errors='replace')[-300:]}")
+    else:
+        os.rename(tmp_video, output_path)
 
     if on_progress:
         on_progress(100)
