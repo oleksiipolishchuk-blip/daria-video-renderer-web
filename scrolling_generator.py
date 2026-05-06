@@ -256,18 +256,18 @@ def generate_video(
 
     y_start    = HEIGHT // 2
     y_end      = SAFE_BOTTOM - text_h
-    total_dist = y_start - y_end
+    total_dist = max(0, y_start - y_end)
 
     tts_clip = None
     if audio_path and os.path.exists(audio_path):
         tts_clip   = AudioFileClip(audio_path)
-        scroll_dur = tts_clip.duration
-        px_per_sec = total_dist / scroll_dur
+        scroll_dur = tts_clip.duration if tts_clip.duration > 0 else 1.0
+        px_per_sec = total_dist / scroll_dur if scroll_dur > 0 else 0
     else:
-        px_per_sec = scroll_speed
+        px_per_sec = max(1, scroll_speed)
         scroll_dur = total_dist / px_per_sec
 
-    duration = scroll_dur + HOLD_SECS
+    duration = max(1.0, scroll_dur + HOLD_SECS)
 
     music_clip = None
     if music_path and os.path.exists(music_path):
@@ -279,42 +279,46 @@ def generate_video(
             music_clip = raw.subclip(0, duration).volumex(music_vol)
 
     def make_frame(t: float) -> np.ndarray:
-        y = int(y_start - min(t, scroll_dur) * px_per_sec)
+        try:
+            y = int(y_start - min(t, scroll_dur) * px_per_sec)
 
-        dst_y0 = max(0, y)
-        dst_y1 = min(HEIGHT, y + text_h)
-        frame  = bg_base.copy()
+            dst_y0 = max(0, y)
+            dst_y1 = min(HEIGHT, y + text_h)
+            frame  = bg_base.copy()
 
-        if dst_y0 < dst_y1:
-            src_y0 = dst_y0 - y
-            src_y1 = dst_y1 - y
-            alpha  = text_alpha[src_y0:src_y1]
-            rgb    = text_rgb[src_y0:src_y1]
-            region = frame[dst_y0:dst_y1, TEXT_X : TEXT_X + text_w].astype(np.float32)
-            frame[dst_y0:dst_y1, TEXT_X : TEXT_X + text_w] = (
-                region * (1.0 - alpha) + rgb * alpha
-            ).astype(np.uint8)
-
-        if overlay_rgba is not None:
-            region = frame[:OVERLAY_H].astype(np.float32)
-            frame[:OVERLAY_H] = (
-                region * (1.0 - ov_alpha_pre) + ov_rgb_pre * ov_alpha_pre
-            ).astype(np.uint8)
-
-        if disc_alpha is not None and t > scroll_dur:
-            fade   = min(1.0, (t - scroll_dur) / 0.5)
-            dy0    = max(0, disc_y)
-            dy1    = min(HEIGHT, disc_y + disc_h)
-            if dy0 < dy1:
-                sy0    = dy0 - disc_y
-                sy1    = dy1 - disc_y
-                a_fade = disc_alpha[sy0:sy1] * fade
-                region = frame[dy0:dy1, TEXT_X:TEXT_X + disc_w].astype(np.float32)
-                frame[dy0:dy1, TEXT_X:TEXT_X + disc_w] = (
-                    region * (1.0 - a_fade) + disc_rgb[sy0:sy1] * a_fade
+            if dst_y0 < dst_y1 and text_h > 0:
+                src_y0 = dst_y0 - y
+                src_y1 = dst_y1 - y
+                alpha  = text_alpha[src_y0:src_y1]
+                rgb    = text_rgb[src_y0:src_y1]
+                region = frame[dst_y0:dst_y1, TEXT_X : TEXT_X + text_w].astype(np.float32)
+                frame[dst_y0:dst_y1, TEXT_X : TEXT_X + text_w] = (
+                    region * (1.0 - alpha) + rgb * alpha
                 ).astype(np.uint8)
 
-        return frame
+            if overlay_rgba is not None:
+                region = frame[:OVERLAY_H].astype(np.float32)
+                frame[:OVERLAY_H] = (
+                    region * (1.0 - ov_alpha_pre) + ov_rgb_pre * ov_alpha_pre
+                ).astype(np.uint8)
+
+            if disc_alpha is not None and t > scroll_dur:
+                fade   = min(1.0, (t - scroll_dur) / 0.5)
+                dy0    = max(0, disc_y)
+                dy1    = min(HEIGHT, disc_y + disc_h)
+                if dy0 < dy1:
+                    sy0    = dy0 - disc_y
+                    sy1    = dy1 - disc_y
+                    a_fade = disc_alpha[sy0:sy1] * fade
+                    region = frame[dy0:dy1, TEXT_X:TEXT_X + disc_w].astype(np.float32)
+                    frame[dy0:dy1, TEXT_X:TEXT_X + disc_w] = (
+                        region * (1.0 - a_fade) + disc_rgb[sy0:sy1] * a_fade
+                    ).astype(np.uint8)
+
+            return frame
+        except Exception as e:
+            print(f"[make_frame] error at t={t:.2f}: {e}", flush=True)
+            return bg_base.copy()
 
     clip = VideoClip(make_frame, duration=duration)
 
@@ -327,6 +331,7 @@ def generate_video(
 
     clip.write_videofile(
         output_path, fps=FPS, codec="libx264", audio_codec="aac", logger=None,
+        ffmpeg_params=["-preset", "ultrafast", "-crf", "23"],
     )
 
     if on_progress:
