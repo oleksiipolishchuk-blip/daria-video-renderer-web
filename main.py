@@ -1843,6 +1843,9 @@ def web_ui():          return _serve_ui()
 @app.get("/easy-mh",        response_class=HTMLResponse)
 def web_easy_mh():     return _serve_ui()
 
+@app.get("/scrolling",      response_class=HTMLResponse)
+def web_scrolling():   return _serve_ui()
+
 @app.get("/voiceover",      response_class=HTMLResponse)
 def web_voiceover():   return _serve_ui()
 
