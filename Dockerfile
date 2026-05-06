@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy fonts from repo
 COPY fonts/ /usr/share/fonts/truetype/montserrat/
+COPY fonts/ /app/fonts/
 RUN fc-cache -f -v
 
 WORKDIR /app

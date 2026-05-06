@@ -582,6 +582,151 @@ textarea::placeholder { color: var(--text-3); }
 @keyframes vpSpin { to{transform:rotate(360deg)} }
 #page-voiceover-pipeline .vp-toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px); background:#1a0f0f; border:1px solid #ef444444; color:#f87171; padding:10px 20px; border-radius:10px; font-size:13px; transition:transform .3s cubic-bezier(.22,1,.36,1); z-index:99; }
 #page-voiceover-pipeline .vp-toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── Scrolling Video page ── */
+#page-scrolling-video {
+  --sv-bg:      #0b0d14;
+  --sv-surface: #12151f;
+  --sv-surface2:#191c29;
+  --sv-border:  #1e2235;
+  --sv-border2: #2a2e45;
+  --sv-accent:  #4f8ef7;
+  --sv-accent2: #3a72d8;
+  --sv-text:    #e2e4ef;
+  --sv-dim:     #5a5f7a;
+  --sv-dim2:    #8890b8;
+}
+#page-scrolling-video { font-family:'DM Mono',monospace; }
+#page-scrolling-video .sv-wrap { max-width:1120px; margin:0 auto; }
+#page-scrolling-video .sv-header { margin-bottom:1.5rem; }
+#page-scrolling-video .sv-header h1 { font-family:'Syne',sans-serif; font-size:1.75rem; font-weight:800; letter-spacing:-.02em; color:var(--sv-text); }
+#page-scrolling-video .sv-sub { color:var(--sv-dim2); font-size:.78rem; margin-top:.2rem; }
+#page-scrolling-video .sv-main-grid { display:grid; grid-template-columns:1fr 284px; gap:1.1rem; align-items:start; }
+#page-scrolling-video .sv-form-col { min-width:0; }
+#page-scrolling-video .sv-card { background:var(--sv-surface); border:1px solid var(--sv-border); border-radius:14px; padding:1.1rem 1.25rem; margin-bottom:.6rem; }
+#page-scrolling-video .sv-lbl { font-family:'Syne',sans-serif; font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:var(--sv-dim2); margin-bottom:.85rem; }
+#page-scrolling-video input[type=text].sv-inp, #page-scrolling-video textarea.sv-ta {
+  width:100%; background:var(--sv-surface2); border:1px solid var(--sv-border); border-radius:8px;
+  color:var(--sv-text); font-family:'DM Mono',monospace; font-size:.88rem;
+  padding:.62rem .85rem; outline:none; transition:border-color .15s;
+}
+#page-scrolling-video input[type=text].sv-inp:focus, #page-scrolling-video textarea.sv-ta:focus { border-color:var(--sv-accent); }
+#page-scrolling-video textarea.sv-ta { min-height:130px; resize:vertical; line-height:1.55; }
+#page-scrolling-video .sv-chars { font-size:.67rem; color:var(--sv-dim); text-align:right; margin-top:.28rem; }
+#page-scrolling-video .sv-row2 { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+#page-scrolling-video .sv-field > label { display:block; font-size:.7rem; color:var(--sv-dim2); margin-bottom:.28rem; }
+#page-scrolling-video select.sv-sel {
+  width:100%; background:var(--sv-surface2); border:1px solid var(--sv-border); border-radius:8px;
+  color:var(--sv-text); font-family:'DM Mono',monospace; font-size:.83rem;
+  padding:.52rem .75rem; appearance:none; cursor:pointer; outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5f7a'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right .75rem center; padding-right:2rem;
+}
+#page-scrolling-video select.sv-sel:focus { border-color:var(--sv-accent); }
+#page-scrolling-video .sv-color-wrap { display:flex; align-items:center; gap:.5rem; background:var(--sv-surface2); border:1px solid var(--sv-border); border-radius:8px; padding:.38rem .7rem; }
+#page-scrolling-video input[type=color].sv-cpick { width:22px; height:22px; border:none; padding:0; border-radius:3px; cursor:pointer; background:none; flex-shrink:0; }
+#page-scrolling-video .sv-hex { background:none; border:none; color:var(--sv-text); font-size:.78rem; font-family:'DM Mono',monospace; width:72px; outline:none; }
+#page-scrolling-video .sv-color-cards { display:grid; grid-template-columns:repeat(5,1fr); gap:.45rem; margin-bottom:.8rem; }
+#page-scrolling-video .sv-color-card {
+  aspect-ratio:1; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:2px solid transparent; transition:border-color .15s, transform .1s;
+  font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; user-select:none;
+}
+#page-scrolling-video .sv-color-card:hover { transform:scale(1.04); }
+#page-scrolling-video .sv-color-card.active { border-color:#fff !important; }
+#page-scrolling-video input[type=range].sv-range { width:100%; appearance:none; height:3px; background:var(--sv-border2); border-radius:2px; margin:.3rem 0 .1rem; cursor:pointer; }
+#page-scrolling-video input[type=range].sv-range::-webkit-slider-thumb { appearance:none; width:14px; height:14px; border-radius:50%; background:var(--sv-accent); cursor:pointer; }
+#page-scrolling-video .sv-range-row { display:flex; justify-content:space-between; font-size:.7rem; color:var(--sv-dim); }
+#page-scrolling-video .sv-align-group { display:flex; gap:.32rem; }
+#page-scrolling-video .sv-align-btn { flex:1; padding:.45rem; border-radius:7px; border:1px solid var(--sv-border); background:var(--sv-surface2); color:var(--sv-dim); cursor:pointer; font-size:.82rem; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+#page-scrolling-video .sv-align-btn:hover { border-color:var(--sv-border2); color:var(--sv-text); }
+#page-scrolling-video .sv-align-btn.active { border-color:var(--sv-accent); background:rgba(79,142,247,.12); color:var(--sv-accent); }
+#page-scrolling-video .sv-font-grid { display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
+#page-scrolling-video .sv-font-card { background:var(--sv-surface2); border:1px solid var(--sv-border); border-radius:10px; padding:.65rem .8rem; cursor:pointer; transition:all .15s; }
+#page-scrolling-video .sv-font-card:hover { border-color:var(--sv-border2); }
+#page-scrolling-video .sv-font-card.active { border-color:var(--sv-accent); background:rgba(79,142,247,.09); }
+#page-scrolling-video .sv-font-card-name { font-size:.6rem; color:var(--sv-dim); margin-bottom:.32rem; text-transform:uppercase; letter-spacing:.07em; font-family:'DM Mono',monospace; }
+#page-scrolling-video .sv-font-card-preview { font-size:.85rem; color:var(--sv-text); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#page-scrolling-video .sv-img-upload-btn {
+  display:flex; align-items:center; justify-content:center; gap:.45rem;
+  width:100%; padding:.6rem; border-radius:8px; border:1px dashed var(--sv-border2);
+  background:none; color:var(--sv-dim2); cursor:pointer; font-size:.78rem;
+  font-family:'DM Mono',monospace; transition:all .15s;
+}
+#page-scrolling-video .sv-img-upload-btn:hover { border-color:var(--sv-accent); color:var(--sv-accent); }
+#page-scrolling-video .sv-img-preview-row { display:flex; align-items:center; gap:.7rem; margin-top:.55rem; }
+#page-scrolling-video .sv-img-thumb { width:52px; height:52px; border-radius:7px; object-fit:cover; border:1px solid var(--sv-border2); flex-shrink:0; }
+#page-scrolling-video .sv-img-info { flex:1; min-width:0; }
+#page-scrolling-video .sv-img-name { font-size:.72rem; color:var(--sv-dim2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#page-scrolling-video .sv-img-remove { background:none; border:none; color:var(--sv-dim); cursor:pointer; font-size:.78rem; padding:.2rem .4rem; border-radius:5px; transition:color .12s; white-space:nowrap; }
+#page-scrolling-video .sv-img-remove:hover { color:#f75f4f; }
+#page-scrolling-video .sv-voice-trigger { display:flex; align-items:center; gap:.6rem; background:var(--sv-surface2); border:1px solid var(--sv-border); border-radius:8px; padding:.55rem .85rem; cursor:pointer; transition:border-color .15s; user-select:none; }
+#page-scrolling-video .sv-voice-trigger:hover { border-color:var(--sv-border2); }
+#page-scrolling-video .sv-voice-trigger.open { border-color:var(--sv-accent); }
+#page-scrolling-video .sv-vdot-sm { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+#page-scrolling-video .sv-vtrig-name { flex:1; font-size:.85rem; color:var(--sv-text); }
+#page-scrolling-video .sv-vchev { color:var(--sv-dim); font-size:.72rem; transition:transform .2s; }
+#page-scrolling-video .sv-vchev.open { transform:rotate(180deg); }
+#page-scrolling-video .sv-voice-panel { background:var(--sv-surface2); border:1px solid var(--sv-border2); border-radius:10px; margin-top:.4rem; overflow:hidden; display:none; }
+#page-scrolling-video .sv-voice-panel.open { display:block; }
+#page-scrolling-video .sv-vsearch-wrap { padding:.45rem; border-bottom:1px solid var(--sv-border); }
+#page-scrolling-video .sv-vsearch { width:100%; background:var(--sv-surface); border:1px solid var(--sv-border); border-radius:6px; color:var(--sv-text); font-family:'DM Mono',monospace; font-size:.82rem; padding:.42rem .68rem; outline:none; }
+#page-scrolling-video .sv-vsearch:focus { border-color:var(--sv-accent); }
+#page-scrolling-video .sv-vlist { max-height:220px; overflow-y:auto; padding:.3rem; }
+#page-scrolling-video .sv-vlist::-webkit-scrollbar { width:4px; }
+#page-scrolling-video .sv-vlist::-webkit-scrollbar-thumb { background:var(--sv-border2); border-radius:2px; }
+#page-scrolling-video .sv-vsec-lbl { font-size:.6rem; color:var(--sv-dim); text-transform:uppercase; letter-spacing:.1em; padding:.38rem .45rem .18rem; font-family:'DM Mono',monospace; }
+#page-scrolling-video .sv-vrow { display:flex; align-items:center; gap:.5rem; padding:.42rem .45rem; border-radius:7px; cursor:pointer; transition:background .12s; }
+#page-scrolling-video .sv-vrow:hover { background:rgba(79,142,247,.08); }
+#page-scrolling-video .sv-vrow.active { background:rgba(79,142,247,.14); }
+#page-scrolling-video .sv-vrow-name { flex:1; font-size:.82rem; color:var(--sv-text); }
+#page-scrolling-video .sv-vstar { background:none; border:none; cursor:pointer; font-size:.82rem; color:var(--sv-dim); padding:.1rem .22rem; border-radius:4px; transition:color .1s; line-height:1; }
+#page-scrolling-video .sv-vstar:hover { color:#f7c94f; }
+#page-scrolling-video .sv-vstar.fav { color:#f7c94f; }
+#page-scrolling-video .sv-music-track, #page-scrolling-video .sv-music-none { display:flex; align-items:center; gap:.6rem; padding:.48rem .62rem; border-radius:8px; border:1px solid var(--sv-border); background:var(--sv-surface2); margin-bottom:.38rem; cursor:pointer; transition:all .15s; }
+#page-scrolling-video .sv-music-track:hover, #page-scrolling-video .sv-music-none:hover { border-color:var(--sv-border2); }
+#page-scrolling-video .sv-music-track.active, #page-scrolling-video .sv-music-none.active { border-color:var(--sv-accent); background:rgba(79,142,247,.09); }
+#page-scrolling-video .sv-play-btn { width:26px; height:26px; border-radius:50%; background:var(--sv-surface); border:1px solid var(--sv-border2); color:var(--sv-text); cursor:pointer; font-size:.65rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .15s; }
+#page-scrolling-video .sv-play-btn:hover, #page-scrolling-video .sv-play-btn.playing { background:var(--sv-accent); border-color:var(--sv-accent); }
+#page-scrolling-video .sv-track-name { flex:1; font-size:.8rem; color:var(--sv-dim2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#page-scrolling-video .sv-music-track.active .sv-track-name, #page-scrolling-video .sv-music-none.active .sv-track-name { color:var(--sv-text); }
+#page-scrolling-video .sv-upload-btn { display:flex; align-items:center; justify-content:center; gap:.45rem; width:100%; padding:.52rem; border-radius:8px; border:1px dashed var(--sv-border2); background:none; color:var(--sv-dim2); cursor:pointer; font-size:.76rem; font-family:'DM Mono',monospace; transition:all .15s; margin-top:.45rem; }
+#page-scrolling-video .sv-upload-btn:hover { border-color:var(--sv-accent); color:var(--sv-accent); }
+#page-scrolling-video .sv-disc-row { display:flex; align-items:center; gap:.6rem; padding:.38rem 0; cursor:pointer; border-bottom:1px solid var(--sv-border); }
+#page-scrolling-video .sv-disc-row:last-child { border-bottom:none; }
+#page-scrolling-video .sv-disc-cb { width:15px; height:15px; cursor:pointer; accent-color:var(--sv-accent); flex-shrink:0; }
+#page-scrolling-video .sv-disc-label { font-size:.8rem; color:var(--sv-dim); line-height:1.4; }
+#page-scrolling-video .sv-disc-row:has(.sv-disc-cb:checked) .sv-disc-label { color:var(--sv-text); }
+#page-scrolling-video .sv-live-disclaimer { position:absolute; bottom:19.79%; left:11.11%; right:11.11%; z-index:4; text-align:center; opacity:.8; pointer-events:none; white-space:pre-wrap; line-height:1.4; }
+#page-scrolling-video .sv-btn { width:100%; padding:.88rem; border-radius:10px; border:none; background:var(--sv-accent); color:#fff; font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:.2rem; transition:background .15s, opacity .2s; letter-spacing:.02em; }
+#page-scrolling-video .sv-btn:hover:not(:disabled) { background:var(--sv-accent2); }
+#page-scrolling-video .sv-btn:disabled { opacity:.4; cursor:not-allowed; }
+#page-scrolling-video .sv-below { margin-top:.75rem; }
+#page-scrolling-video .sv-prog-bg { background:var(--sv-surface2); border-radius:4px; height:5px; overflow:hidden; margin-top:.6rem; }
+#page-scrolling-video .sv-prog-fill { height:100%; background:var(--sv-accent); border-radius:4px; transition:width .4s ease; width:0%; }
+#page-scrolling-video .sv-status-txt { font-size:.8rem; color:var(--sv-dim2); }
+#page-scrolling-video .sv-err { color:#f75f4f; font-size:.78rem; margin-top:.4rem; }
+#page-scrolling-video .sv-result-inner { display:flex; gap:1.5rem; align-items:flex-start; }
+#page-scrolling-video .sv-result-video-wrap video { height:300px; width:auto; border-radius:10px; background:#000; display:block; }
+#page-scrolling-video .sv-result-info p { font-size:.82rem; color:var(--sv-dim2); margin-bottom:.7rem; }
+#page-scrolling-video .sv-dl-btn { display:inline-flex; align-items:center; gap:.4rem; padding:.58rem 1.2rem; border-radius:8px; background:var(--sv-accent); color:#fff; text-decoration:none; font-family:'Syne',sans-serif; font-weight:700; font-size:.84rem; transition:opacity .2s; }
+#page-scrolling-video .sv-dl-btn:hover { opacity:.85; }
+#page-scrolling-video .sv-preview-col { position:sticky; top:1.5rem; }
+#page-scrolling-video .sv-live-preview { aspect-ratio:9/16; border-radius:14px; overflow:hidden; border:1px solid var(--sv-border2); position:relative; background:#0a0a0a; }
+#page-scrolling-video #sv-lyr-bg-color { position:absolute; inset:0; background:#0a0a0a; transition:background .2s; z-index:0; }
+#page-scrolling-video #sv-lyr-bg-img { position:absolute; inset:0; background-size:cover; background-position:center; display:none; z-index:1; }
+#page-scrolling-video .sv-live-text-area { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; padding:0 11.11%; padding-top:88.89%; padding-bottom:25%; overflow:hidden; }
+#page-scrolling-video .sv-live-title { width:100%; line-height:1.3; word-break:break-word; color:#fff; font-weight:bold; display:none; white-space:pre-wrap; }
+#page-scrolling-video .sv-live-text  { width:100%; line-height:1.45; word-break:break-word; color:#fff; white-space:pre-wrap; }
+#page-scrolling-video .sv-live-overlay { position:absolute; top:0; left:0; right:0; height:47%; z-index:3; pointer-events:none; display:none; -webkit-mask-image:linear-gradient(to bottom, black 76%, transparent 100%); mask-image:linear-gradient(to bottom, black 76%, transparent 100%); }
+#page-scrolling-video .sv-live-overlay img { width:100%; height:100%; object-fit:cover; object-position:50% 50%; display:block; }
+#page-scrolling-video .sv-preview-label { text-align:center; font-size:.62rem; color:var(--sv-dim); margin-top:.45rem; letter-spacing:.1em; text-transform:uppercase; }
+@media(max-width:740px) {
+  #page-scrolling-video .sv-main-grid { grid-template-columns:1fr; }
+  #page-scrolling-video .sv-preview-col { position:static; order:-1; }
+  #page-scrolling-video .sv-live-preview { max-width:150px; margin:0 auto; }
+  #page-scrolling-video .sv-result-inner { flex-direction:column; }
+}
 </style>
 </head>
 <body>
@@ -600,6 +745,7 @@ textarea::placeholder { color: var(--text-3); }
       </div>
       <div class="sidebar-items open" id="section-marketing">
         <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Easy MH" data-url="/easy-mh">📹 Easy MH</button>
+        <button class="sidebar-item" data-page="scrolling-video" data-subtitle="/ Scrolling Video" data-url="/scrolling">📜 Scrolling Video</button>
       </div>
     </div>
     <div class="sidebar-section">
@@ -855,6 +1001,213 @@ textarea::placeholder { color: var(--text-3); }
     </div>
     <div class="vp-toast" id="vpToast"></div>
   </div>
+
+  <!-- ── Scrolling Video page ── -->
+  <div id="page-scrolling-video" class="page-content" style="display:none">
+  <div class="sv-wrap">
+    <header class="sv-header">
+      <h1>Scrolling Video</h1>
+      <p class="sv-sub">Вертикальне відео 1080×1920 з прокручуваним текстом</p>
+    </header>
+    <div class="sv-main-grid">
+      <!-- LEFT: form -->
+      <div class="sv-form-col">
+
+        <!-- Overlay photo -->
+        <div class="sv-card">
+          <div class="sv-lbl">Фото у верхній частині</div>
+          <button class="sv-img-upload-btn" onclick="document.getElementById('sv-overlay-file').click()">↑ Завантажити фото</button>
+          <input type="file" id="sv-overlay-file" accept=".jpg,.jpeg,.png,.webp" style="display:none">
+          <div class="sv-img-preview-row" id="sv-overlay-preview-row" style="display:none">
+            <img class="sv-img-thumb" id="sv-overlay-thumb" src="" alt="">
+            <div class="sv-img-info"><div class="sv-img-name" id="sv-overlay-name"></div></div>
+            <button class="sv-img-remove" onclick="svRemoveImage('overlay')">✕ Видалити</button>
+          </div>
+          <div id="sv-overlay-pos-wrap" style="display:none;margin-top:.55rem">
+            <div class="sv-range-row"><span style="font-size:.68rem;color:var(--sv-dim2)">Позиція по вертикалі</span><span id="sv-overlay-pos-val" style="font-size:.68rem;color:var(--sv-dim2)">50%</span></div>
+            <input type="range" class="sv-range" id="sv-overlay-pos" min="0" max="100" value="50" step="5">
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="sv-card">
+          <div class="sv-lbl">Заголовок</div>
+          <textarea id="sv-title-input" class="sv-ta" placeholder="Заголовок (необов'язково)..." rows="2" style="min-height:auto;resize:none;"></textarea>
+          <div class="sv-row2" style="margin-top:.55rem">
+            <div class="sv-field">
+              <label>Шрифт заголовку</label>
+              <select id="sv-title-font" class="sv-sel"><option value="">— як основний —</option></select>
+            </div>
+            <div class="sv-field">
+              <label>Колір заголовку</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-tc-picker" value="#ffffff">
+                <input type="text" class="sv-hex" id="sv-tc-hex" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+          <div class="sv-field" style="margin-top:.55rem">
+            <label>Розмір: <span id="sv-tfs-val">53px</span></label>
+            <input type="range" class="sv-range" id="sv-title-size" min="40" max="180" value="53">
+            <div class="sv-range-row"><span>40</span><span>180</span></div>
+          </div>
+        </div>
+
+        <!-- Body text -->
+        <div class="sv-card">
+          <div class="sv-lbl">Текст</div>
+          <textarea id="sv-text" class="sv-ta" placeholder="Введи основний текст..."></textarea>
+          <div class="sv-chars"><span id="sv-cc">0</span> символів</div>
+        </div>
+
+        <!-- Colors + bg image -->
+        <div class="sv-card">
+          <div class="sv-lbl">Кольори</div>
+          <div class="sv-color-cards" id="sv-color-cards"></div>
+          <div class="sv-row2">
+            <div class="sv-field">
+              <label>Фон</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-bg-picker" value="#000000">
+                <input type="text" class="sv-hex" id="sv-bg-hex" value="#000000" maxlength="7">
+              </div>
+            </div>
+            <div class="sv-field">
+              <label>Колір тексту</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-txt-picker" value="#ffffff">
+                <input type="text" class="sv-hex" id="sv-txt-hex" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:.85rem">
+            <div class="sv-lbl" style="margin-bottom:.5rem">Фонова картинка</div>
+            <button class="sv-img-upload-btn" onclick="document.getElementById('sv-bg-img-file').click()">↑ Завантажити картинку</button>
+            <input type="file" id="sv-bg-img-file" accept=".jpg,.jpeg,.png,.webp" style="display:none">
+            <div class="sv-img-preview-row" id="sv-bg-img-preview-row" style="display:none">
+              <img class="sv-img-thumb" id="sv-bg-img-thumb" src="" alt="">
+              <div class="sv-img-info">
+                <div class="sv-img-name" id="sv-bg-img-name"></div>
+                <label style="font-size:.68rem;color:var(--sv-dim2);display:block;margin-top:.3rem">
+                  Прозорість: <span id="sv-bg-op-val">50%</span>
+                </label>
+                <input type="range" class="sv-range" id="sv-bg-opacity" min="0" max="100" value="50" step="5" style="margin:.2rem 0 0">
+              </div>
+              <button class="sv-img-remove" onclick="svRemoveImage('bg')">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Font + Size + Align -->
+        <div class="sv-card">
+          <div class="sv-lbl">Шрифт</div>
+          <div class="sv-font-grid" id="sv-font-grid">
+            <div style="color:var(--sv-dim);font-size:.78rem;grid-column:1/-1;">Завантаження…</div>
+          </div>
+          <div class="sv-row2" style="margin-top:.9rem">
+            <div class="sv-field">
+              <label>Розмір: <span id="sv-fs-val">40px</span></label>
+              <input type="range" class="sv-range" id="sv-font-size" min="32" max="96" value="40">
+              <div class="sv-range-row"><span>32</span><span>96</span></div>
+            </div>
+            <div class="sv-field">
+              <label>Вирівнювання</label>
+              <div class="sv-align-group" style="margin-top:.3rem">
+                <button class="sv-align-btn active" data-align="left"   title="Ліворуч">&#8676;</button>
+                <button class="sv-align-btn"        data-align="center" title="По центру">&#8596;</button>
+                <button class="sv-align-btn"        data-align="right"  title="Праворуч">&#8677;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice -->
+        <div class="sv-card">
+          <div class="sv-lbl">Озвучка</div>
+          <div id="sv-voice-selector">
+            <div class="sv-voice-trigger" id="sv-voice-trigger">
+              <span class="sv-vdot-sm" id="sv-sel-dot" style="display:none;background:var(--sv-dim)"></span>
+              <span class="sv-vtrig-name" id="sv-sel-name">— без озвучки —</span>
+              <span class="sv-vchev" id="sv-vchev">▾</span>
+            </div>
+            <div class="sv-voice-panel" id="sv-voice-panel">
+              <div class="sv-vsearch-wrap">
+                <input class="sv-vsearch" id="sv-vsearch" placeholder="Пошук голосу..." autocomplete="off">
+              </div>
+              <div class="sv-vlist" id="sv-vlist">
+                <div style="padding:.5rem;color:var(--sv-dim);font-size:.78rem;">Завантаження…</div>
+              </div>
+            </div>
+          </div>
+          <div id="sv-speed-row" style="margin-top:.85rem">
+            <div class="sv-range-row"><span>Швидкість прокрутки</span><span id="sv-sp-val">40 px/с</span></div>
+            <input type="range" class="sv-range" id="sv-speed" min="40" max="400" value="40" step="5">
+            <div style="font-size:.67rem;color:var(--sv-dim);margin-top:.18rem;">Ігнорується, якщо вибрано голос</div>
+          </div>
+        </div>
+
+        <!-- Music -->
+        <div class="sv-card">
+          <div class="sv-lbl">Музика</div>
+          <div id="sv-music-wrap">
+            <div style="color:var(--sv-dim);font-size:.78rem;">Завантаження…</div>
+          </div>
+          <button class="sv-upload-btn" onclick="document.getElementById('sv-music-file-input').click()">↑ Завантажити свій трек</button>
+          <input type="file" id="sv-music-file-input" accept=".mp3,.wav,.m4a,.ogg" style="display:none">
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="sv-card">
+          <div class="sv-lbl">Дісклеймер <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.65rem;opacity:.45">optional</span></div>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-ai"    class="sv-disc-cb"><span class="sv-disc-label">Generative AI used</span></label>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-actor" class="sv-disc-cb"><span class="sv-disc-label">Actor portrayal. Individual results may vary.</span></label>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-vary"  class="sv-disc-cb"><span class="sv-disc-label">Individual results may vary.</span></label>
+        </div>
+
+        <button class="sv-btn" id="sv-gen-btn" onclick="svGenerate()">Згенерувати відео</button>
+
+        <!-- Progress -->
+        <div class="sv-card sv-below" id="sv-prog-card" style="display:none">
+          <div class="sv-lbl">Прогрес</div>
+          <div class="sv-status-txt" id="sv-status-txt">...</div>
+          <div class="sv-prog-bg"><div class="sv-prog-fill" id="sv-prog-bar"></div></div>
+          <div class="sv-err" id="sv-err-msg" style="display:none"></div>
+        </div>
+
+        <!-- Result -->
+        <div class="sv-card sv-below" id="sv-res-card" style="display:none">
+          <div class="sv-lbl">Готово!</div>
+          <div class="sv-result-inner">
+            <div class="sv-result-video-wrap"><video id="sv-result-video" controls playsinline></video></div>
+            <div class="sv-result-info">
+              <p>Відео успішно згенеровано.</p>
+              <a class="sv-dl-btn" id="sv-dl-link" href="#" download>↓ Завантажити відео</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sv-form-col -->
+
+      <!-- RIGHT: live preview -->
+      <div class="sv-preview-col">
+        <div class="sv-live-preview" id="sv-live-wrap">
+          <div id="sv-lyr-bg-color"></div>
+          <div id="sv-lyr-bg-img"></div>
+          <div class="sv-live-text-area">
+            <div class="sv-live-title" id="sv-live-title"></div>
+            <div class="sv-live-text"  id="sv-live-text">Твій текст зʼявиться тут…</div>
+          </div>
+          <div class="sv-live-overlay" id="sv-live-overlay">
+            <img id="sv-live-overlay-img" src="" alt="">
+          </div>
+          <div class="sv-live-disclaimer" id="sv-live-disclaimer" style="display:none"></div>
+        </div>
+        <p class="sv-preview-label">Живий перегляд</p>
+      </div>
+
+    </div><!-- /sv-main-grid -->
+  </div><!-- /sv-wrap -->
+  </div><!-- /page-scrolling-video -->
 
   </div><!-- /left col -->
 
@@ -1416,7 +1769,7 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Sidebar navigation ────────────────────────────────
-  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline' };
+  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline', '/scrolling': 'scrolling-video' };
 
   function switchToPage(pageId, push = true) {
     const item = document.querySelector(`.sidebar-item[data-page="${pageId}"]`);
@@ -1432,7 +1785,9 @@ textarea::placeholder { color: var(--text-3); }
     document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
     document.getElementById('page-' + pageId).style.display = 'block';
     document.getElementById('page-subtitle').textContent = item?.dataset.subtitle || '';
-    document.getElementById('preview-col').style.visibility = pageId === 'video-generator' ? '' : 'hidden';
+    const showPreview = pageId === 'video-generator';
+    document.getElementById('preview-col').style.visibility = showPreview ? '' : 'hidden';
+    if (pageId === 'scrolling-video' && typeof svInit === 'function') svInit();
     if (push) history.pushState({ page: pageId }, '', item?.dataset.url || '/');
   }
 
@@ -1712,6 +2067,520 @@ textarea::placeholder { color: var(--text-3); }
 
   restoreFromStorage();
   updatePreview();
+
+// ── Scrolling Video ────────────────────────────────────────────────────────
+(function() {
+  const SV_PRESETS = [
+    {bg:"#87CDEB", tx:"#0E2273"},
+    {bg:"#000000", tx:"#ffffff"},
+    {bg:"#ffffff", tx:"#000000"},
+    {bg:"#F1EBE4", tx:"#102127"},
+    {bg:"#102127", tx:"#ffffff"},
+  ];
+
+  let svAlign      = 'left';
+  let svFont       = 'Georgia';
+  let svTitleFont  = '';
+  let svTitleColor = '#ffffff';
+  let svTitleSize  = 53;
+  let svMusic      = null;
+  let svVoice      = null;
+  let svAllVoices  = [];
+  let svFontCssMap = {};
+  let svPanelOpen  = false;
+  let svCurAudio   = null;
+  let svCurPlayBtn = null;
+  let svBgImageFile    = null;
+  let svBgImageObjUrl  = null;
+  let svBgOpacity      = 0.5;
+  let svOverlayFile    = null;
+  let svOverlayObjUrl  = null;
+  let svOverlayAnchorY = 0.5;
+  let svTitleColorLinked = true;
+  let svInited = false;
+  let svPoll   = null;
+
+  function svIsLight(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return (0.299*r+0.587*g+0.114*b)>128;
+  }
+  function svDiscText() {
+    const p=[];
+    if(document.getElementById('sv-disc-ai').checked)    p.push('Generative AI used');
+    if(document.getElementById('sv-disc-actor').checked) p.push('Actor portrayal. Individual results may vary.');
+    if(document.getElementById('sv-disc-vary').checked)  p.push('Individual results may vary.');
+    return p.join('\n');
+  }
+
+  function svSetColor(k, val) {
+    document.getElementById(`sv-${k}-picker`).value = val;
+    document.getElementById(`sv-${k}-hex`).value = val;
+  }
+  function svSetTitleColor(val) {
+    svTitleColor = val;
+    document.getElementById('sv-tc-picker').value = val;
+    document.getElementById('sv-tc-hex').value = val;
+  }
+
+  function svUpdatePreview() {
+    const bgColor  = document.getElementById('sv-bg-hex').value;
+    const txtColor = document.getElementById('sv-txt-hex').value;
+    const fontSize = +document.getElementById('sv-font-size').value;
+    const rawText  = document.getElementById('sv-text').value;
+    const titleTxt = document.getElementById('sv-title-input').value;
+
+    const lBgColor = document.getElementById('sv-lyr-bg-color');
+    const lBgImg   = document.getElementById('sv-lyr-bg-img');
+    const wrap     = document.getElementById('sv-live-wrap');
+
+    if (/^#[0-9a-fA-F]{6}$/.test(bgColor)) lBgColor.style.background = bgColor;
+    if (svBgImageObjUrl) {
+      lBgImg.style.backgroundImage = `url(${svBgImageObjUrl})`;
+      lBgImg.style.opacity = svBgOpacity;
+      lBgImg.style.display = 'block';
+    } else {
+      lBgImg.style.display = 'none';
+    }
+
+    const overlayEl  = document.getElementById('sv-live-overlay');
+    const overlayImg = document.getElementById('sv-live-overlay-img');
+    if (svOverlayObjUrl) {
+      overlayImg.src = svOverlayObjUrl;
+      overlayEl.style.display = 'block';
+    } else {
+      overlayEl.style.display = 'none';
+    }
+
+    const css   = svFontCssMap[svFont] || {f:'Arial', w:'normal'};
+    const w     = wrap.getBoundingClientRect().width || 260;
+    const scale = w / 1080;
+    const col   = /^#[0-9a-fA-F]{6}$/.test(txtColor) ? txtColor : '#ffffff';
+
+    const lTitle = document.getElementById('sv-live-title');
+    const lText  = document.getElementById('sv-live-text');
+
+    if (titleTxt.trim()) {
+      const tcss = (svTitleFont && svFontCssMap[svTitleFont]) || css;
+      const tCol = /^#[0-9a-fA-F]{6}$/.test(svTitleColor) ? svTitleColor : col;
+      lTitle.style.display    = 'block';
+      lTitle.style.color      = tCol;
+      lTitle.style.fontFamily = tcss.f;
+      lTitle.style.fontWeight = 'bold';
+      lTitle.style.textAlign  = svAlign;
+      lTitle.style.fontSize   = Math.round(svTitleSize * scale) + 'px';
+      lTitle.style.marginBottom = Math.round(svTitleSize * 0.05 * scale) + 'px';
+      lTitle.textContent = titleTxt;
+    } else {
+      lTitle.style.display = 'none';
+    }
+
+    lText.style.color      = col;
+    lText.style.fontFamily = css.f;
+    lText.style.fontWeight = css.w;
+    lText.style.textAlign  = svAlign;
+    lText.style.fontSize   = Math.round(fontSize * scale) + 'px';
+    lText.textContent = rawText.trim() ? rawText : 'Твій текст зʼявиться тут…';
+
+    const disc   = svDiscText();
+    const discEl = document.getElementById('sv-live-disclaimer');
+    if (disc) {
+      discEl.style.color    = svIsLight(bgColor) ? '#555555' : '#ffffff';
+      discEl.style.fontSize = Math.round(28 * scale) + 'px';
+      discEl.textContent    = disc;
+      discEl.style.display  = 'block';
+    } else {
+      discEl.style.display = 'none';
+    }
+  }
+
+  async function svLoadFonts() {
+    try {
+      const fonts = await fetch('/scrolling/fonts').then(r => r.json());
+      const grid  = document.getElementById('sv-font-grid');
+      const tSel  = document.getElementById('sv-title-font');
+      grid.innerHTML = '';
+      fonts.forEach(f => {
+        if (f.file) {
+          const s = document.createElement('style');
+          s.textContent = `@font-face{font-family:'sv-${f.name}';src:url('/fonts/${f.file}')}`;
+          document.head.appendChild(s);
+          svFontCssMap[f.name] = {f:`'sv-${f.name}'`, w:'normal'};
+        }
+        const css  = svFontCssMap[f.name] || {f:'Arial', w:'normal'};
+        const card = document.createElement('div');
+        card.className = 'sv-font-card' + (f.name === svFont ? ' active' : '');
+        card.dataset.font = f.name;
+        card.innerHTML = `<div class="sv-font-card-name">${f.name}</div>
+          <div class="sv-font-card-preview" style="font-family:${css.f};font-weight:${css.w}">The way you love her.</div>`;
+        card.onclick = () => {
+          document.querySelectorAll('.sv-font-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          svFont = f.name;
+          svUpdatePreview();
+        };
+        grid.appendChild(card);
+        const opt = document.createElement('option');
+        opt.value = f.name; opt.textContent = f.name;
+        tSel.appendChild(opt);
+      });
+    } catch {
+      document.getElementById('sv-font-grid').innerHTML =
+        '<div style="color:var(--sv-dim);font-size:.78rem;grid-column:1/-1;">Помилка</div>';
+    }
+  }
+
+  function svSelectVoice(id, name, color) {
+    svVoice = id ? {id, name, color} : null;
+    const dot = document.getElementById('sv-sel-dot');
+    dot.style.display = id ? 'inline-block' : 'none';
+    dot.style.background = color || 'transparent';
+    document.getElementById('sv-sel-name').textContent = name;
+    document.querySelectorAll('.sv-vrow').forEach(r => r.classList.toggle('active', r.dataset.id === id));
+    document.getElementById('sv-speed-row').style.display = id ? 'none' : 'block';
+    svPanelOpen = false;
+    document.getElementById('sv-voice-panel').classList.remove('open');
+    document.getElementById('sv-voice-trigger').classList.remove('open');
+    document.getElementById('sv-vchev').classList.remove('open');
+  }
+
+  function svMakeVoiceRow(v) {
+    const row = document.createElement('div');
+    row.className = 'sv-vrow' + (svVoice && svVoice.id === v.id ? ' active' : '');
+    row.dataset.id = v.id;
+    row.innerHTML = `<span class="sv-vdot-sm" style="background:${v.color}"></span><span class="sv-vrow-name">${v.name}</span><button class="sv-vstar${v.fav?' fav':''}">${v.fav?'★':'☆'}</button>`;
+    row.onclick = e => { if (e.target.classList.contains('sv-vstar')) return; svSelectVoice(v.id, v.name, v.color); };
+    row.querySelector('.sv-vstar').onclick = async e => {
+      e.stopPropagation();
+      try {
+        const res = await fetch('/scrolling/favorites/toggle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voice_id:v.id})}).then(r=>r.json());
+        v.fav = res.fav;
+        const q = document.getElementById('sv-vsearch').value.toLowerCase();
+        svRenderVoiceList(svAllVoices.filter(x => x.name.toLowerCase().includes(q)));
+      } catch {}
+    };
+    return row;
+  }
+
+  function svRenderVoiceList(voices) {
+    const list = document.getElementById('sv-vlist');
+    list.innerHTML = '';
+    const noneRow = document.createElement('div');
+    noneRow.className = 'sv-vrow' + (!svVoice ? ' active' : '');
+    noneRow.innerHTML = `<span class="sv-vdot-sm" style="background:var(--sv-dim)"></span><span class="sv-vrow-name">— без озвучки —</span>`;
+    noneRow.onclick = () => svSelectVoice(null, '— без озвучки —', null);
+    list.appendChild(noneRow);
+    const favs = voices.filter(v => v.fav);
+    if (favs.length) {
+      const lbl = document.createElement('div'); lbl.className='sv-vsec-lbl'; lbl.textContent='⭐ Обрані'; list.appendChild(lbl);
+      favs.forEach(v => list.appendChild(svMakeVoiceRow(v)));
+    }
+    const allLbl = document.createElement('div'); allLbl.className='sv-vsec-lbl'; allLbl.textContent='Усі голоси'; list.appendChild(allLbl);
+    voices.forEach(v => list.appendChild(svMakeVoiceRow(v)));
+  }
+
+  async function svLoadVoices() {
+    try {
+      svAllVoices = await fetch('/scrolling/voices').then(r => r.json());
+      svRenderVoiceList(svAllVoices);
+    } catch {
+      document.getElementById('sv-vlist').innerHTML = '<div style="padding:.5rem;color:var(--sv-dim);font-size:.78rem;">Помилка завантаження</div>';
+    }
+  }
+
+  function svStopAudio() {
+    if (svCurAudio)   { svCurAudio.pause(); svCurAudio = null; }
+    if (svCurPlayBtn) { svCurPlayBtn.classList.remove('playing'); svCurPlayBtn.textContent='▶'; svCurPlayBtn=null; }
+  }
+  function svTogglePlay(file, btn) {
+    if (svCurPlayBtn===btn) {
+      if (svCurAudio.paused) { svCurAudio.play(); btn.classList.add('playing'); btn.textContent='⏸'; }
+      else { svCurAudio.pause(); btn.classList.remove('playing'); btn.textContent='▶'; }
+      return;
+    }
+    svStopAudio();
+    svCurAudio = new Audio(`/scrolling/music/${encodeURIComponent(file)}`);
+    svCurAudio.play(); svCurPlayBtn=btn; btn.classList.add('playing'); btn.textContent='⏸';
+    svCurAudio.onended = () => { btn.classList.remove('playing'); btn.textContent='▶'; svCurAudio=null; svCurPlayBtn=null; };
+  }
+
+  function svRenderMusicList(tracks) {
+    const wrap = document.getElementById('sv-music-wrap');
+    wrap.innerHTML = '';
+    const noneEl = document.createElement('div');
+    noneEl.className = 'sv-music-none' + (!svMusic ? ' active' : '');
+    noneEl.innerHTML = `<span class="sv-track-name">— без музики —</span>`;
+    noneEl.onclick = () => { svMusic=null; svStopAudio(); wrap.querySelectorAll('.sv-music-track').forEach(c=>c.classList.remove('active')); noneEl.classList.add('active'); };
+    wrap.appendChild(noneEl);
+    if (!tracks.length) {
+      const em = document.createElement('div');
+      em.style.cssText='color:var(--sv-dim);font-size:.75rem;padding:.35rem 0;';
+      em.textContent='Немає треків — завантаж нижче'; wrap.appendChild(em); return;
+    }
+    tracks.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'sv-music-track' + (svMusic===t.file ? ' active' : '');
+      el.dataset.file = t.file;
+      const btn = document.createElement('button'); btn.className='sv-play-btn'; btn.title='Прослухати'; btn.textContent='▶';
+      btn.onclick = e => { e.stopPropagation(); svTogglePlay(t.file, btn); };
+      const nm = document.createElement('span'); nm.className='sv-track-name'; nm.title=t.name; nm.textContent=t.name;
+      el.appendChild(btn); el.appendChild(nm);
+      el.onclick = e => { if(e.target===btn||btn.contains(e.target)) return; svMusic=t.file; wrap.querySelectorAll('.sv-music-track').forEach(c=>c.classList.remove('active')); noneEl.classList.remove('active'); el.classList.add('active'); };
+      wrap.appendChild(el);
+    });
+  }
+
+  async function svLoadMusic() {
+    try { const tracks = await fetch('/scrolling/music').then(r=>r.json()); svRenderMusicList(tracks); } catch {}
+  }
+
+  async function svUploadImage(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/scrolling/upload/image', {method:'POST', body:fd}).then(r=>r.json());
+    if (res.error) throw new Error(res.error);
+    return res.filename;
+  }
+
+  async function svCheckStatus(tid, btn) {
+    try {
+      const d = await fetch(`/scrolling/status/${tid}`).then(r=>r.json());
+      document.getElementById('sv-status-txt').textContent = d.status;
+      document.getElementById('sv-prog-bar').style.width = d.progress+'%';
+      if (d.status==='done') {
+        clearInterval(svPoll);
+        document.getElementById('sv-prog-card').style.display='none';
+        document.getElementById('sv-res-card').style.display='block';
+        const link=document.getElementById('sv-dl-link');
+        const dn=d.display_filename||d.filename;
+        link.href=`/scrolling/download/${d.filename.replace('.mp4','')}?name=${encodeURIComponent(dn)}`;
+        link.download=dn;
+        const vid=document.getElementById('sv-result-video');
+        vid.src=`/scrolling/preview/${d.filename.replace('.mp4','')}`;
+        vid.load();
+        btn.disabled=false;
+      } else if (d.status==='error') {
+        clearInterval(svPoll);
+        const el=document.getElementById('sv-err-msg'); el.textContent=d.error||'Помилка'; el.style.display='block';
+        btn.disabled=false;
+      }
+    } catch {}
+  }
+
+  window.svGenerate = async function() {
+    const text = document.getElementById('sv-text').value.trim();
+    if (!text) return alert('Введи текст!');
+    const btn = document.getElementById('sv-gen-btn');
+    btn.disabled = true;
+    document.getElementById('sv-prog-card').style.display = 'block';
+    document.getElementById('sv-res-card').style.display = 'none';
+    document.getElementById('sv-err-msg').style.display = 'none';
+    document.getElementById('sv-prog-bar').style.width = '0%';
+    document.getElementById('sv-status-txt').textContent = '...';
+
+    const body = {
+      title:              document.getElementById('sv-title-input').value.trim(),
+      title_font_family:  svTitleFont,
+      title_font_size:    svTitleSize,
+      title_color:        svTitleColor,
+      text,
+      bg_color:           document.getElementById('sv-bg-hex').value,
+      text_color:         document.getElementById('sv-txt-hex').value,
+      font_size:          +document.getElementById('sv-font-size').value,
+      font_family:        svFont,
+      text_align:         svAlign,
+      voice_id:           svVoice?.id || null,
+      scroll_speed:       +document.getElementById('sv-speed').value,
+      music_file:         svMusic,
+      bg_image_file:      svBgImageFile,
+      bg_image_opacity:   svBgOpacity,
+      overlay_image_file: svOverlayFile,
+      overlay_anchor_y:   svOverlayAnchorY,
+      disclaimer:         svDiscText(),
+    };
+
+    try {
+      const {task_id} = await fetch('/scrolling/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}).then(r=>r.json());
+      svPoll = setInterval(() => svCheckStatus(task_id, btn), 2000);
+    } catch(e) {
+      const el=document.getElementById('sv-err-msg'); el.textContent=e.message; el.style.display='block';
+      btn.disabled=false;
+    }
+  };
+
+  window.svRemoveImage = function(type) {
+    if (type === 'overlay') {
+      svOverlayObjUrl=null; svOverlayFile=null;
+      document.getElementById('sv-overlay-preview-row').style.display='none';
+      document.getElementById('sv-overlay-pos-wrap').style.display='none';
+      document.getElementById('sv-overlay-thumb').src='';
+    } else {
+      svBgImageObjUrl=null; svBgImageFile=null;
+      document.getElementById('sv-bg-img-preview-row').style.display='none';
+      document.getElementById('sv-bg-img-thumb').src='';
+    }
+    svUpdatePreview();
+  };
+
+  window.svInit = function() {
+    if (svInited) return;
+    svInited = true;
+
+    // Color preset cards
+    const cardsEl = document.getElementById('sv-color-cards');
+    SV_PRESETS.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'sv-color-card' + (i === 1 ? ' active' : '');
+      card.style.background = p.bg;
+      card.innerHTML = `<span style="color:${p.tx};pointer-events:none">Aa</span>`;
+      card.onclick = () => {
+        svSetColor('bg', p.bg); svSetColor('txt', p.tx);
+        svSetTitleColor(p.tx); svTitleColorLinked = true;
+        document.querySelectorAll('.sv-color-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        svUpdatePreview();
+      };
+      cardsEl.appendChild(card);
+    });
+
+    // Align buttons
+    document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        svAlign = btn.dataset.align;
+        svUpdatePreview();
+      };
+    });
+
+    // Color pickers
+    ['bg','txt'].forEach(k => {
+      document.getElementById(`sv-${k}-picker`).oninput = e => {
+        document.getElementById(`sv-${k}-hex`).value = e.target.value;
+        if (k==='txt' && svTitleColorLinked) svSetTitleColor(e.target.value);
+        document.querySelectorAll('.sv-color-card').forEach(c=>c.classList.remove('active'));
+        svUpdatePreview();
+      };
+      document.getElementById(`sv-${k}-hex`).oninput = e => {
+        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+          document.getElementById(`sv-${k}-picker`).value = e.target.value;
+          if (k==='txt' && svTitleColorLinked) svSetTitleColor(e.target.value);
+          document.querySelectorAll('.sv-color-card').forEach(c=>c.classList.remove('active'));
+          svUpdatePreview();
+        }
+      };
+    });
+    document.getElementById('sv-tc-picker').oninput = e => {
+      svTitleColorLinked=false; svTitleColor=e.target.value;
+      document.getElementById('sv-tc-hex').value=e.target.value; svUpdatePreview();
+    };
+    document.getElementById('sv-tc-hex').oninput = e => {
+      if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+        svTitleColorLinked=false; svTitleColor=e.target.value;
+        document.getElementById('sv-tc-picker').value=e.target.value; svUpdatePreview();
+      }
+    };
+    document.getElementById('sv-title-size').oninput = e => {
+      svTitleSize=+e.target.value;
+      document.getElementById('sv-tfs-val').textContent=e.target.value+'px'; svUpdatePreview();
+    };
+    document.getElementById('sv-text').oninput = e => {
+      document.getElementById('sv-cc').textContent=e.target.value.length; svUpdatePreview();
+    };
+    document.getElementById('sv-title-input').oninput = svUpdatePreview;
+    document.getElementById('sv-font-size').oninput = e => {
+      document.getElementById('sv-fs-val').textContent=e.target.value+'px'; svUpdatePreview();
+    };
+    document.getElementById('sv-speed').oninput = e =>
+      document.getElementById('sv-sp-val').textContent=e.target.value+' px/с';
+    document.getElementById('sv-title-font').onchange = e => {
+      svTitleFont=e.target.value; svUpdatePreview();
+    };
+
+    // Disclaimer
+    document.getElementById('sv-disc-actor').onchange = function() {
+      if(this.checked) document.getElementById('sv-disc-vary').checked=false; svUpdatePreview();
+    };
+    document.getElementById('sv-disc-vary').onchange = function() {
+      if(this.checked) document.getElementById('sv-disc-actor').checked=false; svUpdatePreview();
+    };
+    document.getElementById('sv-disc-ai').onchange = svUpdatePreview;
+
+    // Image uploads
+    document.getElementById('sv-overlay-file').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      svOverlayObjUrl=URL.createObjectURL(file);
+      document.getElementById('sv-overlay-thumb').src=svOverlayObjUrl;
+      document.getElementById('sv-overlay-name').textContent=file.name;
+      document.getElementById('sv-overlay-preview-row').style.display='flex';
+      document.getElementById('sv-overlay-pos-wrap').style.display='block';
+      svUpdatePreview();
+      try { svOverlayFile=await svUploadImage(file); } catch(e) { alert(e.message); }
+      this.value='';
+    };
+    document.getElementById('sv-overlay-pos').oninput = e => {
+      svOverlayAnchorY=+e.target.value/100;
+      document.getElementById('sv-overlay-pos-val').textContent=e.target.value+'%';
+      document.getElementById('sv-live-overlay-img').style.objectPosition=`50% ${e.target.value}%`;
+    };
+    document.getElementById('sv-bg-img-file').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      svBgImageObjUrl=URL.createObjectURL(file);
+      document.getElementById('sv-bg-img-thumb').src=svBgImageObjUrl;
+      document.getElementById('sv-bg-img-name').textContent=file.name;
+      document.getElementById('sv-bg-img-preview-row').style.display='flex';
+      svUpdatePreview();
+      try { svBgImageFile=await svUploadImage(file); } catch(e) { alert(e.message); }
+      this.value='';
+    };
+    document.getElementById('sv-bg-opacity').oninput = e => {
+      svBgOpacity=+e.target.value/100;
+      document.getElementById('sv-bg-op-val').textContent=e.target.value+'%'; svUpdatePreview();
+    };
+
+    // Voice panel
+    document.getElementById('sv-voice-trigger').onclick = e => {
+      e.stopPropagation();
+      svPanelOpen=!svPanelOpen;
+      document.getElementById('sv-voice-panel').classList.toggle('open',svPanelOpen);
+      document.getElementById('sv-voice-trigger').classList.toggle('open',svPanelOpen);
+      document.getElementById('sv-vchev').classList.toggle('open',svPanelOpen);
+      if(svPanelOpen) document.getElementById('sv-vsearch').focus();
+    };
+    document.addEventListener('click', e => {
+      if(!e.target.closest('#sv-voice-selector')) {
+        svPanelOpen=false;
+        document.getElementById('sv-voice-panel').classList.remove('open');
+        document.getElementById('sv-voice-trigger').classList.remove('open');
+        document.getElementById('sv-vchev').classList.remove('open');
+      }
+    });
+    document.getElementById('sv-vsearch').oninput = () => {
+      const q=document.getElementById('sv-vsearch').value.toLowerCase();
+      svRenderVoiceList(svAllVoices.filter(v=>v.name.toLowerCase().includes(q)));
+    };
+
+    // Music upload
+    document.getElementById('sv-music-file-input').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      const fd=new FormData(); fd.append('file',file);
+      try {
+        const track=await fetch('/scrolling/music/upload',{method:'POST',body:fd}).then(r=>r.json());
+        if(track.error){alert(track.error);return;}
+        const tracks=await fetch('/scrolling/music').then(r=>r.json());
+        svMusic=track.file; svRenderMusicList(tracks);
+      } catch { alert('Помилка завантаження файлу'); }
+      this.value='';
+    };
+
+    window.addEventListener('resize', svUpdatePreview);
+
+    svLoadFonts();
+    svLoadVoices();
+    svLoadMusic();
+    svUpdatePreview();
+  };
+})();
 </script>
 </body>
 </html>

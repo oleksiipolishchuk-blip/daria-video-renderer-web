@@ -1330,6 +1330,232 @@ async def download_video(job_id: str):
     )
 
 
+# ─── Scrolling Video ─────────────────────────────────────────────────────────
+
+import uuid as _uuid
+from scrolling_generator import generate_video as sv_generate_video, list_fonts as sv_list_fonts
+from scrolling_tts import generate_sv_tts
+
+_sv_tasks: dict[str, dict] = {}
+SV_RESULTS_DIR = Path("/tmp/sv_results")
+SV_UPLOADS_DIR = Path("/tmp/sv_uploads")
+SV_RESULTS_DIR.mkdir(exist_ok=True)
+SV_UPLOADS_DIR.mkdir(exist_ok=True)
+_SV_FAVS_FILE = Path("/tmp/sv_favorites.json")
+
+_SV_VOICE_COLORS = ["#4f8ef7","#f75f4f","#4ff7a0","#f7d24f","#c24ff7",
+                    "#f74fbe","#4ff7f7","#f7944f"]
+
+def _sv_load_favs() -> set:
+    try:
+        import json as _json
+        return set(_json.loads(_SV_FAVS_FILE.read_text()))
+    except Exception:
+        return set()
+
+def _sv_save_favs(favs: set):
+    import json as _json
+    _SV_FAVS_FILE.write_text(_json.dumps(list(favs)))
+
+def _sv_voice_color(voice_id: str) -> str:
+    return _SV_VOICE_COLORS[hash(voice_id) % len(_SV_VOICE_COLORS)]
+
+
+@app.get("/scrolling/fonts")
+def sv_fonts():
+    return JSONResponse(sv_list_fonts())
+
+
+@app.get("/scrolling/music")
+def sv_music_list():
+    tracks = []
+    for f in sorted(MUSIC_DIR.iterdir()):
+        if f.suffix.lower() in (".mp3", ".wav", ".m4a", ".ogg"):
+            tracks.append({"file": f.name, "name": f.stem})
+    return JSONResponse(tracks)
+
+
+@app.get("/scrolling/music/{filename}")
+def sv_serve_music(filename: str):
+    filename = Path(filename).name
+    path = MUSIC_DIR / filename
+    if not path.exists():
+        raise HTTPException(404, "Not found")
+    return FileResponse(str(path))
+
+
+@app.post("/scrolling/music/upload")
+async def sv_upload_music(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(400, "No filename")
+    ext = Path(file.filename).suffix.lower()
+    if ext not in (".mp3", ".wav", ".m4a", ".ogg"):
+        raise HTTPException(400, "Invalid file type")
+    dest = MUSIC_DIR / Path(file.filename).name
+    dest.write_bytes(await file.read())
+    return JSONResponse({"file": dest.name, "name": dest.stem})
+
+
+@app.post("/scrolling/upload/image")
+async def sv_upload_image(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(400, "No filename")
+    ext = Path(file.filename).suffix.lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".webp"):
+        raise HTTPException(400, "Invalid file type")
+    filename = str(_uuid.uuid4()) + ext
+    dest = SV_UPLOADS_DIR / filename
+    dest.write_bytes(await file.read())
+    return JSONResponse({"filename": filename})
+
+
+@app.get("/scrolling/voices")
+def sv_voices():
+    el_key = os.environ.get("ELEVENLABS_API_KEY", "")
+    favs = _sv_load_favs()
+    try:
+        import httpx as _httpx
+        r = _httpx.get("https://api.elevenlabs.io/v1/voices",
+                       headers={"xi-api-key": el_key}, timeout=15)
+        voices = r.json().get("voices", [])
+        result = []
+        for v in voices:
+            result.append({
+                "id":    v["voice_id"],
+                "name":  v["name"],
+                "fav":   v["voice_id"] in favs,
+                "color": _sv_voice_color(v["voice_id"]),
+            })
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse([])
+
+
+@app.post("/scrolling/favorites/toggle")
+async def sv_toggle_fav(request: Request):
+    data = await request.json()
+    vid = data.get("voice_id", "")
+    favs = _sv_load_favs()
+    if vid in favs:
+        favs.discard(vid)
+        is_fav = False
+    else:
+        favs.add(vid)
+        is_fav = True
+    _sv_save_favs(favs)
+    return JSONResponse({"fav": is_fav})
+
+
+def _sv_resolve_upload(filename: str) -> Optional[str]:
+    if not filename:
+        return None
+    p = SV_UPLOADS_DIR / Path(filename).name
+    return str(p) if p.exists() else None
+
+
+def _sv_run(task_id: str, data: dict):
+    try:
+        audio_path = None
+        voice_id = data.get("voice_id")
+
+        if voice_id:
+            _sv_tasks[task_id] = {"status": "Генерую озвучку…", "progress": 10}
+            audio_path = str(SV_RESULTS_DIR / f"{task_id}.mp3")
+            tts_parts = []
+            if data.get("title", "").strip():
+                tts_parts.append(data["title"].strip())
+            tts_parts.append(data["text"])
+            tts_text = "\n\n".join(tts_parts)
+            import re as _re
+            tts_text = _re.sub(r'\bRelatio\b', 'Releyshio', tts_text, flags=_re.IGNORECASE)
+            ok = generate_sv_tts(tts_text, voice_id, audio_path)
+            if not ok:
+                audio_path = None
+
+        _sv_tasks[task_id] = {"status": "Рендерю відео…", "progress": 20}
+        output = str(SV_RESULTS_DIR / f"{task_id}.mp4")
+
+        music_file = data.get("music_file")
+        music_path = str(MUSIC_DIR / Path(music_file).name) if music_file else None
+        if music_path and not Path(music_path).exists():
+            music_path = None
+
+        sv_generate_video(
+            title=data.get("title", ""),
+            title_font_family=data.get("title_font_family", ""),
+            title_font_size=int(data.get("title_font_size", 0)),
+            title_color=data.get("title_color", ""),
+            text=data["text"],
+            bg_color=data.get("bg_color", "#0a0a0a"),
+            text_color=data.get("text_color", "#ffffff"),
+            font_family=data.get("font_family", "Arial Bold"),
+            font_size=int(data.get("font_size", 40)),
+            text_align=data.get("text_align", "left"),
+            audio_path=audio_path,
+            music_path=music_path,
+            output_path=output,
+            scroll_speed=int(data.get("scroll_speed", 40)),
+            bg_image_path=_sv_resolve_upload(data.get("bg_image_file", "")),
+            bg_image_opacity=float(data.get("bg_image_opacity", 0.5)),
+            overlay_image_path=_sv_resolve_upload(data.get("overlay_image_file", "")),
+            overlay_anchor_y=float(data.get("overlay_anchor_y", 0.5)),
+            disclaimer=data.get("disclaimer", ""),
+        )
+
+        if audio_path and Path(audio_path).exists():
+            Path(audio_path).unlink(missing_ok=True)
+
+        from datetime import datetime as _dt
+        ts = _dt.now().strftime("%Y-%m-%d_%H-%M")
+        _sv_tasks[task_id] = {
+            "status": "done", "progress": 100,
+            "filename": f"{task_id}.mp4",
+            "display_filename": f"scrolling_{ts}.mp4",
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        _sv_tasks[task_id] = {"status": "error", "progress": 0, "error": str(e)}
+
+
+@app.post("/scrolling/generate")
+async def sv_generate(request: Request):
+    data = await request.json()
+    if not data or not data.get("text", "").strip():
+        raise HTTPException(400, "text is required")
+    task_id = str(_uuid.uuid4())
+    _sv_tasks[task_id] = {"status": "Починаємо…", "progress": 0}
+    threading.Thread(target=_sv_run, args=(task_id, data), daemon=True).start()
+    return JSONResponse({"task_id": task_id})
+
+
+@app.get("/scrolling/status/{task_id}")
+def sv_status(task_id: str):
+    task = _sv_tasks.get(task_id)
+    if not task:
+        raise HTTPException(404, "Not found")
+    return JSONResponse(task)
+
+
+@app.get("/scrolling/preview/{task_id}")
+def sv_preview(task_id: str):
+    path = SV_RESULTS_DIR / f"{task_id}.mp4"
+    if not path.exists():
+        raise HTTPException(404, "Not found")
+    return FileResponse(str(path), media_type="video/mp4")
+
+
+@app.get("/scrolling/download/{task_id}")
+def sv_download(task_id: str, name: str = ""):
+    path = SV_RESULTS_DIR / f"{task_id}.mp4"
+    if not path.exists():
+        raise HTTPException(404, "Not found")
+    display = Path(name).name if name else f"{task_id}.mp4"
+    return FileResponse(str(path), media_type="video/mp4",
+                        filename=display, as_attachment=True)
+
+
 # ─── Voiceover Pipeline ──────────────────────────────────────────────────────
 
 ELEVENLABS_API_KEY_VP = os.environ.get("ELEVENLABS_API_KEY", "")
