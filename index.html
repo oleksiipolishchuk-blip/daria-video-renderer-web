@@ -2341,7 +2341,7 @@ textarea::placeholder { color: var(--text-3); }
         vid.src=`/scrolling/preview/${d.filename.replace('.mp4','')}`;
         vid.load();
         btn.disabled=false;
-        link.click();
+        setTimeout(() => link.click(), 3000);
       } else if (d.status==='error') {
         clearInterval(svPoll);
         const el=document.getElementById('sv-err-msg'); el.textContent=d.error||'Помилка'; el.style.display='block';

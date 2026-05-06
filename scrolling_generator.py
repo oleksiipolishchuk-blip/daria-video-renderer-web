@@ -1,3 +1,4 @@
+import gc
 import os
 import subprocess
 from pathlib import Path
@@ -335,6 +336,8 @@ def generate_video(
         )
     finally:
         clip.close()
+        del clip
+        gc.collect()  # free numpy closures immediately before mux
 
     # Validate the silent video before proceeding
     probe = subprocess.run(
