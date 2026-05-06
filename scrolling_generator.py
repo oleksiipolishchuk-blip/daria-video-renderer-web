@@ -332,9 +332,11 @@ def generate_video(
 
         cmd_v = [
             "ffmpeg", "-y", "-loglevel", "error",
+            "-threads", "1",
             "-framerate", str(FPS),
             "-i", str(frames_dir / "f%06d.jpg"),
             "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-threads", "1",
             "-pix_fmt", "yuv420p", "-movflags", "+faststart",
             tmp_raw,
         ]
