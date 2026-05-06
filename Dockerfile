@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY index.html .
+COPY scrolling_generator.py .
+COPY scrolling_tts.py .
 COPY frames/ /app/frames/
 COPY music/  /app/music/
 
