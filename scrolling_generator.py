@@ -23,28 +23,35 @@ OVERLAY_FADE = 0.93
 # Fonts are in the same directory as this file → /app/fonts/ on Railway
 _FONT_BASE = Path(__file__).parent / "fonts"
 
-_FONTS: dict[str, str] = {
-    "Arial Bold":      "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-    "Arial":           "/System/Library/Fonts/Supplemental/Arial.ttf",
-    "Georgia Bold":    "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
-    "Georgia":         "/System/Library/Fonts/Supplemental/Georgia.ttf",
-    "Impact":          "/System/Library/Fonts/Supplemental/Impact.ttf",
-    "Trebuchet Bold":  "/System/Library/Fonts/Supplemental/Trebuchet MS Bold.ttf",
-}
+# Curated font catalog with display names mapped to actual files
+_NAMED_FONTS: list[dict] = [
+    {"name": "Montserrat",  "file": "Montserrat-Bold.ttf"},
+    {"name": "Gilroy",      "file": "Gilroy-Medium.ttf"},
+    {"name": "Georgia",     "file": "Georgia.ttf"},
+    {"name": "LT Carpet",   "file": "LTCarpet.ttf"},
+    {"name": "Inter",       "file": "Inter-Medium.otf"},
+    {"name": "Bodyhand",    "file": "Bodyhand Regular.otf"},
+]
+
 _FALLBACKS = [
-    "/System/Library/Fonts/Helvetica.ttc",
-    "/Library/Fonts/Arial.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
 ]
 
 
 def _get_font(family: str, size: int) -> ImageFont.FreeTypeFont:
+    # Named catalog lookup first
+    for entry in _NAMED_FONTS:
+        if entry["name"] == family:
+            p = _FONT_BASE / entry["file"]
+            if p.exists():
+                return ImageFont.truetype(str(p), size)
+    # Direct filename fallback (underscore-encoded family name)
     for ext in (".otf", ".ttf"):
         custom = _FONT_BASE / f"{family.replace(' ', '_')}{ext}"
         if custom.exists():
             return ImageFont.truetype(str(custom), size)
-    if family in _FONTS and os.path.exists(_FONTS[family]):
-        return ImageFont.truetype(_FONTS[family], size)
     for path in _FALLBACKS:
         if os.path.exists(path):
             return ImageFont.truetype(path, size)
@@ -52,21 +59,12 @@ def _get_font(family: str, size: int) -> ImageFont.FreeTypeFont:
 
 
 def list_fonts() -> list[dict]:
-    """Return list of available fonts for the API."""
-    result = []
-    seen = set()
-    if _FONT_BASE.exists():
-        for f in sorted(_FONT_BASE.iterdir()):
-            if f.suffix.lower() in (".ttf", ".otf") and not f.name.startswith("."):
-                name = f.stem.replace("_", " ")
-                if name not in seen:
-                    result.append({"name": name, "file": f.name})
-                    seen.add(name)
-    for name in _FONTS:
-        if name not in seen and os.path.exists(_FONTS[name]):
-            result.append({"name": name, "file": None})
-            seen.add(name)
-    return result
+    """Return curated list of available fonts for the API."""
+    return [
+        {"name": entry["name"], "file": entry["file"]}
+        for entry in _NAMED_FONTS
+        if (_FONT_BASE / entry["file"]).exists()
+    ]
 
 
 def _wrap_lines(text: str, font: ImageFont.FreeTypeFont) -> list[str]:

@@ -2563,6 +2563,9 @@ textarea::placeholder { color: var(--text-3); }
     svUpdatePreview();
   };
 })();
+
+// switchToPage ran before the IIFE defined svInit — call it now if needed
+if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrolling-video') svInit();
 </script>
 </body>
 </html>
