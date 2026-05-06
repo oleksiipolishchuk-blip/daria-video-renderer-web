@@ -1,7 +1,8 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, HTMLResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, HTMLResponse, StreamingResponse, FileResponse
+from starlette.background import BackgroundTask
 import asyncio
 from typing import Optional
 import base64
@@ -30,6 +31,8 @@ app = FastAPI()
 
 # ── Job store for async generation ───────────────────────────────────────────
 _jobs: dict[str, dict] = {}
+RESULTS_DIR = Path("/tmp/easymh_results")
+RESULTS_DIR.mkdir(exist_ok=True)
 
 def _job_log(job_id: str, msg: str):
     if job_id in _jobs:
@@ -1192,9 +1195,13 @@ def _generate_core_sync(log, params: dict) -> dict:
             f"Music: {music_label}\n"
         )
 
+        # Save video to disk — avoids holding large bytes in RAM
+        video_file = RESULTS_DIR / f"{params['_job_id']}.mp4"
+        video_file.write_bytes(video_bytes)
+        del video_bytes  # free immediately
+
         log("✅ Готово!")
         return {
-            "video":    base64.b64encode(video_bytes).decode(),
             "audio":    base64.b64encode(audio_bytes).decode(),
             "txt":      txt_content,
             "srt":      srt_content,
@@ -1253,7 +1260,18 @@ async def generate_start(
         "bg_image_data": bg_image_data,
         "use_christmas_frame": use_christmas_frame,
         "frame_file": frame_file, "disclaimer": disclaimer,
+        "_job_id": job_id,
     }
+
+    # Clean up result files older than 2 hours to free disk space
+    try:
+        cutoff = time.time() - 7200
+        for f in RESULTS_DIR.glob("*.mp4"):
+            if f.stat().st_mtime < cutoff:
+                f.unlink(missing_ok=True)
+    except Exception:
+        pass
+
     threading.Thread(target=_run_generate, args=(job_id, params), daemon=True).start()
     return JSONResponse({"job_id": job_id})
 
@@ -1296,7 +1314,20 @@ async def generation_result(job_id: str):
     result = job.pop("result")
     _jobs.pop(job_id, None)
     result["status"] = "done"
+    # video is on disk — tell client to fetch it separately
+    result["video_url"] = f"/download/{job_id}"
     return JSONResponse(result)
+
+
+@app.get("/download/{job_id}")
+async def download_video(job_id: str):
+    path = RESULTS_DIR / f"{job_id}.mp4"
+    if not path.exists():
+        raise HTTPException(404, "Video not found or already downloaded")
+    return FileResponse(
+        str(path), media_type="video/mp4", filename="video.mp4",
+        background=BackgroundTask(lambda: path.unlink(missing_ok=True))
+    )
 
 
 # ─── Voiceover Pipeline ──────────────────────────────────────────────────────

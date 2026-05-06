@@ -1337,11 +1337,9 @@ textarea::placeholder { color: var(--text-3); }
       if (!data) throw new Error('Generation timed out');
       const basename = makeFilename(text).replace('.mp4', '');
 
-      // Auto-download video
-      const videoBlob = new Blob([Uint8Array.from(atob(data.video), c => c.charCodeAt(0))], { type: 'video/mp4' });
-      const videoUrl  = URL.createObjectURL(videoBlob);
+      // Auto-download video directly from server (no base64 in memory)
       const tmpA = document.createElement('a');
-      tmpA.href = videoUrl; tmpA.download = basename + '.mp4'; tmpA.click();
+      tmpA.href = data.video_url; tmpA.download = basename + '.mp4'; tmpA.click();
 
       fill.style.width = '100%';
       msg.textContent  = '✓ Done';
@@ -1360,8 +1358,14 @@ textarea::placeholder { color: var(--text-3); }
         a.href = url; a.download = filename; a.textContent = label;
         return a;
       }
+      function makeLinkBtn(label, href, filename) {
+        const a = document.createElement('a');
+        a.className = 'result-dl';
+        a.href = href; a.download = filename; a.textContent = label;
+        return a;
+      }
 
-      btns.appendChild(makeBtn('✓ Video',    videoBlob, 'video/mp4', basename + '.mp4'));
+      btns.appendChild(makeLinkBtn('✓ Video', data.video_url, basename + '.mp4'));
       btns.appendChild(makeBtn('↓ MP3',      new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))]), 'audio/mpeg', basename + '.mp3'));
       btns.appendChild(makeBtn('↓ TXT',      data.txt,      'text/plain', basename + '.txt'));
       btns.appendChild(makeBtn('↓ SRT',      data.srt,      'text/plain', basename + '.srt'));
