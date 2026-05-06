@@ -1606,7 +1606,10 @@ def serve_font(filename: str):
 
 def _serve_ui():
     p = Path(__file__).parent / "index.html"
-    return HTMLResponse(content=p.read_text() if p.exists() else "<h1>Not found</h1>")
+    return HTMLResponse(
+        content=p.read_text() if p.exists() else "<h1>Not found</h1>",
+        headers={"Cache-Control": "no-store"},
+    )
 
 @app.get("/",               response_class=HTMLResponse)
 def web_ui():          return _serve_ui()
