@@ -1,6 +1,7 @@
 import os
+import shutil
 import subprocess
-import threading
+import tempfile
 from pathlib import Path
 from typing import Callable, Literal, Optional
 
@@ -286,30 +287,7 @@ def generate_video(
 
     tmp_raw = output_path + ".raw.mp4"
 
-    cmd_v = [
-        "ffmpeg", "-y",
-        "-loglevel", "error",
-        "-f", "rawvideo", "-vcodec", "rawvideo",
-        "-s", f"{WIDTH}x{HEIGHT}", "-pix_fmt", "rgb24", "-r", str(FPS),
-        "-i", "pipe:0",
-        "-vcodec", "libx264", "-preset", "ultrafast", "-crf", "23",
-        "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-        tmp_raw,
-    ]
-
-    proc = subprocess.Popen(cmd_v, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    # Drain stderr in background thread to prevent pipe buffer deadlock
-    stderr_buf: list[bytes] = []
-    def _drain() -> None:
-        try:
-            stderr_buf.append(proc.stderr.read())
-        except Exception:
-            pass
-    drain_thread = threading.Thread(target=_drain, daemon=True)
-    drain_thread.start()
-
-    write_error: list[Exception] = []
+    frames_dir = Path(tempfile.mkdtemp(prefix="sv_frames_"))
     try:
         for fi in range(n_frames):
             t = fi / FPS
@@ -348,26 +326,24 @@ def generate_video(
                         region * (1.0 - a_fade) + disc_rgb[sy0:sy1] * a_fade
                     ).astype(np.uint8)
 
-            proc.stdin.write(frame.tobytes())
+            Image.fromarray(frame, "RGB").save(
+                str(frames_dir / f"f{fi:06d}.jpg"), quality=85, optimize=False,
+            )
 
-    except Exception as exc:
-        write_error.append(exc)
+        cmd_v = [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-framerate", str(FPS),
+            "-i", str(frames_dir / "f%06d.jpg"),
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            tmp_raw,
+        ]
+        r = subprocess.run(cmd_v, capture_output=True, timeout=600)
+        if r.returncode != 0:
+            err = r.stderr.decode(errors="replace").strip()
+            raise RuntimeError(f"FFmpeg encode failed (rc={r.returncode}): {err}")
     finally:
-        try:
-            proc.stdin.close()
-        except Exception:
-            pass
-
-    proc.wait()
-    drain_thread.join(timeout=10)
-    ffmpeg_err = (stderr_buf[0] if stderr_buf else b"").decode(errors="replace").strip()
-    if ffmpeg_err:
-        print(f"[scrolling ffmpeg] {ffmpeg_err}", flush=True)
-
-    if write_error:
-        raise RuntimeError(f"FFmpeg pipe write failed: {write_error[0]}. ffmpeg stderr: {ffmpeg_err}")
-    if proc.returncode != 0:
-        raise RuntimeError(f"FFmpeg video encode failed (rc={proc.returncode}): {ffmpeg_err}")
+        shutil.rmtree(str(frames_dir), ignore_errors=True)
 
     # Mux audio if needed
     audio_inputs: list[str] = []
