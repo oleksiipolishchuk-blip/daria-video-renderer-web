@@ -329,10 +329,17 @@ def generate_video(
     elif music_clip:
         clip = clip.set_audio(music_clip)
 
-    clip.write_videofile(
-        output_path, fps=FPS, codec="libx264", audio_codec="aac", logger=None,
-        ffmpeg_params=["-preset", "ultrafast", "-crf", "28", "-threads", "1"],
-    )
+    try:
+        clip.write_videofile(
+            output_path, fps=FPS, codec="libx264", audio_codec="aac", logger=None,
+            ffmpeg_params=["-preset", "ultrafast", "-crf", "28", "-threads", "1"],
+        )
+    finally:
+        clip.close()
+        if tts_clip:
+            tts_clip.close()
+        if music_clip:
+            music_clip.close()
 
     if on_progress:
         on_progress(100)
