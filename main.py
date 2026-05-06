@@ -1522,12 +1522,18 @@ def _sv_run(task_id: str, data: dict):
         if audio_path and Path(audio_path).exists():
             Path(audio_path).unlink(missing_ok=True)
 
+        # Read video into RAM so download works even if /tmp is cleared
+        output_path_obj = Path(output)
+        video_bytes = output_path_obj.read_bytes()
+        output_path_obj.unlink(missing_ok=True)
+
         from datetime import datetime as _dt
         ts = _dt.now().strftime("%Y-%m-%d_%H-%M")
         _sv_tasks[task_id] = {
             "status": "done", "progress": 100,
             "filename": f"{task_id}.mp4",
             "display_filename": f"scrolling_{ts}.mp4",
+            "video_bytes": video_bytes,
         }
 
     except Exception as e:
@@ -1552,25 +1558,58 @@ def sv_status(task_id: str):
     task = _sv_tasks.get(task_id)
     if not task:
         raise HTTPException(404, "Not found")
-    return JSONResponse(task)
+    return JSONResponse({k: v for k, v in task.items() if k != "video_bytes"})
 
 
 @app.get("/scrolling/preview/{task_id}")
-def sv_preview(task_id: str):
-    path = SV_RESULTS_DIR / f"{task_id}.mp4"
-    if not path.exists():
+def sv_preview(task_id: str, request: Request):
+    task = _sv_tasks.get(task_id)
+    video_bytes = task.get("video_bytes") if task else None
+    if not video_bytes:
         raise HTTPException(404, "Not found")
-    return FileResponse(str(path), media_type="video/mp4")
+    total = len(video_bytes)
+    range_header = request.headers.get("range")
+    if range_header:
+        try:
+            ranges = range_header.strip().lower().replace("bytes=", "")
+            start_str, end_str = ranges.split("-", 1)
+            start = int(start_str) if start_str else 0
+            end = int(end_str) if end_str else total - 1
+            end = min(end, total - 1)
+            return Response(
+                content=video_bytes[start:end + 1],
+                status_code=206,
+                media_type="video/mp4",
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{total}",
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(end - start + 1),
+                },
+            )
+        except Exception:
+            pass
+    return Response(
+        content=video_bytes,
+        media_type="video/mp4",
+        headers={"Accept-Ranges": "bytes", "Content-Length": str(total)},
+    )
 
 
 @app.get("/scrolling/download/{task_id}")
 def sv_download(task_id: str, name: str = ""):
-    path = SV_RESULTS_DIR / f"{task_id}.mp4"
-    if not path.exists():
+    task = _sv_tasks.get(task_id)
+    video_bytes = task.get("video_bytes") if task else None
+    if not video_bytes:
         raise HTTPException(404, "Not found")
-    display = Path(name).name if name else f"{task_id}.mp4"
-    return FileResponse(str(path), media_type="video/mp4",
-                        filename=display, as_attachment=True)
+    display = Path(name).name if name else task.get("display_filename", f"{task_id}.mp4")
+    return Response(
+        content=video_bytes,
+        media_type="video/mp4",
+        headers={
+            "Content-Disposition": f'attachment; filename="{display}"',
+            "Content-Length": str(len(video_bytes)),
+        },
+    )
 
 
 # ─── Voiceover Pipeline ──────────────────────────────────────────────────────
