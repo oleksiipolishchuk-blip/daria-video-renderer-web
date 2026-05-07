@@ -666,7 +666,7 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
         if start_idx is not None:
             end_idx = min(start_idx + len(b_words) - 1, n - 1)
             raw.append((fixed, round(words[start_idx]['start'], 3), round(words[end_idx]['end'], 3), True))
-            cursor = end_idx + 1
+            cursor = max(cursor, end_idx + 1)  # never move cursor backwards
         else:
             raw.append((fixed, None, None, False))
 
@@ -1093,6 +1093,8 @@ def _generate_core_sync(log, params: dict) -> dict:
         log("✂️ Видалення пауз…")
         audio_path, silence_intervals = remove_silence(audio_path, tmp_path)
         if silence_intervals:
+            total_removed = sum(e - s for s, e in silence_intervals)
+            print(f"[silence] removed {len(silence_intervals)} intervals, {total_removed:.2f}s total: {[(round(s,2),round(e,2)) for s,e in silence_intervals[:5]]}", flush=True)
             adjusted = adjust_timestamps(
                 [{"text": w["word"], "start": w["start"], "end": w["end"]} for w in all_words],
                 silence_intervals,
