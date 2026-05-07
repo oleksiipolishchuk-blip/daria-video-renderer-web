@@ -622,6 +622,9 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
     def norm(w: str) -> str:
         return re.sub(r'[^a-zA-Z0-9]', '', w).lower()
 
+    if not words:
+        return []
+
     w_norm = [norm(w['word']) for w in words]
     n = len(w_norm)
     word_pos: dict = {}
@@ -629,7 +632,9 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
         if w:
             word_pos.setdefault(w, []).append(i)
 
-    result, cursor = [], 0
+    # Phase 1: try to align each block, record success/failure separately
+    raw: list[tuple] = []   # (text, start_time, end_time, aligned: bool)
+    cursor = 0
     for block in gpt_blocks:
         b_words = block.split()
         b_norm = [norm(w) for w in b_words if norm(w)]
@@ -656,15 +661,57 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
                     if matches >= (1 if len(b_norm) <= 2 else 2):
                         start_idx = cs
                         break
-        if start_idx is None:
-            if result:
-                result[-1]['text'] += ' ' + block
-            continue
-        # Use original word count (not filtered) for accurate end position
-        end_idx = min(start_idx + len(b_words) - 1, n - 1)
         fixed = re.sub(r'\b(Releyshio|RelayShow|Relay\s*Show|Rilaysho)\b', 'Relatio', block, flags=re.IGNORECASE)
-        result.append({'text': fixed, 'start': round(words[start_idx]['start'], 3), 'end': round(words[end_idx]['end'], 3)})
-        cursor = end_idx + 1
+        if start_idx is not None:
+            end_idx = min(start_idx + len(b_words) - 1, n - 1)
+            raw.append((fixed, round(words[start_idx]['start'], 3), round(words[end_idx]['end'], 3), True))
+            cursor = end_idx + 1
+        else:
+            raw.append((fixed, None, None, False))
+
+    if not raw:
+        return []
+
+    # Phase 2: interpolate timestamps for failed blocks so nothing gets swallowed
+    total_dur = words[-1]['end']
+
+    # Build per-index "nearest known end before" and "nearest known start after"
+    prev_end = [0.0] * len(raw)
+    last_end = 0.0
+    for i, (_, ts, te, ok) in enumerate(raw):
+        prev_end[i] = last_end
+        if ok:
+            last_end = te
+
+    next_start = [total_dur] * len(raw)
+    nxt = total_dur
+    for i in range(len(raw) - 1, -1, -1):
+        _, ts, te, ok = raw[i]
+        next_start[i] = nxt
+        if ok:
+            nxt = ts
+
+    result = []
+    i = 0
+    while i < len(raw):
+        text, ts, te, ok = raw[i]
+        if ok:
+            result.append({'text': text, 'start': ts, 'end': te})
+            i += 1
+        else:
+            # Collect the full run of consecutive failures
+            j = i
+            while j < len(raw) and not raw[j][3]:
+                j += 1
+            run_texts = [raw[k][0] for k in range(i, j)]
+            p = prev_end[i]
+            q = next_start[i]
+            step = (q - p) / (len(run_texts) + 1)
+            for k, rt in enumerate(run_texts):
+                t = round(p + (k + 1) * step, 3)
+                result.append({'text': rt, 'start': t, 'end': round(t + step * 0.9, 3)})
+            i = j
+
     return result
 
 
