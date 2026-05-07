@@ -13,6 +13,8 @@ import os
 import json
 import sys
 import re
+import html as _H
+import difflib
 import httpx
 import threading
 import time
@@ -1904,6 +1906,149 @@ def web_scrolling():   return _serve_ui()
 
 @app.get("/voiceover",      response_class=HTMLResponse)
 def web_voiceover():   return _serve_ui()
+
+@app.get("/tiktok",         response_class=HTMLResponse)
+def web_tiktok():      return _serve_ui()
+
+
+# ── Text Cleaner (TikTok tab) ─────────────────────────────────────────────────
+
+_TC_RULES_FILE = Path(__file__).parent / "tc_rules.json"
+_TC_DEFAULT_RULES = [
+    {"from": "get hard",          "to": "Get firm"},
+    {"from": "hard",              "to": "Firm"},
+    {"from": "sex",               "to": "Intimacy"},
+    {"from": "masturbate",        "to": "Beat off"},
+    {"from": "anxiety",           "to": "Stress"},
+    {"from": "porn",              "to": "Spicy content"},
+    {"from": "penis",             "to": "Member"},
+    {"from": "pills",             "to": "Supplements"},
+    {"from": "doctor",            "to": "Specialist"},
+    {"from": "morning erections", "to": "morning wood"},
+    {"from": "sexual position",   "to": "position"},
+]
+
+def _tc_load_rules() -> list:
+    if _TC_RULES_FILE.exists():
+        try:
+            return json.loads(_TC_RULES_FILE.read_text("utf-8"))
+        except Exception:
+            pass
+    return list(_TC_DEFAULT_RULES)
+
+def _tc_save_rules(rules: list):
+    _TC_RULES_FILE.write_text(json.dumps(rules, ensure_ascii=False, indent=2), "utf-8")
+
+def _tc_apply_case(original: str, target: str) -> str:
+    if not original or not target:
+        return target
+    if original.isupper() and len(original) > 1:
+        return target.upper()
+    if original[0].isupper():
+        return target[0].upper() + target[1:]
+    return target[0].lower() + target[1:]
+
+def _tc_static_clean(text: str, rules: list) -> tuple[str, str]:
+    if not rules:
+        return text, _H.escape(text).replace("\n", "<br>")
+    sorted_r = sorted(rules, key=lambda r: len(r["from"]), reverse=True)
+    try:
+        pattern = re.compile(
+            "|".join(r"(?<!\w)" + re.escape(r["from"]) + r"(?!\w)" for r in sorted_r if r["from"]),
+            re.IGNORECASE,
+        )
+    except re.error:
+        return text, _H.escape(text).replace("\n", "<br>")
+    plain_buf, diff_buf, last = [], [], 0
+    for m in pattern.finditer(text):
+        orig = m.group(0)
+        repl = next(
+            (_tc_apply_case(orig, r["to"]) for r in sorted_r if orig.lower() == r["from"].lower()),
+            orig,
+        )
+        before = text[last: m.start()]
+        plain_buf.append(before)
+        diff_buf.append(_H.escape(before).replace("\n", "<br>"))
+        plain_buf.append(repl)
+        diff_buf.append(f'<mark>{_H.escape(repl)}</mark>')
+        last = m.end()
+    tail = text[last:]
+    plain_buf.append(tail)
+    diff_buf.append(_H.escape(tail).replace("\n", "<br>"))
+    return "".join(plain_buf), "".join(diff_buf)
+
+def _tc_make_diff_html(original: str, cleaned: str) -> str:
+    orig_t  = re.findall(r"\S+|\s+", original)
+    clean_t = re.findall(r"\S+|\s+", cleaned)
+    sm = difflib.SequenceMatcher(None, orig_t, clean_t, autojunk=False)
+    parts = []
+    for tag, _i1, _i2, j1, j2 in sm.get_opcodes():
+        chunk = "".join(clean_t[j1:j2])
+        parts.append(
+            f'<mark>{_H.escape(chunk)}</mark>'
+            if tag in ("replace", "insert") else _H.escape(chunk)
+        )
+    return "".join(parts).replace("\n", "<br>")
+
+async def _tc_ai_clean(text: str, api_key: str) -> str:
+    SYSTEM = (
+        "You are a script editor. Lightly clean the text: fix grammar errors, "
+        "improve sentence flow, align meaning where needed — but do NOT rewrite, "
+        "do NOT change the core message, keep the same structure and approximate length. "
+        "Return ONLY the corrected text, nothing else."
+    )
+    words = text.split()
+    chunks = (
+        [" ".join(words[i: i + 2500]) for i in range(0, len(words), 2500)]
+        if len(words) > 2500 else [text]
+    )
+    results = []
+    async with httpx.AsyncClient(timeout=120) as c:
+        for chunk in chunks:
+            r = await c.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "temperature": 0.2,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM},
+                        {"role": "user",   "content": chunk},
+                    ],
+                },
+            )
+            r.raise_for_status()
+            results.append(r.json()["choices"][0]["message"]["content"])
+    return "\n".join(results)
+
+@app.get("/tiktok/rules")
+def tc_get_rules():
+    return JSONResponse(_tc_load_rules())
+
+@app.post("/tiktok/rules")
+async def tc_set_rules(req: Request):
+    _tc_save_rules(await req.json())
+    return JSONResponse({"ok": True})
+
+@app.post("/tiktok/clean")
+async def tc_clean(req: Request):
+    data    = await req.json()
+    text    = data.get("text", "").strip()
+    mode    = data.get("mode", "static")
+    api_key = data.get("api_key", "") or os.environ.get("OPENAI_API_KEY", "")
+    if not text:
+        return JSONResponse({"error": "Empty text"}, status_code=400)
+    rules = _tc_load_rules()
+    cleaned, diff_html = _tc_static_clean(text, rules)
+    if mode == "ai":
+        if not api_key:
+            return JSONResponse({"error": "OpenAI API key required. Open ⚙️ Settings."}, status_code=400)
+        try:
+            cleaned   = await _tc_ai_clean(cleaned, api_key)
+            diff_html = _tc_make_diff_html(text, cleaned)
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+    return JSONResponse({"cleaned": cleaned, "diff_html": diff_html})
 
 
 @app.get("/health")

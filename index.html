@@ -720,6 +720,79 @@ textarea::placeholder { color: var(--text-3); }
   #page-scrolling-video .sv-live-preview { max-width: 150px; margin: 0 auto; }
   #page-scrolling-video .sv-result-inner { flex-direction: column; }
 }
+
+/* ── Text Cleaner page ── */
+#page-text-cleaner { max-width: 1060px; }
+#page-text-cleaner .tc-header { text-align:center; margin-bottom:28px; padding-top:8px; }
+#page-text-cleaner .tc-header h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.3px; color:var(--text); }
+#page-text-cleaner .tc-header p  { font-size:11px; color:var(--text-3); letter-spacing:1.2px; text-transform:uppercase; margin-top:4px; }
+
+#page-text-cleaner .tc-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:12px; }
+#page-text-cleaner .tc-mode-toggle { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:50px; padding:3px; gap:2px; }
+#page-text-cleaner .tc-mode-btn { padding:6px 16px; border:none; background:none; border-radius:50px; color:var(--text-2); font-size:12px; font-weight:500; font-family:inherit; cursor:pointer; transition:all .18s; white-space:nowrap; }
+#page-text-cleaner .tc-mode-btn.active { background:rgba(255,255,255,0.10); color:var(--text); }
+#page-text-cleaner .btn-tc-settings { background:var(--surface); border:1px solid var(--border); border-radius:10px; width:34px; height:34px; font-size:16px; cursor:pointer; color:var(--text-2); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+#page-text-cleaner .btn-tc-settings:hover { border-color:var(--border-2); color:var(--text); }
+
+#page-text-cleaner .tc-split { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px; }
+#page-text-cleaner .tc-pane { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; }
+#page-text-cleaner .tc-pane-hd { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+#page-text-cleaner .tc-pane-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-3); }
+#page-text-cleaner .tc-pane-actions { display:flex; gap:6px; }
+
+#page-text-cleaner .btn-tc-sm { padding:4px 11px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text-2); font-size:11px; font-weight:500; font-family:inherit; cursor:pointer; transition:all .14s; }
+#page-text-cleaner .btn-tc-sm:hover:not(:disabled) { border-color:var(--border-2); color:var(--text); }
+#page-text-cleaner .btn-tc-sm:disabled { opacity:.3; cursor:not-allowed; }
+#page-text-cleaner .btn-tc-sm.hi { background:rgba(255,255,255,0.08); border-color:var(--border-2); color:var(--text); }
+
+#page-text-cleaner textarea#tc-input { flex:1; width:100%; min-height:340px; max-height:480px; padding:16px; font-size:13.5px; line-height:1.75; color:var(--text); background:transparent; border:none; outline:none; resize:none; font-family:inherit; overflow-y:auto; }
+#page-text-cleaner textarea#tc-input::placeholder { color:var(--text-3); }
+
+#page-text-cleaner .tc-output { flex:1; min-height:340px; max-height:480px; padding:16px; font-size:13.5px; line-height:1.75; color:var(--text); overflow-y:auto; word-break:break-word; }
+#page-text-cleaner .tc-output-placeholder { color:var(--text-3); font-style:italic; }
+
+#page-text-cleaner .tc-pane-ft { padding:7px 16px; border-top:1px solid var(--border); flex-shrink:0; }
+#page-text-cleaner .tc-foot-txt { font-size:11px; color:var(--text-3); }
+
+#page-text-cleaner mark { background:rgba(251,191,36,.18); border-bottom:2px solid rgba(251,191,36,.55); border-radius:3px; padding:0 1px; color:inherit; }
+
+#page-text-cleaner .tc-action-bar { display:flex; flex-direction:column; align-items:center; padding:8px 0 20px; gap:6px; }
+#page-text-cleaner .btn-tc-clean { background:rgba(255,255,255,0.08); color:var(--text); border:1px solid var(--border-2); padding:13px 52px; border-radius:50px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:all .2s; letter-spacing:-.1px; }
+#page-text-cleaner .btn-tc-clean:hover:not(:disabled) { background:rgba(255,255,255,0.13); }
+#page-text-cleaner .btn-tc-clean:disabled { opacity:.35; cursor:not-allowed; }
+#page-text-cleaner .tc-shortcut { font-size:11px; color:var(--text-3); }
+
+#page-text-cleaner .tc-rules-section { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+#page-text-cleaner .tc-rules-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border); transition:background .14s; }
+#page-text-cleaner .tc-rules-hd:hover { background:rgba(255,255,255,.03); }
+#page-text-cleaner .tc-rules-title { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-3); }
+#page-text-cleaner .tc-rules-arrow { font-size:9px; transition:transform .2s; opacity:.5; }
+#page-text-cleaner .tc-rules-badge { background:rgba(255,255,255,.1); color:var(--text-2); font-size:10px; font-weight:700; padding:1px 7px; border-radius:50px; letter-spacing:0; text-transform:none; }
+#page-text-cleaner .tc-rules-body { padding:14px 16px; }
+#page-text-cleaner .tc-rules-body.closed { display:none; }
+#page-text-cleaner .tc-rule-row { display:grid; grid-template-columns:1fr 24px 1fr 28px; gap:7px; align-items:center; margin-bottom:8px; }
+#page-text-cleaner .tc-rule-input { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:9px; padding:7px 11px; font-size:12px; color:var(--text); outline:none; width:100%; font-family:'DM Mono',monospace; transition:border-color .14s; }
+#page-text-cleaner .tc-rule-input::placeholder { color:var(--text-3); font-style:italic; }
+#page-text-cleaner .tc-rule-input:focus { border-color:var(--border-2); background:rgba(255,255,255,.06); }
+#page-text-cleaner .tc-rule-sep { color:var(--text-3); font-size:13px; text-align:center; }
+#page-text-cleaner .btn-tc-del { background:none; border:none; color:var(--text-3); cursor:pointer; font-size:14px; padding:3px; border-radius:5px; line-height:1; transition:color .12s; text-align:center; }
+#page-text-cleaner .btn-tc-del:hover { color:#ef4444; }
+#page-text-cleaner .tc-rules-ft { padding:10px 16px 14px; border-top:1px solid var(--border); }
+#page-text-cleaner .tc-status { text-align:center; margin-top:12px; font-size:12px; font-weight:500; min-height:18px; transition:opacity .3s; }
+
+#page-text-cleaner .tc-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:200; backdrop-filter:blur(6px); }
+#page-text-cleaner .tc-modal { background:#141416; border:1px solid var(--border-2); border-radius:18px; width:400px; max-width:calc(100vw - 32px); overflow:hidden; }
+#page-text-cleaner .tc-modal-hd { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); font-size:13px; font-weight:600; }
+#page-text-cleaner .tc-modal-close { background:none; border:none; color:var(--text-3); font-size:20px; cursor:pointer; line-height:1; padding:0 4px; transition:color .12s; }
+#page-text-cleaner .tc-modal-close:hover { color:#ef4444; }
+#page-text-cleaner .tc-modal-body { padding:20px; }
+#page-text-cleaner .tc-modal-label { display:block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text-3); margin-bottom:8px; }
+#page-text-cleaner .tc-modal-input { width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:9px; padding:9px 13px; font-size:12px; font-family:'DM Mono',monospace; color:var(--text); outline:none; transition:border-color .14s; }
+#page-text-cleaner .tc-modal-input:focus { border-color:var(--border-2); }
+#page-text-cleaner .tc-modal-hint { margin-top:8px; font-size:11px; color:var(--text-3); line-height:1.5; }
+#page-text-cleaner .tc-modal-ft { padding:0 20px 20px; }
+#page-text-cleaner .btn-tc-save-key { width:100%; padding:11px; border-radius:50px; background:rgba(255,255,255,.08); border:1px solid var(--border-2); color:var(--text); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s; }
+#page-text-cleaner .btn-tc-save-key:hover { background:rgba(255,255,255,.13); }
 </style>
 </head>
 <body>
@@ -747,6 +820,14 @@ textarea::placeholder { color: var(--text-3); }
       </div>
       <div class="sidebar-items" id="section-design">
         <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline" data-url="/voiceover">🎤 Voiceover Pipeline</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" data-section="tiktok">
+        TikTok <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items" id="section-tiktok">
+        <button class="sidebar-item" data-page="text-cleaner" data-subtitle="/ Text Cleaner" data-url="/tiktok">✂️ Text Cleaner</button>
       </div>
     </div>
   </nav>
@@ -1203,6 +1284,94 @@ textarea::placeholder { color: var(--text-3); }
     </div><!-- /sv-main-grid -->
   </div><!-- /sv-wrap -->
   </div><!-- /page-scrolling-video -->
+
+  <!-- ── Text Cleaner page ── -->
+  <div id="page-text-cleaner" class="page-content" style="display:none">
+
+    <div class="tc-header">
+      <h1>✂️ Text Cleaner</h1>
+      <p>Заміна слів · Diff-підсвітка · AI-редагування</p>
+    </div>
+
+    <div class="tc-toolbar">
+      <div class="tc-mode-toggle">
+        <button class="tc-mode-btn active" data-tcmode="static">Static</button>
+        <button class="tc-mode-btn" data-tcmode="ai">Static + AI ✦</button>
+      </div>
+      <button class="btn-tc-settings" id="tc-btn-settings" title="OpenAI API Key">⚙</button>
+    </div>
+
+    <div class="tc-split">
+      <!-- Original -->
+      <div class="tc-pane">
+        <div class="tc-pane-hd">
+          <span class="tc-pane-label">Оригінал</span>
+          <div class="tc-pane-actions">
+            <button class="btn-tc-sm" id="tc-btn-paste">Paste</button>
+            <button class="btn-tc-sm" id="tc-btn-clear">Clear</button>
+          </div>
+        </div>
+        <textarea id="tc-input" placeholder="Встав скрипт тут…&#10;&#10;Або натисни Paste."></textarea>
+        <div class="tc-pane-ft"><span class="tc-foot-txt" id="tc-char-count">0 символів</span></div>
+      </div>
+      <!-- Result -->
+      <div class="tc-pane">
+        <div class="tc-pane-hd">
+          <span class="tc-pane-label">Результат</span>
+          <div class="tc-pane-actions">
+            <button class="btn-tc-sm hi" id="tc-btn-copy" disabled>📋 Copy</button>
+            <button class="btn-tc-sm" id="tc-btn-dl" disabled>↓ TXT</button>
+          </div>
+        </div>
+        <div id="tc-output" class="tc-output">
+          <span class="tc-output-placeholder">Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>
+        </div>
+        <div class="tc-pane-ft"><span class="tc-foot-txt" id="tc-changes-count"></span></div>
+      </div>
+    </div>
+
+    <div class="tc-action-bar">
+      <button class="btn-tc-clean" id="tc-btn-clean">Очистити →</button>
+      <span class="tc-shortcut">⌘ Enter / Ctrl+Enter</span>
+    </div>
+
+    <!-- Rules -->
+    <div class="tc-rules-section">
+      <div class="tc-rules-hd" id="tc-rules-toggle">
+        <div class="tc-rules-title">
+          <span class="tc-rules-arrow" id="tc-rules-arrow">▾</span>
+          Правила заміни
+          <span class="tc-rules-badge" id="tc-rules-badge">0</span>
+        </div>
+        <button class="btn-tc-sm" id="tc-btn-add-rule" style="pointer-events:all">+ Додати</button>
+      </div>
+      <div class="tc-rules-body" id="tc-rules-body"></div>
+      <div class="tc-rules-ft" id="tc-rules-ft" style="display:none">
+        <button class="btn-tc-sm" id="tc-btn-save-rules">💾 Зберегти зміни</button>
+      </div>
+    </div>
+
+    <div class="tc-status" id="tc-status"></div>
+
+    <!-- Settings modal -->
+    <div class="tc-modal-overlay" id="tc-modal" style="display:none">
+      <div class="tc-modal">
+        <div class="tc-modal-hd">
+          Налаштування
+          <button class="tc-modal-close" id="tc-modal-close">×</button>
+        </div>
+        <div class="tc-modal-body">
+          <label class="tc-modal-label" for="tc-api-key">OpenAI API Key</label>
+          <input type="password" id="tc-api-key" class="tc-modal-input" placeholder="sk-…" autocomplete="off" spellcheck="false">
+          <p class="tc-modal-hint">Потрібно тільки для режиму <strong>Static + AI</strong>. Зберігається в localStorage.</p>
+        </div>
+        <div class="tc-modal-ft">
+          <button class="btn-tc-save-key" id="tc-btn-save-key">Зберегти</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-text-cleaner -->
 
   </div><!-- /left col -->
 
@@ -1770,7 +1939,7 @@ textarea::placeholder { color: var(--text-3); }
   });
 
   // ── Sidebar navigation ────────────────────────────────
-  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline', '/scrolling': 'scrolling-video' };
+  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline', '/scrolling': 'scrolling-video', '/tiktok': 'text-cleaner' };
 
   function switchToPage(pageId, push = true) {
     const item = document.querySelector(`.sidebar-item[data-page="${pageId}"]`);
@@ -1789,6 +1958,7 @@ textarea::placeholder { color: var(--text-3); }
     const showPreview = pageId === 'video-generator';
     document.getElementById('preview-col').style.visibility = showPreview ? '' : 'hidden';
     if (pageId === 'scrolling-video' && typeof svInit === 'function') svInit();
+    if (pageId === 'text-cleaner'   && typeof _tcInit === 'function') _tcInit();
     if (push) history.pushState({ page: pageId }, '', item?.dataset.url || '/');
   }
 
@@ -2691,6 +2861,232 @@ textarea::placeholder { color: var(--text-3); }
 
 // switchToPage ran before the IIFE defined svInit — call it now if needed
 if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrolling-video') svInit();
+
+// ── Text Cleaner ──────────────────────────────────────────────────────────────
+(function() {
+  const TC_DEFAULT_RULES = [
+    { from: 'get hard',          to: 'Get firm' },
+    { from: 'hard',              to: 'Firm' },
+    { from: 'sex',               to: 'Intimacy' },
+    { from: 'masturbate',        to: 'Beat off' },
+    { from: 'anxiety',           to: 'Stress' },
+    { from: 'porn',              to: 'Spicy content' },
+    { from: 'penis',             to: 'Member' },
+    { from: 'pills',             to: 'Supplements' },
+    { from: 'doctor',            to: 'Specialist' },
+    { from: 'morning erections', to: 'morning wood' },
+    { from: 'sexual position',   to: 'position' },
+  ];
+
+  let tcRules = [];
+  let tcClean = '';
+  let tcMode  = 'static';
+  let tcRulesOpen = true;
+  let tcDirty = false;
+  let tcInited = false;
+
+  async function tcInit() {
+    if (tcInited) return;
+    tcInited = true;
+    await tcLoadRules();
+    const k = localStorage.getItem('tc_api_key');
+    if (k) document.getElementById('tc-api-key').value = k;
+    tcSetupEvents();
+  }
+
+  async function tcLoadRules() {
+    try {
+      const res = await fetch('/tiktok/rules');
+      if (!res.ok) throw new Error();
+      tcRules = await res.json();
+      if (!tcRules.length) tcRules = TC_DEFAULT_RULES.map(r => ({...r}));
+    } catch {
+      tcRules = TC_DEFAULT_RULES.map(r => ({...r}));
+    }
+    tcRenderRules();
+  }
+
+  function tcRenderRules() {
+    const body = document.getElementById('tc-rules-body');
+    body.innerHTML = '';
+    if (!tcRules.length) {
+      body.innerHTML = '<p style="color:var(--text-3);font-size:12px;padding:4px 0">Правил немає. Натисни + Додати.</p>';
+      tcUpdateBadge(); return;
+    }
+    tcRules.forEach((rule, i) => {
+      const row = document.createElement('div');
+      row.className = 'tc-rule-row';
+      row.innerHTML = `
+        <input class="tc-rule-input" type="text" value="${tcEsc(rule.from)}" placeholder="Знайти…" data-i="${i}" data-f="from">
+        <span class="tc-rule-sep">→</span>
+        <input class="tc-rule-input" type="text" value="${tcEsc(rule.to)}" placeholder="Замінити…" data-i="${i}" data-f="to">
+        <button class="btn-tc-del" data-i="${i}" title="Видалити">✕</button>`;
+      body.appendChild(row);
+    });
+    body.querySelectorAll('.tc-rule-input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        tcRules[+e.target.dataset.i][e.target.dataset.f] = e.target.value;
+        tcMarkDirty();
+      });
+    });
+    body.querySelectorAll('.btn-tc-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        tcRules.splice(+e.target.dataset.i, 1);
+        tcRenderRules();
+        tcSaveRules();
+      });
+    });
+    tcUpdateBadge();
+  }
+
+  function tcMarkDirty() {
+    tcDirty = true;
+    document.getElementById('tc-rules-ft').style.display = 'block';
+  }
+
+  async function tcSaveRules() {
+    try {
+      await fetch('/tiktok/rules', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(tcRules),
+      });
+      tcDirty = false;
+      document.getElementById('tc-rules-ft').style.display = 'none';
+      tcShowStatus('✓ Правила збережено');
+    } catch { tcShowStatus('Помилка збереження', true); }
+  }
+
+  function tcUpdateBadge() {
+    document.getElementById('tc-rules-badge').textContent = tcRules.filter(r => r.from).length;
+  }
+
+  async function tcRunClean() {
+    const text = document.getElementById('tc-input').value.trim();
+    if (!text) { tcShowStatus('Введи текст!', true); return; }
+    const btn = document.getElementById('tc-btn-clean');
+    btn.disabled = true;
+    btn.textContent = tcMode === 'ai' ? 'AI обробка…' : 'Очищаємо…';
+    const api_key = localStorage.getItem('tc_api_key') || '';
+    try {
+      const res  = await fetch('/tiktok/clean', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text, mode: tcMode, api_key }),
+      });
+      const data = await res.json();
+      if (data.error) { tcShowStatus('❌ ' + data.error, true); return; }
+      tcClean = data.cleaned;
+      document.getElementById('tc-output').innerHTML = data.diff_html;
+      document.getElementById('tc-btn-copy').disabled = false;
+      document.getElementById('tc-btn-dl').disabled   = false;
+      const n = (data.diff_html.match(/<mark>/g) || []).length;
+      document.getElementById('tc-changes-count').textContent =
+        n ? `${n} замін${n===1?'а':n<5?'и':''}` : 'Змін не виявлено';
+      tcShowStatus(tcMode === 'ai' ? '✓ AI + Static готово' : `✓ Готово — ${n} замін`);
+    } catch (e) {
+      tcShowStatus('❌ ' + (e.message || 'Помилка'), true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Очистити →';
+    }
+  }
+
+  function tcSetupEvents() {
+    document.getElementById('tc-input').addEventListener('input', e => {
+      document.getElementById('tc-char-count').textContent =
+        `${e.target.value.length.toLocaleString('uk')} символів`;
+    });
+    document.getElementById('tc-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); tcRunClean(); }
+    });
+    document.querySelectorAll('.tc-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tc-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tcMode = btn.dataset.tcmode;
+      });
+    });
+    document.getElementById('tc-btn-clean').addEventListener('click', tcRunClean);
+    document.getElementById('tc-btn-paste').addEventListener('click', async () => {
+      try {
+        const t = await navigator.clipboard.readText();
+        document.getElementById('tc-input').value = t;
+        document.getElementById('tc-char-count').textContent = `${t.length.toLocaleString('uk')} символів`;
+      } catch { tcShowStatus('Використай ⌘V / Ctrl+V', true); }
+    });
+    document.getElementById('tc-btn-clear').addEventListener('click', () => {
+      document.getElementById('tc-input').value = '';
+      document.getElementById('tc-char-count').textContent = '0 символів';
+      document.getElementById('tc-output').innerHTML = "<span class='tc-output-placeholder'>Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>";
+      document.getElementById('tc-changes-count').textContent = '';
+      document.getElementById('tc-btn-copy').disabled = true;
+      document.getElementById('tc-btn-dl').disabled   = true;
+      tcClean = '';
+    });
+    document.getElementById('tc-btn-copy').addEventListener('click', async () => {
+      if (!tcClean) return;
+      await navigator.clipboard.writeText(tcClean);
+      tcShowStatus('✓ Скопійовано!');
+    });
+    document.getElementById('tc-btn-dl').addEventListener('click', () => {
+      if (!tcClean) return;
+      const blob = new Blob([tcClean], {type:'text/plain;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {href:url, download:`cleaned_${new Date().toISOString().slice(0,10)}.txt`});
+      a.click(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('tc-rules-toggle').addEventListener('click', e => {
+      if (e.target.closest('#tc-btn-add-rule')) return;
+      tcRulesOpen = !tcRulesOpen;
+      document.getElementById('tc-rules-body').classList.toggle('closed', !tcRulesOpen);
+      document.getElementById('tc-rules-arrow').style.transform = tcRulesOpen ? '' : 'rotate(-90deg)';
+    });
+    document.getElementById('tc-btn-add-rule').addEventListener('click', e => {
+      e.stopPropagation();
+      if (!tcRulesOpen) {
+        tcRulesOpen = true;
+        document.getElementById('tc-rules-body').classList.remove('closed');
+        document.getElementById('tc-rules-arrow').style.transform = '';
+      }
+      tcRules.push({from:'', to:''});
+      tcRenderRules();
+      tcMarkDirty();
+      const inputs = document.querySelectorAll('.tc-rule-input[data-f="from"]');
+      if (inputs.length) inputs[inputs.length-1].focus();
+    });
+    document.getElementById('tc-btn-save-rules').addEventListener('click', tcSaveRules);
+    document.getElementById('tc-btn-settings').addEventListener('click', () => {
+      document.getElementById('tc-modal').style.display = 'flex';
+    });
+    document.getElementById('tc-modal-close').addEventListener('click', tcCloseModal);
+    document.getElementById('tc-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('tc-modal')) tcCloseModal();
+    });
+    document.getElementById('tc-btn-save-key').addEventListener('click', () => {
+      const key = document.getElementById('tc-api-key').value.trim();
+      if (key) localStorage.setItem('tc_api_key', key);
+      else     localStorage.removeItem('tc_api_key');
+      tcCloseModal();
+      tcShowStatus('✓ API ключ збережено');
+    });
+  }
+
+  function tcCloseModal() { document.getElementById('tc-modal').style.display = 'none'; }
+
+  let _tcStatusTimer = null;
+  function tcShowStatus(msg, isErr = false) {
+    const bar = document.getElementById('tc-status');
+    bar.textContent = msg;
+    bar.style.color   = isErr ? '#ef4444' : '#32d74b';
+    bar.style.opacity = '1';
+    clearTimeout(_tcStatusTimer);
+    _tcStatusTimer = setTimeout(() => { bar.style.opacity = '0'; }, 3500);
+  }
+
+  function tcEsc(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window._tcInit = tcInit;
+})();
 </script>
 </body>
 </html>
