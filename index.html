@@ -682,6 +682,8 @@ textarea::placeholder { color: var(--text-3); }
 #page-scrolling-video .sv-btn:hover:not(:disabled) { transform: scale(1.01); box-shadow: 0 4px 20px rgba(255,255,255,0.12); }
 #page-scrolling-video .sv-btn:active { transform: scale(0.99); }
 #page-scrolling-video .sv-btn:disabled { background: rgba(255,255,255,0.07); color: var(--text-3); cursor: not-allowed; transform: none; box-shadow: none; }
+#page-scrolling-video .sv-btn-ghost { background: transparent; color: var(--text-3); border: 1px solid var(--border); margin-top: -4px; }
+#page-scrolling-video .sv-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.04); color: var(--text-2); transform: none; box-shadow: none; }
 #page-scrolling-video .sv-below { margin-top: 0; }
 #page-scrolling-video .sv-prog-bg { background: rgba(255,255,255,0.06); border-radius: 4px; height: 3px; overflow: hidden; margin-top: 10px; }
 #page-scrolling-video .sv-prog-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s var(--ease); width: 0%; }
@@ -1147,6 +1149,7 @@ textarea::placeholder { color: var(--text-3); }
         </div>
 
         <button class="sv-btn" id="sv-gen-btn" onclick="svGenerate()">Згенерувати відео</button>
+        <button class="sv-btn sv-btn-ghost" onclick="svResetAll()">Скинути все</button>
 
         <!-- Progress -->
         <div class="sv-card sv-below" id="sv-prog-card" style="display:none">
@@ -2082,6 +2085,110 @@ textarea::placeholder { color: var(--text-3); }
   let svInited = false;
   let svPoll   = null;
 
+  const SV_LS_KEY = 'sv_form_v1';
+
+  function svSaveState() {
+    try {
+      localStorage.setItem(SV_LS_KEY, JSON.stringify({
+        text:      document.getElementById('sv-text').value,
+        title:     document.getElementById('sv-title-input').value,
+        bg:        document.getElementById('sv-bg-hex').value,
+        txt:       document.getElementById('sv-txt-hex').value,
+        tc:        svTitleColor,
+        tcLinked:  svTitleColorLinked,
+        font:      svFont,
+        titleFont: svTitleFont,
+        titleSize: svTitleSize,
+        fontSize:  document.getElementById('sv-font-size').value,
+        voice:     svVoice,
+        music:     svMusic,
+        align:     svAlign,
+        speed:     document.getElementById('sv-speed').value,
+        discAi:    document.getElementById('sv-disc-ai').checked,
+        discActor: document.getElementById('sv-disc-actor').checked,
+        discVary:  document.getElementById('sv-disc-vary').checked,
+        opacity:   svBgOpacity,
+      }));
+    } catch {}
+  }
+
+  function svRestoreState() {
+    try {
+      const raw = localStorage.getItem(SV_LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.text  != null) { document.getElementById('sv-text').value = s.text; document.getElementById('sv-cc').textContent = s.text.length; }
+      if (s.title != null) document.getElementById('sv-title-input').value = s.title;
+      if (s.bg)  svSetColor('bg',  s.bg);
+      if (s.txt) svSetColor('txt', s.txt);
+      if (s.tc)  { svSetTitleColor(s.tc); svTitleColorLinked = !!s.tcLinked; }
+      if (s.font) svFont = s.font;
+      if (s.titleFont) { svTitleFont = s.titleFont; const sel = document.getElementById('sv-title-font'); if (sel) sel.value = s.titleFont; }
+      if (s.titleSize != null) { svTitleSize = +s.titleSize; const el = document.getElementById('sv-title-size'); if (el) { el.value = s.titleSize; document.getElementById('sv-tfs-val').textContent = s.titleSize + 'px'; } }
+      if (s.fontSize) { document.getElementById('sv-font-size').value = s.fontSize; document.getElementById('sv-fs-val').textContent = s.fontSize + 'px'; }
+      if (s.voice) {
+        svVoice = s.voice;
+        const dot = document.getElementById('sv-sel-dot');
+        dot.style.display = 'inline-block';
+        dot.style.background = s.voice.color || 'transparent';
+        document.getElementById('sv-sel-name').textContent = s.voice.name;
+        document.getElementById('sv-speed-row').style.display = 'none';
+      }
+      if (s.music != null) svMusic = s.music;
+      if (s.align) { svAlign = s.align; document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.toggle('active', b.dataset.align === s.align)); }
+      if (s.speed) { document.getElementById('sv-speed').value = s.speed; document.getElementById('sv-sp-val').textContent = s.speed + ' px/с'; }
+      if (s.discAi    != null) document.getElementById('sv-disc-ai').checked    = s.discAi;
+      if (s.discActor != null) document.getElementById('sv-disc-actor').checked = s.discActor;
+      if (s.discVary  != null) document.getElementById('sv-disc-vary').checked  = s.discVary;
+      if (s.opacity != null) { svBgOpacity = s.opacity; const el = document.getElementById('sv-bg-opacity'); if (el) { el.value = Math.round(s.opacity * 100); document.getElementById('sv-bg-op-val').textContent = Math.round(s.opacity * 100) + '%'; } }
+    } catch {}
+  }
+
+  window.svResetAll = function() {
+    if (!confirm('Скинути всі налаштування та очистити форму?')) return;
+    if (svPoll) { clearInterval(svPoll); svPoll = null; }
+    try { localStorage.removeItem(SV_LS_KEY); } catch {}
+    document.getElementById('sv-text').value = '';
+    document.getElementById('sv-title-input').value = '';
+    document.getElementById('sv-cc').textContent = '0';
+    svSetColor('bg', '#0a0a0a'); svSetColor('txt', '#ffffff'); svSetTitleColor('#ffffff'); svTitleColorLinked = true;
+    document.querySelectorAll('.sv-color-card').forEach((c,i) => c.classList.toggle('active', i===1));
+    svFont = 'Georgia';
+    document.querySelectorAll('.sv-font-card').forEach(c => c.classList.toggle('active', c.dataset.font === 'Georgia'));
+    svTitleFont = ''; document.getElementById('sv-title-font').value = '';
+    svTitleSize = 53; document.getElementById('sv-title-size').value = '53'; document.getElementById('sv-tfs-val').textContent = '53px';
+    document.getElementById('sv-font-size').value = '40'; document.getElementById('sv-fs-val').textContent = '40px';
+    svVoice = null;
+    document.getElementById('sv-sel-dot').style.display = 'none';
+    document.getElementById('sv-sel-name').textContent = '— без озвучки —';
+    document.getElementById('sv-speed-row').style.display = 'block';
+    document.querySelectorAll('.sv-vrow').forEach(r => r.classList.remove('active'));
+    const noneVRow = document.querySelector('#sv-vlist .sv-vrow');
+    if (noneVRow) noneVRow.classList.add('active');
+    svMusic = null; svStopAudio();
+    document.querySelectorAll('.sv-music-track').forEach(c => c.classList.remove('active'));
+    const noneMEl = document.querySelector('#sv-music-wrap .sv-music-none');
+    if (noneMEl) { noneMEl.classList.add('active'); }
+    svAlign = 'left';
+    document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.toggle('active', b.dataset.align === 'left'));
+    document.getElementById('sv-speed').value = '40'; document.getElementById('sv-sp-val').textContent = '40 px/с';
+    document.getElementById('sv-disc-ai').checked = false;
+    document.getElementById('sv-disc-actor').checked = false;
+    document.getElementById('sv-disc-vary').checked = false;
+    svBgImageFile = null; svBgImageObjUrl = null; svOverlayFile = null; svOverlayObjUrl = null; svBgOpacity = 0.5;
+    document.getElementById('sv-bg-opacity').value = '50'; document.getElementById('sv-bg-op-val').textContent = '50%';
+    document.getElementById('sv-bg-img-preview-row').style.display = 'none';
+    document.getElementById('sv-bg-img-thumb').src = '';
+    document.getElementById('sv-overlay-preview-row').style.display = 'none';
+    document.getElementById('sv-overlay-pos-wrap').style.display = 'none';
+    document.getElementById('sv-overlay-thumb').src = '';
+    document.getElementById('sv-prog-card').style.display = 'none';
+    document.getElementById('sv-res-card').style.display = 'none';
+    document.getElementById('sv-err-msg').style.display = 'none';
+    document.getElementById('sv-gen-btn').disabled = false;
+    svUpdatePreview();
+  };
+
   function svIsLight(hex) {
     if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
     const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
@@ -2174,6 +2281,7 @@ textarea::placeholder { color: var(--text-3); }
     } else {
       discEl.style.display = 'none';
     }
+    if (svInited) svSaveState();
   }
 
   async function svLoadFonts() {
@@ -2341,7 +2449,7 @@ textarea::placeholder { color: var(--text-3); }
         vid.src=`/scrolling/preview/${d.filename.replace('.mp4','')}`;
         vid.load();
         btn.disabled=false;
-        setTimeout(() => link.click(), 3000);
+        link.click();
       } else if (d.status==='error') {
         clearInterval(svPoll);
         const el=document.getElementById('sv-err-msg'); el.textContent=d.error||'Помилка'; el.style.display='block';
@@ -2356,7 +2464,6 @@ textarea::placeholder { color: var(--text-3); }
     const btn = document.getElementById('sv-gen-btn');
     btn.disabled = true;
     document.getElementById('sv-prog-card').style.display = 'block';
-    document.getElementById('sv-res-card').style.display = 'none';
     document.getElementById('sv-err-msg').style.display = 'none';
     document.getElementById('sv-prog-bar').style.width = '0%';
     document.getElementById('sv-status-txt').textContent = '...';
@@ -2558,6 +2665,7 @@ textarea::placeholder { color: var(--text-3); }
 
     window.addEventListener('resize', svUpdatePreview);
 
+    svRestoreState();
     svLoadFonts();
     svLoadVoices();
     svLoadMusic();
