@@ -33,6 +33,7 @@ app = FastAPI()
 
 # ── Job store for async generation ───────────────────────────────────────────
 _jobs: dict[str, dict] = {}
+_gen_sem = threading.Semaphore(1)   # one generation at a time (OOM prevention)
 RESULTS_DIR = Path("/tmp/easymh_results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
@@ -1259,7 +1260,13 @@ def _generate_core_sync(log, params: dict) -> dict:
 
 
 def _run_generate(job_id: str, params: dict):
+    if not _gen_sem.acquire(blocking=True, timeout=600):
+        _jobs[job_id]["error"]  = "Queue timeout: server busy for too long"
+        _jobs[job_id]["status"] = "error"
+        _job_log(job_id, "❌ Queue timeout")
+        return
     try:
+        _job_log(job_id, "▶️ Починаємо…")
         result = _generate_core_sync(lambda msg: _job_log(job_id, msg), params)
         _jobs[job_id]["result"] = result
         _jobs[job_id]["status"] = "done"
@@ -1267,6 +1274,8 @@ def _run_generate(job_id: str, params: dict):
         _jobs[job_id]["error"]  = str(e)
         _jobs[job_id]["status"] = "error"
         _job_log(job_id, f"❌ {str(e)[:300]}")
+    finally:
+        _gen_sem.release()
 
 
 @app.post("/generate/start")
@@ -1298,7 +1307,9 @@ async def generate_start(
     music_data    = await music.read()    if music    else None
 
     job_id = secrets.token_hex(8)
-    _jobs[job_id] = {"status": "running", "logs": [], "result": None, "error": None}
+    queued = not _gen_sem._value  # another job currently holds the semaphore
+    init_logs = ["⏳ В черзі — зачекайте…"] if queued else []
+    _jobs[job_id] = {"status": "running", "logs": init_logs, "result": None, "error": None}
 
     params = {
         "el_key": el_key, "oai_key": oai_key,
