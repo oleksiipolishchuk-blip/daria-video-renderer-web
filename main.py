@@ -33,7 +33,7 @@ app = FastAPI()
 
 # ── Job store for async generation ───────────────────────────────────────────
 _jobs: dict[str, dict] = {}
-_gen_sem = threading.Semaphore(1)   # one generation at a time (OOM prevention)
+_gen_sem = threading.Semaphore(1)   # one generation at a time across all video types (OOM prevention)
 RESULTS_DIR = Path("/tmp/easymh_results")
 RESULTS_DIR.mkdir(exist_ok=True)
 
@@ -1536,6 +1536,9 @@ def _sv_resolve_upload(filename: str) -> Optional[str]:
 
 
 def _sv_run(task_id: str, data: dict):
+    if not _gen_sem.acquire(blocking=True, timeout=600):
+        _sv_tasks[task_id] = {"status": "error", "progress": 0, "error": "Queue timeout"}
+        return
     try:
         audio_path = None
         voice_id = data.get("voice_id")
@@ -1605,6 +1608,8 @@ def _sv_run(task_id: str, data: dict):
         import traceback
         traceback.print_exc()
         _sv_tasks[task_id] = {"status": "error", "progress": 0, "error": str(e)}
+    finally:
+        _gen_sem.release()
 
 
 @app.post("/scrolling/generate")
@@ -1613,7 +1618,8 @@ async def sv_generate(request: Request):
     if not data or not data.get("text", "").strip():
         raise HTTPException(400, "text is required")
     task_id = str(_uuid.uuid4())
-    _sv_tasks[task_id] = {"status": "Починаємо…", "progress": 0}
+    queued = not _gen_sem._value
+    _sv_tasks[task_id] = {"status": "⏳ В черзі…" if queued else "Починаємо…", "progress": 0}
     threading.Thread(target=_sv_run, args=(task_id, data), daemon=True).start()
     return JSONResponse({"task_id": task_id})
 
