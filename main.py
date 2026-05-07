@@ -1981,7 +1981,7 @@ _TC_DEFAULT_RULES = [
     {"from": "get hard",          "to": "Get firm"},
     {"from": "hard",              "to": "Firm"},
     {"from": "sex",               "to": "Intimacy"},
-    {"from": "masturbate",        "to": "Beat off"},
+    {"from": "masturb[a-z]*|masturnat[a-z]*", "to": "Beat off", "regex": True},
     {"from": "anxiety",           "to": "Stress"},
     {"from": "porn",              "to": "Spicy content"},
     {"from": "penis",             "to": "Member"},
@@ -2016,19 +2016,25 @@ def _tc_static_clean(text: str, rules: list) -> tuple[str, str]:
         return text, _H.escape(text).replace("\n", "<br>")
     sorted_r = sorted(rules, key=lambda r: len(r["from"]), reverse=True)
     try:
-        pattern = re.compile(
-            "|".join(r"(?<!\w)" + re.escape(r["from"]) + r"(?!\w)" for r in sorted_r if r["from"]),
-            re.IGNORECASE,
-        )
+        parts = []
+        for r in sorted_r:
+            if not r["from"]:
+                continue
+            pat = r["from"] if r.get("regex") else re.escape(r["from"])
+            parts.append(r"(?<!\w)" + pat + r"(?!\w)")
+        pattern = re.compile("|".join(parts), re.IGNORECASE)
     except re.error:
         return text, _H.escape(text).replace("\n", "<br>")
     plain_buf, diff_buf, last = [], [], 0
     for m in pattern.finditer(text):
         orig = m.group(0)
-        repl = next(
-            (_tc_apply_case(orig, r["to"]) for r in sorted_r if orig.lower() == r["from"].lower()),
-            orig,
-        )
+        repl = orig
+        for r in sorted_r:
+            if r.get("regex"):
+                if re.fullmatch(r["from"], orig, re.IGNORECASE):
+                    repl = _tc_apply_case(orig, r["to"]); break
+            elif orig.lower() == r["from"].lower():
+                repl = _tc_apply_case(orig, r["to"]); break
         before = text[last: m.start()]
         plain_buf.append(before)
         diff_buf.append(_H.escape(before).replace("\n", "<br>"))
