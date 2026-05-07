@@ -2860,8 +2860,9 @@ textarea::placeholder { color: var(--text-3); }
   };
 })();
 
-// switchToPage ran before the IIFE defined svInit — call it now if needed
-if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrolling-video') svInit();
+// switchToPage ran before the IIFEs defined their inits — call them now if needed
+if (typeof svInit   === 'function' && URL_TO_PAGE[location.pathname] === 'scrolling-video') svInit();
+if (typeof _tcInit  === 'function' && URL_TO_PAGE[location.pathname] === 'text-cleaner')    _tcInit();
 
 // ── Text Cleaner ──────────────────────────────────────────────────────────────
 (function() {
