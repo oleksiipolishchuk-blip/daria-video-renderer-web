@@ -713,6 +713,9 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
                 result.append({'text': rt, 'start': t, 'end': round(t + step * 0.9, 3)})
             i = j
 
+    ok_count = sum(1 for _, _, _, ok in raw if ok)
+    print(f"[align] blocks={len(raw)} words={n} ok={ok_count} fail={len(raw)-ok_count} "
+          f"first5_ts={[round(r['start'],2) for r in result[:5]]}", flush=True)
     return result
 
 
