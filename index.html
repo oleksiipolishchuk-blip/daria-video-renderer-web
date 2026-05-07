@@ -1333,6 +1333,7 @@ textarea::placeholder { color: var(--text-3); }
     <div class="tc-action-bar">
       <button class="btn-tc-clean" id="tc-btn-clean">Очистити →</button>
       <span class="tc-shortcut">⌘ Enter / Ctrl+Enter</span>
+      <button class="btn-tc-sm" id="tc-btn-reset" style="margin-top:2px">Скинути все</button>
     </div>
 
     <!-- Rules -->
@@ -2878,6 +2879,8 @@ if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrollin
     { from: 'sexual position',   to: 'position' },
   ];
 
+  const TC_LS_KEY = 'tc_text_v1';
+
   let tcRules = [];
   let tcClean = '';
   let tcMode  = 'static';
@@ -2885,10 +2888,26 @@ if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrollin
   let tcDirty = false;
   let tcInited = false;
 
+  function tcSaveText() {
+    try { localStorage.setItem(TC_LS_KEY, document.getElementById('tc-input').value); } catch {}
+  }
+
+  function tcRestoreText() {
+    try {
+      const saved = localStorage.getItem(TC_LS_KEY);
+      if (saved) {
+        document.getElementById('tc-input').value = saved;
+        document.getElementById('tc-char-count').textContent =
+          `${saved.length.toLocaleString('uk')} символів`;
+      }
+    } catch {}
+  }
+
   async function tcInit() {
     if (tcInited) return;
     tcInited = true;
     await tcLoadRules();
+    tcRestoreText();
     const k = localStorage.getItem('tc_api_key');
     if (k) document.getElementById('tc-api-key').value = k;
     tcSetupEvents();
@@ -2993,6 +3012,7 @@ if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrollin
     document.getElementById('tc-input').addEventListener('input', e => {
       document.getElementById('tc-char-count').textContent =
         `${e.target.value.length.toLocaleString('uk')} символів`;
+      tcSaveText();
     });
     document.getElementById('tc-input').addEventListener('keydown', e => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); tcRunClean(); }
@@ -3013,6 +3033,18 @@ if (typeof svInit === 'function' && URL_TO_PAGE[location.pathname] === 'scrollin
       } catch { tcShowStatus('Використай ⌘V / Ctrl+V', true); }
     });
     document.getElementById('tc-btn-clear').addEventListener('click', () => {
+      document.getElementById('tc-input').value = '';
+      document.getElementById('tc-char-count').textContent = '0 символів';
+      document.getElementById('tc-output').innerHTML = "<span class='tc-output-placeholder'>Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>";
+      document.getElementById('tc-changes-count').textContent = '';
+      document.getElementById('tc-btn-copy').disabled = true;
+      document.getElementById('tc-btn-dl').disabled   = true;
+      tcClean = '';
+      tcSaveText();
+    });
+    document.getElementById('tc-btn-reset').addEventListener('click', () => {
+      if (!confirm('Скинути текст і результат?')) return;
+      localStorage.removeItem(TC_LS_KEY);
       document.getElementById('tc-input').value = '';
       document.getElementById('tc-char-count').textContent = '0 символів';
       document.getElementById('tc-output').innerHTML = "<span class='tc-output-placeholder'>Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>";
