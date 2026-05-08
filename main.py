@@ -714,8 +714,11 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
             i = j
 
     ok_count = sum(1 for _, _, _, ok in raw if ok)
+    fail_examples = [(i, raw[i][0][:40], b_norm[0] if (b_norm := [norm(w) for w in raw[i][0].split() if norm(w)]) else '?')
+                     for i in range(len(raw)) if not raw[i][3]][:5]
     print(f"[align] blocks={len(raw)} words={n} ok={ok_count} fail={len(raw)-ok_count} "
-          f"first5_ts={[round(r['start'],2) for r in result[:5]]}", flush=True)
+          f"first5_ts={[round(r['start'],2) for r in result[:5]]} "
+          f"fail_examples={fail_examples}", flush=True)
     return result
 
 
