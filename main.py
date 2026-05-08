@@ -633,24 +633,63 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
         if w:
             word_pos.setdefault(w, []).append(i)
 
+    # MAX_GAP: if the matched position jumps more than this many seconds from the
+    # previous matched block, it's treated as a "suspicious" match (e.g. GPT reordered
+    # a bridge/recap section before the body, but TTS speaks it later in the audio).
+    # Suspicious matches are still recorded with their real timestamps so the subtitles
+    # sync to the audio, but cursor does NOT advance — letting body blocks find their
+    # earlier positions via the fallback search range [cursor, sus_cursor).
+    MAX_GAP = 20.0
+
     # Phase 1: try to align each block, record success/failure separately
     raw: list[tuple] = []   # (text, start_time, end_time, aligned: bool)
-    cursor = 0
+    cursor = 0       # conservative: advances only on non-suspicious matches
+    sus_cursor = 0   # always advances; marks the high-water-mark of matched positions
+    prev_end_time = 0.0  # only updated on non-suspicious matches
+
     for block in gpt_blocks:
         b_words = block.split()
         b_norm = [norm(w) for w in b_words if norm(w)]
         if not b_norm:
             continue
         start_idx = None
+        is_sus = False
+        best_sus = None   # best suspicious candidate from primary search
+
+        # ── Primary search: from max(cursor, sus_cursor) forward ──────────────
+        search_from = max(cursor, sus_cursor)
         for off in range(min(3, len(b_norm))):
             if start_idx is not None:
                 break
-            for pos in [p for p in word_pos.get(b_norm[off], []) if p - off >= cursor]:
+            for pos in [p for p in word_pos.get(b_norm[off], []) if p - off >= search_from]:
                 cs = pos - off
                 matches = sum(1 for d, bw in enumerate(b_norm[:4]) if cs + d < n and w_norm[cs + d] == bw)
                 if matches >= (1 if len(b_norm) <= 2 else 2):
-                    start_idx = cs
+                    gap = words[cs]['start'] - prev_end_time if prev_end_time > 0 else 0.0
+                    if gap <= MAX_GAP:
+                        start_idx = cs; is_sus = False; break
+                    elif best_sus is None:
+                        best_sus = cs
+
+        # ── Fallback: if primary failed and sus_cursor skipped body content,
+        #    search in [cursor, sus_cursor) for a non-suspicious match ──────────
+        if start_idx is None and sus_cursor > cursor:
+            for off in range(min(3, len(b_norm))):
+                if start_idx is not None:
                     break
+                for pos in [p for p in word_pos.get(b_norm[off], []) if cursor <= p - off < sus_cursor]:
+                    cs = pos - off
+                    matches = sum(1 for d, bw in enumerate(b_norm[:4]) if cs + d < n and w_norm[cs + d] == bw)
+                    if matches >= (1 if len(b_norm) <= 2 else 2):
+                        gap = words[cs]['start'] - prev_end_time if prev_end_time > 0 else 0.0
+                        if gap <= MAX_GAP:
+                            start_idx = cs; is_sus = False; break
+
+        # ── If still no normal match, take the suspicious one ─────────────────
+        if start_idx is None and best_sus is not None:
+            start_idx = best_sus; is_sus = True
+
+        # ── Look-back (unchanged) ─────────────────────────────────────────────
         if start_idx is None:
             lb = max(0, cursor - 10)
             for off in range(min(3, len(b_norm))):
@@ -662,12 +701,24 @@ def align_timestamps_python(gpt_blocks: list, words: list) -> list:
                     if matches >= (1 if len(b_norm) <= 2 else 2):
                         start_idx = cs
                         break
+
         fixed = re.sub(r'\b(Releyshio|RelayShow|Relay\s*Show|Rilaysho)\b', 'Relatio', block, flags=re.IGNORECASE)
         if start_idx is not None:
             end_idx = min(start_idx + len(b_words) - 1, n - 1)
-            raw.append((fixed, round(words[start_idx]['start'], 3), round(words[end_idx]['end'], 3), True))
-            cursor = max(cursor, end_idx + 1)  # never move cursor backwards
+            t_start = round(words[start_idx]['start'], 3)
+            t_end   = round(words[end_idx]['end'], 3)
+            raw.append((fixed, t_start, t_end, True))
+            sus_cursor = max(sus_cursor, end_idx + 1)  # always advance sus_cursor
+            if is_sus:
+                # cursor held — body blocks can still search behind sus_cursor
+                print(f"[align] suspicious '{block[:30]}' t={t_start:.1f} gap={t_start-prev_end_time:.1f}s cursor_held={cursor}", flush=True)
+            else:
+                cursor = max(cursor, end_idx + 1)
+                prev_end_time = t_end
         else:
+            key = b_norm[0] if b_norm else ''
+            near = [(p, round(words[p]['start'], 2)) for p in word_pos.get(key, []) if abs(p - cursor) < 20][:4]
+            print(f"[align] fail '{block[:30]}' cursor={cursor} key='{key}' near={near}", flush=True)
             raw.append((fixed, None, None, False))
 
     if not raw:
