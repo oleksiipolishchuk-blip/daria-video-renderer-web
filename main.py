@@ -2185,3 +2185,45 @@ async def tc_clean(req: Request):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/admin/cleanup")
+def admin_cleanup():
+    import gc
+    freed_jobs = freed_tasks = freed_files = 0
+
+    # Remove completed/errored jobs from memory
+    done = [jid for jid, j in _jobs.items() if j.get("status") in ("done", "error")]
+    for jid in done:
+        _jobs.pop(jid, None)
+        freed_jobs += 1
+
+    # Remove completed/errored scrolling tasks from memory
+    done_sv = [tid for tid, t in _sv_tasks.items() if t.get("status") in ("done", "error")]
+    for tid in done_sv:
+        _sv_tasks.pop(tid, None)
+        freed_tasks += 1
+
+    # Delete all mp4/mp3 result files
+    for f in RESULTS_DIR.iterdir():
+        try:
+            f.unlink()
+            freed_files += 1
+        except Exception:
+            pass
+
+    # Delete leftover /tmp dirs from previous generations
+    for d in Path("/tmp").iterdir():
+        if d.is_dir() and d.name.startswith("tmp") and d != RESULTS_DIR:
+            try:
+                shutil.rmtree(d, ignore_errors=True)
+                freed_files += 1
+            except Exception:
+                pass
+
+    gc.collect()
+    return JSONResponse({
+        "freed_jobs": freed_jobs,
+        "freed_tasks": freed_tasks,
+        "freed_files": freed_files,
+    })
