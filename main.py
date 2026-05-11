@@ -905,6 +905,11 @@ async def generate_video_web(
         # 5. Align GPT blocks with EL word timestamps
         transcript_data = align_timestamps_python(gpt_blocks, all_words)
         transcript_data = split_long_blocks(transcript_data, font, font_size_int)
+        # Sort by start time: alignment may produce out-of-order blocks (e.g. when GPT
+        # reorders a bridge section before the body but TTS speaks it later).
+        # Frame rendering uses next_block["start"] as end time, so list order must match
+        # chronological order to avoid 70-second frames and skipped body blocks.
+        transcript_data = sorted(transcript_data, key=lambda b: b["start"])
 
         # 7. Render
         bg_rgb   = hex_to_rgb(bg_color   if bg_color.startswith("#")   else f"#{bg_color}")
@@ -1166,6 +1171,7 @@ def _generate_core_sync(log, params: dict) -> dict:
         # 5. Align
         transcript_data = align_timestamps_python(gpt_blocks, all_words)
         transcript_data = split_long_blocks(transcript_data, font, font_size_int)
+        transcript_data = sorted(transcript_data, key=lambda b: b["start"])
         log(f"✅ {len(transcript_data)} субтитр-блоків")
 
         # 6. Prepare render
