@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Easy MH — Video Generator</title>
+<title>Iron Woman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 @font-face { font-family: 'F-Montserrat'; src: url('/fonts/Montserrat-Bold.ttf'); font-weight: bold; }
 @font-face { font-family: 'F-Gilroy';    src: url('/fonts/Gilroy-Medium.ttf'); }
@@ -38,13 +40,39 @@ body {
 }
 
 .layout {
-  max-width: 1080px;
+  max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 290px;
+  grid-template-columns: 150px 1fr 290px;
   gap: 20px;
   align-items: start;
 }
+
+/* ── Sidebar ── */
+.sidebar { position: sticky; top: 48px; }
+.sidebar-section { margin-bottom: 6px; }
+.sidebar-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 10px; cursor: pointer; border-radius: 10px;
+  font-size: 15px; font-weight: 600; color: var(--text-2);
+  letter-spacing: -0.3px; transition: all 0.18s var(--ease); user-select: none;
+}
+.sidebar-section-header:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.sidebar-section-header.open { color: var(--text); }
+.sidebar-arrow { font-size: 9px; transition: transform 0.2s var(--ease); opacity: 0.4; }
+.sidebar-section-header.open .sidebar-arrow { transform: rotate(90deg); }
+.sidebar-items { overflow: hidden; max-height: 0; transition: max-height 0.25s var(--ease); }
+.sidebar-items.open { max-height: 300px; }
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  cursor: pointer; color: var(--text-2); font-size: 13px;
+  letter-spacing: -0.1px; transition: all 0.18s var(--ease);
+  user-select: none; background: none; border: none;
+  width: 100%; text-align: left; font-family: inherit;
+}
+.sidebar-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.sidebar-item.active { background: rgba(255,255,255,0.08); color: var(--text); font-weight: 500; }
 
 /* ── Header ── */
 .page-header {
@@ -112,6 +140,16 @@ body {
   transition: color 0.15s var(--ease);
 }
 .script-remove:hover { color: #ff453a; }
+.script-name-inp {
+  flex: 1; background: transparent; border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2); font-family: 'SF Mono','Fira Code',monospace;
+  font-size: 12px; padding: 1px 8px; outline: none;
+  min-width: 0; max-width: 180px; letter-spacing: 0.2px;
+  transition: border-color 0.15s;
+}
+.script-name-inp::placeholder { color: var(--text-3); }
+.script-name-inp:focus { border-bottom-color: var(--border-2); color: var(--text); }
 
 textarea {
   width: 100%;
@@ -142,14 +180,18 @@ textarea::placeholder { color: var(--text-3); }
 .result-msg.done  { color: var(--green); }
 .result-msg.error { color: #ff453a; }
 .result-dl {
-  display: none; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 13px; background: var(--green); color: #000;
   border-radius: 20px; font-size: 11px; font-weight: 600;
   text-decoration: none; letter-spacing: -0.1px;
   transition: opacity 0.15s var(--ease);
 }
-.result-dl.show { display: inline-flex; }
 .result-dl:hover { opacity: 0.85; }
+.result-dl.secondary {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border-2);
+  color: var(--text-2);
+}
 
 .add-script-btn {
   margin-top: 14px; padding: 9px 16px;
@@ -407,22 +449,399 @@ textarea::placeholder { color: var(--text-3); }
 
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; margin-bottom: 8px; }
+  .sidebar-section-header { font-size: 13px; padding: 7px 10px; }
   .preview-sticky { position: static; }
   .preview-wrap { max-width: 200px; margin: 0 auto 14px; }
   .font-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Tool header ── */
+.tool-header {
+  text-align: center; padding: 4px 0 20px;
+}
+.tool-header-icon { font-size: 30px; margin-bottom: 8px; display: block; }
+.tool-header-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800; letter-spacing: -0.3px;
+  color: #fff; margin-bottom: 6px;
+}
+.tool-header-desc {
+  font-size: 10px; color: var(--text-3);
+  letter-spacing: 1.4px; text-transform: uppercase;
+}
+.reset-btn {
+  width: 100%; padding: 11px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text-3); font-size: 13px;
+  cursor: pointer; font-family: inherit; letter-spacing: -0.1px;
+  transition: all 0.18s var(--ease); margin-top: 4px;
+}
+.reset-btn:hover { color: var(--text-2); border-color: var(--border-2); background: rgba(255,255,255,0.03); }
+
+/* ── Generation log panel ── */
+.gen-log {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.gen-log summary {
+  padding: 9px 14px;
+  cursor: pointer;
+  color: var(--text-3);
+  list-style: none;
+  display: flex; align-items: center; gap: 6px;
+  user-select: none;
+}
+.gen-log summary::before { content: '▶'; font-size: 9px; transition: transform 0.15s; }
+.gen-log[open] summary::before { transform: rotate(90deg); }
+.gen-log-body {
+  padding: 8px 12px 10px;
+  max-height: 200px; overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.25);
+}
+.gen-log-line {
+  font-family: 'DM Mono', monospace;
+  color: var(--text-2);
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.gen-log-line.error { color: #ff6b6b; }
+
+/* ── Voiceover Pipeline (scoped) ── */
+#page-voiceover-pipeline {
+  --vp-bg: #0b0d14; --vp-surface: #12151f;
+  --vp-border: #1e2235; --vp-border2: #252a3d;
+  --vp-text: #e2e5f0; --vp-muted: #555e7a; --vp-muted2: #8891aa;
+  --vp-accent: #4f8ef7; --vp-red: #ef4444; --vp-green: #34d399;
+  font-family: 'DM Mono', monospace; color: #e2e5f0;
+}
+#page-voiceover-pipeline .vp-app { max-width:680px; display:flex; flex-direction:column; gap:22px; animation:vpFadeUp .4s cubic-bezier(.22,1,.36,1) both; }
+@keyframes vpFadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+#page-voiceover-pipeline .vp-header { display:flex; flex-direction:column; align-items:center; gap:5px; padding-top:4px; margin-bottom:4px; }
+#page-voiceover-pipeline .vp-header-icon { font-size:30px; animation:vpGlow 3s ease-in-out infinite; }
+@keyframes vpGlow { 0%,100%{filter:drop-shadow(0 0 10px #4f8ef744)} 50%{filter:drop-shadow(0 0 26px #4f8ef799)} }
+#page-voiceover-pipeline .vp-header h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.3px; color:#fff; }
+#page-voiceover-pipeline .vp-header p  { font-size:10px; color:var(--vp-muted); letter-spacing:1.4px; text-transform:uppercase; }
+
+#page-voiceover-pipeline .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:22px 24px; backdrop-filter:blur(40px); -webkit-backdrop-filter:blur(40px); margin-bottom:0; }
+#page-voiceover-pipeline .card-label { font-size:11px; font-weight:600; color:var(--text-3); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:16px; }
+
+#page-voiceover-pipeline textarea { width:100%; min-height:180px; max-height:420px; background:#080a10; border:1px solid var(--vp-border); border-radius:10px; padding:14px 16px; color:#c9d1e8; font-family:'DM Mono',monospace; font-size:13px; line-height:1.7; resize:vertical; outline:none; transition:border-color .2s; }
+#page-voiceover-pipeline textarea:focus { border-color:var(--vp-border2); }
+#page-voiceover-pipeline textarea::placeholder { color:var(--vp-muted); }
+#page-voiceover-pipeline .vp-char-count { position:absolute; bottom:10px; right:14px; font-size:11px; color:var(--vp-muted); pointer-events:none; }
+#page-voiceover-pipeline .vp-textarea-wrap { position:relative; }
+
+#page-voiceover-pipeline .vp-task-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
+#page-voiceover-pipeline .vp-task-prefix { font-size:13px; color:var(--vp-muted); flex-shrink:0; }
+#page-voiceover-pipeline .vp-task-input { width:160px; background:#080a10; border:1px solid var(--vp-border); border-radius:8px; padding:7px 12px; color:#c9d1e8; font-family:'DM Mono',monospace; font-size:13px; outline:none; transition:border-color .2s; }
+#page-voiceover-pipeline .vp-task-input:focus { border-color:var(--vp-border2); }
+#page-voiceover-pipeline .vp-task-input::placeholder { color:var(--vp-muted); }
+#page-voiceover-pipeline .vp-task-hint { font-size:11px; color:var(--vp-muted); }
+
+#page-voiceover-pipeline .vp-voice-toolbar { display:flex; gap:8px; margin-bottom:10px; align-items:center; }
+#page-voiceover-pipeline .vp-voice-search { flex:1; background:#080a10; border:1px solid var(--vp-border); border-radius:8px; padding:7px 12px; color:#c9d1e8; font-family:'DM Mono',monospace; font-size:12px; outline:none; transition:border-color .2s; }
+#page-voiceover-pipeline .vp-voice-search:focus { border-color:var(--vp-border2); }
+#page-voiceover-pipeline .vp-voice-search::placeholder { color:var(--vp-muted); }
+
+#page-voiceover-pipeline .vp-voice-scroll { display:flex; flex-direction:column; gap:4px; max-height:220px; overflow-y:auto; }
+#page-voiceover-pipeline .vp-voice-scroll::-webkit-scrollbar { width:4px; }
+#page-voiceover-pipeline .vp-voice-scroll::-webkit-scrollbar-thumb { background:var(--vp-border2); border-radius:2px; }
+
+#page-voiceover-pipeline .vp-voice-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; background:var(--vp-bg); border:1px solid var(--vp-border); cursor:pointer; user-select:none; transition:border-color .18s,background .18s; }
+#page-voiceover-pipeline .vp-voice-row:hover { border-color:var(--vp-border2); }
+#page-voiceover-pipeline .vp-voice-row.selected { border-color:var(--sel-color,#4f8ef7); background:var(--sel-bg,#4f8ef710); }
+#page-voiceover-pipeline .vp-voice-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+#page-voiceover-pipeline .vp-voice-name { font-size:13px; color:var(--vp-text); flex:1; }
+#page-voiceover-pipeline .vp-voice-cat { font-size:10px; color:var(--vp-muted); letter-spacing:.6px; text-transform:uppercase; background:var(--vp-surface); padding:2px 7px; border-radius:4px; }
+#page-voiceover-pipeline .vp-voice-empty { font-size:12px; color:var(--vp-muted); font-style:italic; padding:8px 0; }
+
+#page-voiceover-pipeline .vp-fav-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:2px 4px; line-height:1; color:#4a5168; transition:color .15s,transform .15s; flex-shrink:0; }
+#page-voiceover-pipeline .vp-fav-btn:hover { color:#f0b429; transform:scale(1.2); }
+#page-voiceover-pipeline .vp-fav-btn.active { color:#f0b429; text-shadow:0 0 8px #f0b42966; }
+#page-voiceover-pipeline .vp-fav-divider { font-size:10px; color:var(--vp-muted); letter-spacing:1px; text-transform:uppercase; padding:6px 2px 4px; }
+
+#page-voiceover-pipeline .vp-log-box { background:#080a10; border:1px solid var(--vp-border); border-radius:10px; height:180px; overflow-y:auto; padding:13px 16px; font-size:12px; line-height:1.75; color:#c9d1e8; white-space:pre-wrap; word-break:break-all; scroll-behavior:smooth; }
+#page-voiceover-pipeline .vp-log-box.empty { color:var(--vp-muted); font-style:italic; }
+#page-voiceover-pipeline .vp-log-box::-webkit-scrollbar { width:4px; }
+#page-voiceover-pipeline .vp-log-box::-webkit-scrollbar-thumb { background:var(--vp-border2); border-radius:2px; }
+
+#page-voiceover-pipeline .vp-action-bar { display:flex; align-items:center; gap:12px; }
+#page-voiceover-pipeline .vp-badge { display:flex; align-items:center; gap:7px; padding:6px 12px; background:var(--surface); border:1px solid var(--border); border-radius:10px; font-size:12px; color:var(--text-2); font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,sans-serif; }
+#page-voiceover-pipeline .vp-badge-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+#page-voiceover-pipeline .vp-spacer { flex:1; }
+
+#page-voiceover-pipeline .vp-btn { display:inline-flex; align-items:center; gap:6px; padding:9px 20px; border-radius:12px; border:none; cursor:pointer; font-family:-apple-system,'SF Pro Text',BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:13px; font-weight:500; transition:all .18s var(--ease); white-space:nowrap; letter-spacing:-0.1px; }
+#page-voiceover-pipeline .vp-btn:active { transform:scale(.98); }
+#page-voiceover-pipeline .vp-btn:disabled { opacity:.35; cursor:not-allowed; transform:none !important; }
+#page-voiceover-pipeline .vp-btn-primary { background:var(--vp-accent); color:#fff; box-shadow:0 4px 18px #4f8ef730; }
+#page-voiceover-pipeline .vp-btn-primary:hover:not(:disabled) { opacity:.88; transform:scale(1.01); }
+#page-voiceover-pipeline .vp-btn-danger { background:rgba(239,68,68,0.1); color:var(--vp-red); border:1px solid rgba(239,68,68,0.25); }
+#page-voiceover-pipeline .vp-btn-danger:hover { background:rgba(239,68,68,0.18); }
+#page-voiceover-pipeline .vp-btn-txt { background:rgba(79,142,247,0.08); color:var(--vp-accent); border:1px solid rgba(79,142,247,0.2); }
+#page-voiceover-pipeline .vp-btn-txt:hover { background:rgba(79,142,247,0.14); }
+#page-voiceover-pipeline .vp-btn-ghost { background:rgba(255,255,255,0.05); color:var(--text-2); border:1px solid var(--border-2); }
+#page-voiceover-pipeline .vp-btn-ghost:hover { background:rgba(255,255,255,0.08); color:var(--text); }
+
+#page-voiceover-pipeline .vp-spinner { width:18px; height:18px; border:2px solid var(--vp-border2); border-top-color:var(--vp-accent); border-radius:50%; animation:vpSpin .7s linear infinite; flex-shrink:0; }
+@keyframes vpSpin { to{transform:rotate(360deg)} }
+#page-voiceover-pipeline .vp-toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px); background:#1a0f0f; border:1px solid #ef444444; color:#f87171; padding:10px 20px; border-radius:10px; font-size:13px; transition:transform .3s cubic-bezier(.22,1,.36,1); z-index:99; }
+#page-voiceover-pipeline .vp-toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── Scrolling Video page ── */
+#page-scrolling-video { font-family: -apple-system, 'SF Pro Text', 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+#page-scrolling-video .sv-wrap { max-width: 1120px; margin: 0 auto; }
+#page-scrolling-video .sv-header { text-align: center; padding: 4px 0 20px; }
+#page-scrolling-video .sv-header h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.3px; color: #fff; margin-bottom: 6px; }
+#page-scrolling-video .sv-sub { font-size: 10px; color: var(--text-3); letter-spacing: 1.4px; text-transform: uppercase; }
+#page-scrolling-video .sv-main-grid { display: grid; grid-template-columns: 1fr 284px; gap: 20px; align-items: start; }
+#page-scrolling-video .sv-form-col { min-width: 0; }
+#page-scrolling-video .sv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; margin-bottom: 12px; backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+#page-scrolling-video .sv-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-3); margin-bottom: 16px; }
+#page-scrolling-video input[type=text].sv-inp,
+#page-scrolling-video textarea.sv-ta { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 13px; outline: none; transition: border-color 0.2s var(--ease); letter-spacing: -0.1px; }
+#page-scrolling-video input[type=text].sv-inp:focus,
+#page-scrolling-video textarea.sv-ta:focus { border-color: var(--border-2); }
+#page-scrolling-video textarea.sv-ta { min-height: 130px; resize: vertical; line-height: 1.65; }
+#page-scrolling-video textarea.sv-ta::placeholder { color: var(--text-3); }
+#page-scrolling-video .sv-chars { font-size: 11px; color: var(--text-3); text-align: right; margin-top: 6px; }
+#page-scrolling-video .sv-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#page-scrolling-video .sv-field > label { display: block; font-size: 11px; color: var(--text-3); margin-bottom: 7px; font-weight: 500; letter-spacing: 0.1px; }
+#page-scrolling-video select.sv-sel { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: inherit; font-size: 13px; padding: 9px 30px 9px 13px; appearance: none; cursor: pointer; outline: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; transition: border-color 0.2s var(--ease); }
+#page-scrolling-video select.sv-sel:focus { border-color: var(--border-2); }
+#page-scrolling-video .sv-color-wrap { display: flex; align-items: center; gap: 9px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 7px 11px; transition: border-color 0.2s var(--ease); }
+#page-scrolling-video .sv-color-wrap:focus-within { border-color: var(--border-2); }
+#page-scrolling-video input[type=color].sv-cpick { width: 18px; height: 18px; border: none; background: none; padding: 0; cursor: pointer; border-radius: 4px; flex-shrink: 0; }
+#page-scrolling-video .sv-hex { background: none; border: none; color: var(--text-2); font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; width: 68px; outline: none; letter-spacing: -0.3px; }
+#page-scrolling-video .sv-color-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+#page-scrolling-video .sv-color-card { aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s, transform 0.1s; font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; user-select: none; }
+#page-scrolling-video .sv-color-card:hover { transform: scale(1.06); }
+#page-scrolling-video .sv-color-card.active { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent); }
+#page-scrolling-video input[type=range].sv-range { width: 100%; -webkit-appearance: none; appearance: none; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer; margin: 6px 0 2px; }
+#page-scrolling-video input[type=range].sv-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.1s; }
+#page-scrolling-video input[type=range].sv-range::-webkit-slider-thumb:active { transform: scale(1.2); }
+#page-scrolling-video .sv-range-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+#page-scrolling-video .sv-align-group { display: flex; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 3px; gap: 2px; }
+#page-scrolling-video .sv-align-btn { flex: 1; padding: 7px; background: none; border: none; color: var(--text-2); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; border-radius: 8px; transition: all 0.2s var(--ease); display: flex; align-items: center; justify-content: center; }
+#page-scrolling-video .sv-align-btn:hover:not(.active) { color: var(--text); }
+#page-scrolling-video .sv-align-btn.active { background: rgba(255,255,255,0.1); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+#page-scrolling-video .sv-font-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#page-scrolling-video .sv-font-card { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.18s var(--ease); user-select: none; }
+#page-scrolling-video .sv-font-card:hover { border-color: var(--border-2); background: rgba(255,255,255,0.04); }
+#page-scrolling-video .sv-font-card.active { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+#page-scrolling-video .sv-font-card-name { font-size: 10px; font-weight: 500; letter-spacing: 0.3px; color: var(--text-3); font-family: -apple-system, sans-serif; margin-bottom: 5px; }
+#page-scrolling-video .sv-font-card-preview { font-size: 14px; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#page-scrolling-video .sv-img-upload-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 7px 16px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text-2); cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.18s var(--ease); letter-spacing: -0.1px; }
+#page-scrolling-video .sv-img-upload-btn:hover { background: rgba(255,255,255,0.09); border-color: var(--border-2); color: var(--text); }
+#page-scrolling-video .sv-img-preview-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+#page-scrolling-video .sv-img-thumb { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+#page-scrolling-video .sv-img-info { flex: 1; min-width: 0; }
+#page-scrolling-video .sv-img-name { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#page-scrolling-video .sv-img-remove { background: none; border: none; color: var(--text-3); cursor: pointer; font-size: 12px; padding: 4px 8px; border-radius: 6px; transition: color 0.12s; white-space: nowrap; }
+#page-scrolling-video .sv-img-remove:hover { color: #ff453a; }
+#page-scrolling-video .sv-voice-trigger { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; cursor: pointer; transition: border-color 0.2s var(--ease); user-select: none; }
+#page-scrolling-video .sv-voice-trigger:hover,
+#page-scrolling-video .sv-voice-trigger.open { border-color: var(--border-2); }
+#page-scrolling-video .sv-vdot-sm { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+#page-scrolling-video .sv-vtrig-name { flex: 1; font-size: 14px; color: var(--text); }
+#page-scrolling-video .sv-vchev { color: var(--text-3); font-size: 11px; transition: transform 0.2s; }
+#page-scrolling-video .sv-vchev.open { transform: rotate(180deg); }
+#page-scrolling-video .sv-voice-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-top: 6px; overflow: hidden; display: none; backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
+#page-scrolling-video .sv-voice-panel.open { display: block; }
+#page-scrolling-video .sv-vsearch-wrap { padding: 8px; border-bottom: 1px solid var(--border); }
+#page-scrolling-video .sv-vsearch { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 13px; padding: 8px 12px; outline: none; transition: border-color 0.2s; }
+#page-scrolling-video .sv-vsearch:focus { border-color: var(--border-2); }
+#page-scrolling-video .sv-vsearch::placeholder { color: var(--text-3); }
+#page-scrolling-video .sv-vlist { max-height: 220px; overflow-y: auto; padding: 5px; }
+#page-scrolling-video .sv-vlist::-webkit-scrollbar { width: 4px; }
+#page-scrolling-video .sv-vlist::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 2px; }
+#page-scrolling-video .sv-vsec-lbl { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 8px 3px; font-weight: 600; }
+#page-scrolling-video .sv-vrow { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: background 0.12s; }
+#page-scrolling-video .sv-vrow:hover { background: rgba(255,255,255,0.05); }
+#page-scrolling-video .sv-vrow.active { background: rgba(255,255,255,0.08); }
+#page-scrolling-video .sv-vrow-name { flex: 1; font-size: 13px; color: var(--text); }
+#page-scrolling-video .sv-vstar { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-3); padding: 2px 4px; border-radius: 4px; transition: color 0.1s; line-height: 1; }
+#page-scrolling-video .sv-vstar:hover { color: #f0b429; }
+#page-scrolling-video .sv-vstar.fav { color: #f0b429; }
+#page-scrolling-video .sv-music-track,
+#page-scrolling-video .sv-music-none { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); margin-bottom: 6px; cursor: pointer; transition: all 0.18s var(--ease); user-select: none; }
+#page-scrolling-video .sv-music-track:hover,
+#page-scrolling-video .sv-music-none:hover { border-color: var(--border-2); background: rgba(255,255,255,0.04); }
+#page-scrolling-video .sv-music-track.active,
+#page-scrolling-video .sv-music-none.active { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+#page-scrolling-video .sv-play-btn { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+#page-scrolling-video .sv-play-btn:hover { background: rgba(255,255,255,0.12); border-color: var(--border-2); color: var(--text); }
+#page-scrolling-video .sv-play-btn.playing { background: var(--green); border-color: var(--green); color: #000; }
+#page-scrolling-video .sv-track-name { flex: 1; font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.1px; }
+#page-scrolling-video .sv-music-track.active .sv-track-name,
+#page-scrolling-video .sv-music-none.active .sv-track-name { color: var(--text); }
+#page-scrolling-video .sv-upload-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 7px 16px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text-2); cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.18s var(--ease); margin-top: 8px; letter-spacing: -0.1px; }
+#page-scrolling-video .sv-upload-btn:hover { background: rgba(255,255,255,0.09); border-color: var(--border-2); color: var(--text); }
+#page-scrolling-video .sv-disc-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; cursor: pointer; border-bottom: 1px solid var(--border); }
+#page-scrolling-video .sv-disc-row:last-child { border-bottom: none; }
+#page-scrolling-video .sv-disc-cb { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+#page-scrolling-video .sv-disc-label { font-size: 12.5px; color: var(--text-2); line-height: 1.4; letter-spacing: -0.1px; }
+#page-scrolling-video .sv-disc-row:has(.sv-disc-cb:checked) .sv-disc-label { color: var(--text); }
+#page-scrolling-video .sv-live-disclaimer { position: absolute; bottom: 19.79%; left: 11.11%; right: 11.11%; z-index: 4; text-align: center; opacity: 0.8; pointer-events: none; white-space: pre-wrap; line-height: 1.4; }
+#page-scrolling-video .sv-btn { width: 100%; padding: 16px; background: var(--accent); color: #000; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; letter-spacing: -0.3px; transition: all 0.2s var(--ease); margin-bottom: 12px; }
+#page-scrolling-video .sv-btn:hover:not(:disabled) { transform: scale(1.01); box-shadow: 0 4px 20px rgba(255,255,255,0.12); }
+#page-scrolling-video .sv-btn:active { transform: scale(0.99); }
+#page-scrolling-video .sv-btn:disabled { background: rgba(255,255,255,0.07); color: var(--text-3); cursor: not-allowed; transform: none; box-shadow: none; }
+#page-scrolling-video .sv-btn-ghost { background: transparent; color: var(--text-3); border: 1px solid var(--border); margin-top: -4px; }
+#page-scrolling-video .sv-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.04); color: var(--text-2); transform: none; box-shadow: none; }
+#page-scrolling-video .sv-below { margin-top: 0; }
+#page-scrolling-video .sv-prog-bg { background: rgba(255,255,255,0.06); border-radius: 4px; height: 3px; overflow: hidden; margin-top: 10px; }
+#page-scrolling-video .sv-prog-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s var(--ease); width: 0%; }
+#page-scrolling-video .sv-status-txt { font-size: 13px; color: var(--text-2); letter-spacing: -0.1px; }
+#page-scrolling-video .sv-err { color: #ff453a; font-size: 12px; margin-top: 8px; }
+#page-scrolling-video .sv-result-inner { display: flex; gap: 20px; align-items: flex-start; }
+#page-scrolling-video .sv-result-video-wrap video { height: 300px; width: auto; border-radius: 14px; background: #000; display: block; }
+#page-scrolling-video .sv-result-info p { font-size: 13px; color: var(--text-2); margin-bottom: 12px; letter-spacing: -0.1px; }
+#page-scrolling-video .sv-dl-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 20px; background: var(--green); color: #000; text-decoration: none; font-weight: 600; font-size: 11px; transition: opacity 0.2s; letter-spacing: -0.1px; }
+#page-scrolling-video .sv-dl-btn:hover { opacity: 0.85; }
+#page-scrolling-video .sv-preview-col { position: sticky; top: 48px; }
+#page-scrolling-video .sv-live-preview { aspect-ratio: 9/16; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); position: relative; background: #0a0a0a; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+#page-scrolling-video #sv-lyr-bg-color { position: absolute; inset: 0; background: #0a0a0a; transition: background 0.2s; z-index: 0; }
+#page-scrolling-video #sv-lyr-bg-img { position: absolute; inset: 0; background-size: cover; background-position: center; display: none; z-index: 1; }
+#page-scrolling-video .sv-live-text-area { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; padding: 0 11.11%; padding-top: 88.89%; padding-bottom: 25%; overflow: hidden; }
+#page-scrolling-video .sv-live-title { width: 100%; line-height: 1.3; word-break: break-word; color: #fff; font-weight: bold; display: none; white-space: pre-wrap; }
+#page-scrolling-video .sv-live-text { width: 100%; line-height: 1.45; word-break: break-word; color: #fff; white-space: pre-wrap; }
+#page-scrolling-video .sv-live-overlay { position: absolute; top: 0; left: 0; right: 0; height: 47%; z-index: 3; pointer-events: none; display: none; -webkit-mask-image: linear-gradient(to bottom, black 76%, transparent 100%); mask-image: linear-gradient(to bottom, black 76%, transparent 100%); }
+#page-scrolling-video .sv-live-overlay img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; display: block; }
+#page-scrolling-video .sv-preview-label { text-align: center; font-size: 10px; color: var(--text-3); margin-top: 8px; letter-spacing: 1.4px; text-transform: uppercase; }
+@media (max-width: 740px) {
+  #page-scrolling-video .sv-main-grid { grid-template-columns: 1fr; }
+  #page-scrolling-video .sv-preview-col { position: static; order: -1; }
+  #page-scrolling-video .sv-live-preview { max-width: 150px; margin: 0 auto; }
+  #page-scrolling-video .sv-result-inner { flex-direction: column; }
+}
+
+/* ── Text Cleaner page ── */
+#page-text-cleaner { max-width: 1060px; }
+#page-text-cleaner .tc-header { text-align:center; margin-bottom:28px; padding-top:8px; }
+#page-text-cleaner .tc-header h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.3px; color:var(--text); }
+#page-text-cleaner .tc-header p  { font-size:11px; color:var(--text-3); letter-spacing:1.2px; text-transform:uppercase; margin-top:4px; }
+
+#page-text-cleaner .tc-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:12px; }
+#page-text-cleaner .tc-mode-toggle { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:50px; padding:3px; gap:2px; }
+#page-text-cleaner .tc-mode-btn { padding:6px 16px; border:none; background:none; border-radius:50px; color:var(--text-2); font-size:12px; font-weight:500; font-family:inherit; cursor:pointer; transition:all .18s; white-space:nowrap; }
+#page-text-cleaner .tc-mode-btn.active { background:rgba(255,255,255,0.10); color:var(--text); }
+#page-text-cleaner .btn-tc-settings { background:var(--surface); border:1px solid var(--border); border-radius:10px; width:34px; height:34px; font-size:16px; cursor:pointer; color:var(--text-2); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+#page-text-cleaner .btn-tc-settings:hover { border-color:var(--border-2); color:var(--text); }
+
+#page-text-cleaner .tc-split { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px; }
+#page-text-cleaner .tc-pane { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; }
+#page-text-cleaner .tc-pane-hd { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+#page-text-cleaner .tc-pane-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-3); }
+#page-text-cleaner .tc-pane-actions { display:flex; gap:6px; }
+
+#page-text-cleaner .btn-tc-sm { padding:4px 11px; border-radius:7px; border:1px solid var(--border); background:transparent; color:var(--text-2); font-size:11px; font-weight:500; font-family:inherit; cursor:pointer; transition:all .14s; }
+#page-text-cleaner .btn-tc-sm:hover:not(:disabled) { border-color:var(--border-2); color:var(--text); }
+#page-text-cleaner .btn-tc-sm:disabled { opacity:.3; cursor:not-allowed; }
+#page-text-cleaner .btn-tc-sm.hi { background:rgba(255,255,255,0.08); border-color:var(--border-2); color:var(--text); }
+
+#page-text-cleaner textarea#tc-input { flex:1; width:100%; min-height:340px; max-height:480px; padding:16px; font-size:13.5px; line-height:1.75; color:var(--text); background:transparent; border:none; outline:none; resize:none; font-family:inherit; overflow-y:auto; }
+#page-text-cleaner textarea#tc-input::placeholder { color:var(--text-3); }
+
+#page-text-cleaner .tc-output { flex:1; min-height:340px; max-height:480px; padding:16px; font-size:13.5px; line-height:1.75; color:var(--text); overflow-y:auto; word-break:break-word; }
+#page-text-cleaner .tc-output-placeholder { color:var(--text-3); font-style:italic; }
+
+#page-text-cleaner .tc-pane-ft { padding:7px 16px; border-top:1px solid var(--border); flex-shrink:0; }
+#page-text-cleaner .tc-foot-txt { font-size:11px; color:var(--text-3); }
+
+#page-text-cleaner mark { background:rgba(251,191,36,.18); border-bottom:2px solid rgba(251,191,36,.55); border-radius:3px; padding:0 1px; color:inherit; }
+
+#page-text-cleaner .tc-action-bar { display:flex; flex-direction:column; align-items:center; padding:8px 0 20px; gap:6px; }
+#page-text-cleaner .btn-tc-clean { background:rgba(255,255,255,0.08); color:var(--text); border:1px solid var(--border-2); padding:13px 52px; border-radius:50px; font-size:14px; font-weight:600; font-family:inherit; cursor:pointer; transition:all .2s; letter-spacing:-.1px; }
+#page-text-cleaner .btn-tc-clean:hover:not(:disabled) { background:rgba(255,255,255,0.13); }
+#page-text-cleaner .btn-tc-clean:disabled { opacity:.35; cursor:not-allowed; }
+#page-text-cleaner .tc-shortcut { font-size:11px; color:var(--text-3); }
+
+#page-text-cleaner .tc-rules-section { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+#page-text-cleaner .tc-rules-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; border-bottom:1px solid var(--border); transition:background .14s; }
+#page-text-cleaner .tc-rules-hd:hover { background:rgba(255,255,255,.03); }
+#page-text-cleaner .tc-rules-title { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--text-3); }
+#page-text-cleaner .tc-rules-arrow { font-size:9px; transition:transform .2s; opacity:.5; }
+#page-text-cleaner .tc-rules-badge { background:rgba(255,255,255,.1); color:var(--text-2); font-size:10px; font-weight:700; padding:1px 7px; border-radius:50px; letter-spacing:0; text-transform:none; }
+#page-text-cleaner .tc-rules-body { padding:14px 16px; }
+#page-text-cleaner .tc-rules-body.closed { display:none; }
+#page-text-cleaner .tc-rule-row { display:grid; grid-template-columns:1fr 24px 1fr 28px; gap:7px; align-items:center; margin-bottom:8px; }
+#page-text-cleaner .tc-rule-input { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:9px; padding:7px 11px; font-size:12px; color:var(--text); outline:none; width:100%; font-family:'DM Mono',monospace; transition:border-color .14s; }
+#page-text-cleaner .tc-rule-input::placeholder { color:var(--text-3); font-style:italic; }
+#page-text-cleaner .tc-rule-input:focus { border-color:var(--border-2); background:rgba(255,255,255,.06); }
+#page-text-cleaner .tc-rule-sep { color:var(--text-3); font-size:13px; text-align:center; }
+#page-text-cleaner .btn-tc-del { background:none; border:none; color:var(--text-3); cursor:pointer; font-size:14px; padding:3px; border-radius:5px; line-height:1; transition:color .12s; text-align:center; }
+#page-text-cleaner .btn-tc-del:hover { color:#ef4444; }
+#page-text-cleaner .tc-rules-ft { padding:10px 16px 14px; border-top:1px solid var(--border); }
+#page-text-cleaner .tc-status { text-align:center; margin-top:12px; font-size:12px; font-weight:500; min-height:18px; transition:opacity .3s; }
+
+#page-text-cleaner .tc-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; z-index:200; backdrop-filter:blur(6px); }
+#page-text-cleaner .tc-modal { background:#141416; border:1px solid var(--border-2); border-radius:18px; width:400px; max-width:calc(100vw - 32px); overflow:hidden; }
+#page-text-cleaner .tc-modal-hd { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); font-size:13px; font-weight:600; }
+#page-text-cleaner .tc-modal-close { background:none; border:none; color:var(--text-3); font-size:20px; cursor:pointer; line-height:1; padding:0 4px; transition:color .12s; }
+#page-text-cleaner .tc-modal-close:hover { color:#ef4444; }
+#page-text-cleaner .tc-modal-body { padding:20px; }
+#page-text-cleaner .tc-modal-label { display:block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text-3); margin-bottom:8px; }
+#page-text-cleaner .tc-modal-input { width:100%; background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:9px; padding:9px 13px; font-size:12px; font-family:'DM Mono',monospace; color:var(--text); outline:none; transition:border-color .14s; }
+#page-text-cleaner .tc-modal-input:focus { border-color:var(--border-2); }
+#page-text-cleaner .tc-modal-hint { margin-top:8px; font-size:11px; color:var(--text-3); line-height:1.5; }
+#page-text-cleaner .tc-modal-ft { padding:0 20px 20px; }
+#page-text-cleaner .btn-tc-save-key { width:100%; padding:11px; border-radius:50px; background:rgba(255,255,255,.08); border:1px solid var(--border-2); color:var(--text); font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s; }
+#page-text-cleaner .btn-tc-save-key:hover { background:rgba(255,255,255,.13); }
 </style>
 </head>
 <body>
 <div class="layout">
 
   <div class="page-header">
-    <span class="page-title">Easy MH</span>
-    <span class="page-subtitle">/ Video Generator</span>
+    <span class="page-title">Iron Woman</span>
+    <span class="page-subtitle" id="page-subtitle">/ Easy MH</span>
   </div>
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-header open" data-section="marketing">
+        Marketing <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items open" id="section-marketing">
+        <button class="sidebar-item active" data-page="video-generator" data-subtitle="/ Easy MH" data-url="/easy-mh">📹 Easy MH</button>
+        <button class="sidebar-item" data-page="scrolling-video" data-subtitle="/ Scrolling Video" data-url="/scrolling">📜 Scrolling Video</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" data-section="design">
+        Design <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items" id="section-design">
+        <button class="sidebar-item" data-page="voiceover-pipeline" data-subtitle="/ Voiceover Pipeline" data-url="/voiceover">🎤 Voiceover Pipeline</button>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" data-section="tiktok">
+        TikTok <span class="sidebar-arrow">▶</span>
+      </div>
+      <div class="sidebar-items" id="section-tiktok">
+        <button class="sidebar-item" data-page="text-cleaner" data-subtitle="/ Text Cleaner" data-url="/tiktok">✂️ Text Cleaner</button>
+      </div>
+    </div>
+  </nav>
 
   <!-- ── LEFT ── -->
   <div>
+  <div id="page-video-generator" class="page-content">
+
+    <!-- Tool header -->
+    <div class="tool-header">
+      <div class="tool-header-icon">💬</div>
+      <div class="tool-header-title">Easy MH</div>
+      <div class="tool-header-desc">Script → Generation → Creo</div>
+    </div>
 
     <!-- Scripts -->
     <div class="card">
@@ -599,10 +1018,366 @@ textarea::placeholder { color: var(--text-3); }
       </div>
     </div>
 
+  </div><!-- /page-video-generator -->
+
+  <div id="page-voiceover-pipeline" class="page-content" style="display:none">
+    <div class="vp-app">
+
+      <div class="vp-header">
+        <div class="vp-header-icon">🎙</div>
+        <h1>Voiceover Pipeline</h1>
+        <p>Format → ElevenLabs TTS → MP3</p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">✍️ Текст для озвучки</div>
+        <div class="vp-textarea-wrap">
+          <textarea id="vpTextInput" placeholder="Вставте або введіть текст тут…" oninput="vpOnTextInput()"></textarea>
+          <span class="vp-char-count" id="vpCharCount">0 символів</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">🔖 Номер задачі <span style="color:var(--vp-muted);font-size:9px;letter-spacing:.5px">(опційно)</span></div>
+        <div class="vp-task-row">
+          <span class="vp-task-prefix">#</span>
+          <input class="vp-task-input" id="vpTaskInput" placeholder="42" maxlength="30">
+          <span class="vp-task-hint">додається до назви файлу</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">🎤 Голос</div>
+        <div class="vp-voice-toolbar">
+          <input class="vp-voice-search" id="vpVoiceSearch" placeholder="Пошук голосу…" oninput="vpFilterVoices(this.value)">
+          <button class="vp-btn vp-btn-ghost" style="padding:7px 12px;font-size:11px" onclick="vpRefreshVoices()">↻ Оновити</button>
+        </div>
+        <div class="vp-voice-scroll" id="vpVoiceList">
+          <div class="vp-voice-empty">Завантаження…</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">📋 Лог</div>
+        <div class="vp-log-box empty" id="vpLogBox">Вивід з'явиться тут після запуску…</div>
+      </div>
+
+      <div class="vp-action-bar">
+        <div class="vp-badge" id="vpBadge"><span style="color:var(--vp-muted)">голос не вибрано</span></div>
+        <div class="vp-spacer"></div>
+        <button class="vp-btn vp-btn-txt" id="vpBtnTxt" style="display:none" onclick="vpDownloadTxt()">📄 TXT</button>
+        <button class="vp-btn vp-btn-ghost" id="vpBtnDownload" style="display:none" onclick="vpDownload()">⬇ MP3</button>
+        <div id="vpSpinner" class="vp-spinner" style="display:none"></div>
+        <button class="vp-btn vp-btn-danger" id="vpBtnStop" style="display:none" onclick="vpStop()">⏹ Стоп</button>
+        <button class="vp-btn vp-btn-primary" id="vpBtnRun" disabled onclick="vpRun()">▶ Озвучити</button>
+      </div>
+
+    </div>
+    <div class="vp-toast" id="vpToast"></div>
   </div>
 
+  <!-- ── Scrolling Video page ── -->
+  <div id="page-scrolling-video" class="page-content" style="display:none">
+  <div class="sv-wrap">
+    <header class="sv-header">
+      <div class="tool-header-icon">📜</div>
+      <h1>Scrolling Video</h1>
+      <p class="sv-sub">Вертикальне відео 1080×1920 з прокручуваним текстом</p>
+    </header>
+    <div class="sv-main-grid">
+      <!-- LEFT: form -->
+      <div class="sv-form-col">
+
+        <!-- Overlay photo -->
+        <div class="sv-card">
+          <div class="sv-lbl">Фото у верхній частині</div>
+          <button class="sv-img-upload-btn" onclick="document.getElementById('sv-overlay-file').click()">↑ Завантажити фото</button>
+          <input type="file" id="sv-overlay-file" accept=".jpg,.jpeg,.png,.webp" style="display:none">
+          <div class="sv-img-preview-row" id="sv-overlay-preview-row" style="display:none">
+            <img class="sv-img-thumb" id="sv-overlay-thumb" src="" alt="">
+            <div class="sv-img-info"><div class="sv-img-name" id="sv-overlay-name"></div></div>
+            <button class="sv-img-remove" onclick="svRemoveImage('overlay')">✕ Видалити</button>
+          </div>
+          <div id="sv-overlay-pos-wrap" style="display:none;margin-top:.55rem">
+            <div class="sv-range-row"><span style="font-size:.68rem;color:var(--text-2)">Позиція по вертикалі</span><span id="sv-overlay-pos-val" style="font-size:.68rem;color:var(--text-2)">50%</span></div>
+            <input type="range" class="sv-range" id="sv-overlay-pos" min="0" max="100" value="50" step="5">
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="sv-card">
+          <div class="sv-lbl">Заголовок</div>
+          <textarea id="sv-title-input" class="sv-ta" placeholder="Заголовок (необов'язково)..." rows="2" style="min-height:auto;resize:none;"></textarea>
+          <div class="sv-row2" style="margin-top:.55rem">
+            <div class="sv-field">
+              <label>Шрифт заголовку</label>
+              <select id="sv-title-font" class="sv-sel"><option value="">— як основний —</option></select>
+            </div>
+            <div class="sv-field">
+              <label>Колір заголовку</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-tc-picker" value="#ffffff">
+                <input type="text" class="sv-hex" id="sv-tc-hex" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+          <div class="sv-field" style="margin-top:.55rem">
+            <label>Розмір: <span id="sv-tfs-val">53px</span></label>
+            <input type="range" class="sv-range" id="sv-title-size" min="40" max="180" value="53">
+            <div class="sv-range-row"><span>40</span><span>180</span></div>
+          </div>
+        </div>
+
+        <!-- Body text -->
+        <div class="sv-card">
+          <div class="sv-lbl">Текст</div>
+          <textarea id="sv-text" class="sv-ta" placeholder="Введи основний текст..."></textarea>
+          <div class="sv-chars"><span id="sv-cc">0</span> символів</div>
+        </div>
+
+        <!-- Colors + bg image -->
+        <div class="sv-card">
+          <div class="sv-lbl">Кольори</div>
+          <div class="sv-color-cards" id="sv-color-cards"></div>
+          <div class="sv-row2">
+            <div class="sv-field">
+              <label>Фон</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-bg-picker" value="#000000">
+                <input type="text" class="sv-hex" id="sv-bg-hex" value="#000000" maxlength="7">
+              </div>
+            </div>
+            <div class="sv-field">
+              <label>Колір тексту</label>
+              <div class="sv-color-wrap">
+                <input type="color" class="sv-cpick" id="sv-txt-picker" value="#ffffff">
+                <input type="text" class="sv-hex" id="sv-txt-hex" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:.85rem">
+            <div class="sv-lbl" style="margin-bottom:.5rem">Фонова картинка</div>
+            <button class="sv-img-upload-btn" onclick="document.getElementById('sv-bg-img-file').click()">↑ Завантажити картинку</button>
+            <input type="file" id="sv-bg-img-file" accept=".jpg,.jpeg,.png,.webp" style="display:none">
+            <div class="sv-img-preview-row" id="sv-bg-img-preview-row" style="display:none">
+              <img class="sv-img-thumb" id="sv-bg-img-thumb" src="" alt="">
+              <div class="sv-img-info">
+                <div class="sv-img-name" id="sv-bg-img-name"></div>
+                <label style="font-size:.68rem;color:var(--text-2);display:block;margin-top:.3rem">
+                  Прозорість: <span id="sv-bg-op-val">50%</span>
+                </label>
+                <input type="range" class="sv-range" id="sv-bg-opacity" min="0" max="100" value="50" step="5" style="margin:.2rem 0 0">
+              </div>
+              <button class="sv-img-remove" onclick="svRemoveImage('bg')">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Font + Size + Align -->
+        <div class="sv-card">
+          <div class="sv-lbl">Шрифт</div>
+          <div class="sv-font-grid" id="sv-font-grid">
+            <div style="color:var(--text-3);font-size:.78rem;grid-column:1/-1;">Завантаження…</div>
+          </div>
+          <div class="sv-row2" style="margin-top:.9rem">
+            <div class="sv-field">
+              <label>Розмір: <span id="sv-fs-val">40px</span></label>
+              <input type="range" class="sv-range" id="sv-font-size" min="32" max="96" value="40">
+              <div class="sv-range-row"><span>32</span><span>96</span></div>
+            </div>
+            <div class="sv-field">
+              <label>Вирівнювання</label>
+              <div class="sv-align-group" style="margin-top:.3rem">
+                <button class="sv-align-btn active" data-align="left"   title="Ліворуч">&#8676;</button>
+                <button class="sv-align-btn"        data-align="center" title="По центру">&#8596;</button>
+                <button class="sv-align-btn"        data-align="right"  title="Праворуч">&#8677;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice -->
+        <div class="sv-card">
+          <div class="sv-lbl">Озвучка</div>
+          <div id="sv-voice-selector">
+            <div class="sv-voice-trigger" id="sv-voice-trigger">
+              <span class="sv-vdot-sm" id="sv-sel-dot" style="display:none;background:var(--text-3)"></span>
+              <span class="sv-vtrig-name" id="sv-sel-name">— без озвучки —</span>
+              <span class="sv-vchev" id="sv-vchev">▾</span>
+            </div>
+            <div class="sv-voice-panel" id="sv-voice-panel">
+              <div class="sv-vsearch-wrap">
+                <input class="sv-vsearch" id="sv-vsearch" placeholder="Пошук голосу..." autocomplete="off">
+              </div>
+              <div class="sv-vlist" id="sv-vlist">
+                <div style="padding:.5rem;color:var(--text-3);font-size:.78rem;">Завантаження…</div>
+              </div>
+            </div>
+          </div>
+          <div id="sv-speed-row" style="margin-top:.85rem">
+            <div class="sv-range-row"><span>Швидкість прокрутки</span><span id="sv-sp-val">40 px/с</span></div>
+            <input type="range" class="sv-range" id="sv-speed" min="40" max="400" value="40" step="5">
+            <div style="font-size:.67rem;color:var(--text-3);margin-top:.18rem;">Ігнорується, якщо вибрано голос</div>
+          </div>
+        </div>
+
+        <!-- Music -->
+        <div class="sv-card">
+          <div class="sv-lbl">Музика</div>
+          <div id="sv-music-wrap">
+            <div style="color:var(--text-3);font-size:.78rem;">Завантаження…</div>
+          </div>
+          <button class="sv-upload-btn" onclick="document.getElementById('sv-music-file-input').click()">↑ Завантажити свій трек</button>
+          <input type="file" id="sv-music-file-input" accept=".mp3,.wav,.m4a,.ogg" style="display:none">
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="sv-card">
+          <div class="sv-lbl">Дісклеймер <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.65rem;opacity:.45">optional</span></div>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-ai"    class="sv-disc-cb"><span class="sv-disc-label">Generative AI used</span></label>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-actor" class="sv-disc-cb"><span class="sv-disc-label">Actor portrayal. Individual results may vary.</span></label>
+          <label class="sv-disc-row"><input type="checkbox" id="sv-disc-vary"  class="sv-disc-cb"><span class="sv-disc-label">Individual results may vary.</span></label>
+        </div>
+
+        <button class="sv-btn" id="sv-gen-btn" onclick="svGenerate()">Згенерувати відео</button>
+        <button class="sv-btn sv-btn-ghost" onclick="svResetAll()">Скинути все</button>
+
+        <!-- Progress -->
+        <div class="sv-card sv-below" id="sv-prog-card" style="display:none">
+          <div class="sv-lbl">Прогрес</div>
+          <div class="sv-status-txt" id="sv-status-txt">...</div>
+          <div class="sv-prog-bg"><div class="sv-prog-fill" id="sv-prog-bar"></div></div>
+          <div class="sv-err" id="sv-err-msg" style="display:none"></div>
+        </div>
+
+        <!-- Result -->
+        <div class="sv-card sv-below" id="sv-res-card" style="display:none">
+          <div class="sv-lbl">Готово!</div>
+          <div class="sv-result-inner">
+            <div class="sv-result-video-wrap"><video id="sv-result-video" controls playsinline></video></div>
+            <div class="sv-result-info">
+              <p>Відео успішно згенеровано.</p>
+              <a class="sv-dl-btn" id="sv-dl-link" href="#" download>↓ Завантажити відео</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /sv-form-col -->
+
+      <!-- RIGHT: live preview -->
+      <div class="sv-preview-col">
+        <div class="sv-live-preview" id="sv-live-wrap">
+          <div id="sv-lyr-bg-color"></div>
+          <div id="sv-lyr-bg-img"></div>
+          <div class="sv-live-text-area">
+            <div class="sv-live-title" id="sv-live-title"></div>
+            <div class="sv-live-text"  id="sv-live-text">Твій текст зʼявиться тут…</div>
+          </div>
+          <div class="sv-live-overlay" id="sv-live-overlay">
+            <img id="sv-live-overlay-img" src="" alt="">
+          </div>
+          <div class="sv-live-disclaimer" id="sv-live-disclaimer" style="display:none"></div>
+        </div>
+        <p class="sv-preview-label">Живий перегляд</p>
+      </div>
+
+    </div><!-- /sv-main-grid -->
+  </div><!-- /sv-wrap -->
+  </div><!-- /page-scrolling-video -->
+
+  <!-- ── Text Cleaner page ── -->
+  <div id="page-text-cleaner" class="page-content" style="display:none">
+
+    <div class="tc-header">
+      <h1>✂️ Text Cleaner</h1>
+      <p>Заміна слів · Diff-підсвітка · AI-редагування</p>
+    </div>
+
+    <div class="tc-toolbar">
+      <div class="tc-mode-toggle">
+        <button class="tc-mode-btn active" data-tcmode="static">Static</button>
+        <button class="tc-mode-btn" data-tcmode="ai">Static + AI ✦</button>
+      </div>
+      <button class="btn-tc-settings" id="tc-btn-settings" title="OpenAI API Key">⚙</button>
+    </div>
+
+    <div class="tc-split">
+      <!-- Original -->
+      <div class="tc-pane">
+        <div class="tc-pane-hd">
+          <span class="tc-pane-label">Оригінал</span>
+          <div class="tc-pane-actions">
+            <button class="btn-tc-sm" id="tc-btn-paste">Paste</button>
+            <button class="btn-tc-sm" id="tc-btn-clear">Clear</button>
+          </div>
+        </div>
+        <textarea id="tc-input" placeholder="Встав скрипт тут…&#10;&#10;Або натисни Paste."></textarea>
+        <div class="tc-pane-ft"><span class="tc-foot-txt" id="tc-char-count">0 символів</span></div>
+      </div>
+      <!-- Result -->
+      <div class="tc-pane">
+        <div class="tc-pane-hd">
+          <span class="tc-pane-label">Результат</span>
+          <div class="tc-pane-actions">
+            <button class="btn-tc-sm hi" id="tc-btn-copy" disabled>📋 Copy</button>
+            <button class="btn-tc-sm" id="tc-btn-dl" disabled>↓ TXT</button>
+          </div>
+        </div>
+        <div id="tc-output" class="tc-output">
+          <span class="tc-output-placeholder">Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>
+        </div>
+        <div class="tc-pane-ft"><span class="tc-foot-txt" id="tc-changes-count"></span></div>
+      </div>
+    </div>
+
+    <div class="tc-action-bar">
+      <button class="btn-tc-clean" id="tc-btn-clean">Очистити →</button>
+      <span class="tc-shortcut">⌘ Enter / Ctrl+Enter</span>
+      <button class="btn-tc-sm" id="tc-btn-reset" style="margin-top:2px">Скинути все</button>
+    </div>
+
+    <!-- Rules -->
+    <div class="tc-rules-section">
+      <div class="tc-rules-hd" id="tc-rules-toggle">
+        <div class="tc-rules-title">
+          <span class="tc-rules-arrow" id="tc-rules-arrow">▾</span>
+          Правила заміни
+          <span class="tc-rules-badge" id="tc-rules-badge">0</span>
+        </div>
+        <button class="btn-tc-sm" id="tc-btn-add-rule" style="pointer-events:all">+ Додати</button>
+      </div>
+      <div class="tc-rules-body" id="tc-rules-body"></div>
+      <div class="tc-rules-ft" id="tc-rules-ft" style="display:none">
+        <button class="btn-tc-sm" id="tc-btn-save-rules">💾 Зберегти зміни</button>
+      </div>
+    </div>
+
+    <div class="tc-status" id="tc-status"></div>
+
+    <!-- Settings modal -->
+    <div class="tc-modal-overlay" id="tc-modal" style="display:none">
+      <div class="tc-modal">
+        <div class="tc-modal-hd">
+          Налаштування
+          <button class="tc-modal-close" id="tc-modal-close">×</button>
+        </div>
+        <div class="tc-modal-body">
+          <label class="tc-modal-label" for="tc-api-key">OpenAI API Key</label>
+          <input type="password" id="tc-api-key" class="tc-modal-input" placeholder="sk-…" autocomplete="off" spellcheck="false">
+          <p class="tc-modal-hint">Потрібно тільки для режиму <strong>Static + AI</strong>. Зберігається в localStorage.</p>
+        </div>
+        <div class="tc-modal-ft">
+          <button class="btn-tc-save-key" id="tc-btn-save-key">Зберегти</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-text-cleaner -->
+
+  </div><!-- /left col -->
+
   <!-- ── RIGHT ── -->
-  <div class="preview-sticky">
+  <div class="preview-sticky" id="preview-col">
     <div class="preview-wrap">
       <div class="preview-bg" id="preview-frame" style="background:#000">
         <div class="preview-text" id="preview-text"
@@ -615,6 +1390,11 @@ textarea::placeholder { color: var(--text-3); }
     </div>
     <button class="generate-btn" id="generate-btn">Generate</button>
     <button class="stop-btn"     id="stop-btn">Stop generation</button>
+    <button class="reset-btn"    onclick="clearAll()">↺ Reset all</button>
+    <details class="gen-log" id="gen-log-panel" style="display:none">
+      <summary>Лог генерації</summary>
+      <div class="gen-log-body" id="gen-log-body"></div>
+    </details>
   </div>
 
 </div>
@@ -650,6 +1430,7 @@ textarea::placeholder { color: var(--text-3); }
     item.innerHTML = `
       <div class="script-header">
         <span class="script-index">Script ${num}</span>
+        <input type="text" class="script-name-inp" id="script-name-${idx}" placeholder="Нейм (BRS_001…)" autocomplete="off" maxlength="60">
         <button class="script-remove" onclick="removeScript(${idx})">×</button>
       </div>
       <textarea class="script-text" id="script-text-${idx}" placeholder="Paste your script here…"></textarea>
@@ -657,7 +1438,7 @@ textarea::placeholder { color: var(--text-3); }
         <div class="result-track"><div class="result-fill" id="result-fill-${idx}"></div></div>
         <div class="result-row">
           <span class="result-msg" id="result-msg-${idx}"></span>
-          <a class="result-dl" id="result-dl-${idx}" download="video-${num}.mp4">↓ Download</a>
+          <div class="result-btns" id="result-btns-${idx}" style="display:none;gap:6px;flex-wrap:wrap;justify-content:flex-end"></div>
         </div>
       </div>`;
     list.appendChild(item);
@@ -672,7 +1453,7 @@ textarea::placeholder { color: var(--text-3); }
 
   function reindexLabels() {
     document.querySelectorAll('#scripts-list .script-index').forEach((el, i) => el.textContent = `Script ${i + 1}`);
-    document.querySelectorAll('#scripts-list .result-dl').forEach((el, i) => { el.download = `video-${i + 1}.mp4`; });
+    // download buttons are rebuilt dynamically after generation
   }
 
   function updateRemoveButtons() {
@@ -691,7 +1472,6 @@ textarea::placeholder { color: var(--text-3); }
   document.getElementById('scripts-list').addEventListener('input', e => {
     if (e.target.classList.contains('script-text')) updatePreview();
   });
-  addScript();
 
   // ── Preview ───────────────────────────────────────────
   function getPreviewText() {
@@ -714,6 +1494,7 @@ textarea::placeholder { color: var(--text-3); }
     pt.style.fontSize   = Math.round(state.fontSize * 0.38) + 'px';
     document.getElementById('preview-overlay').classList.toggle('show', state.useFrame);
     updateDisclaimerPreview();
+    saveToStorage();
   }
 
   function applyColors(bg, txt) {
@@ -758,6 +1539,7 @@ textarea::placeholder { color: var(--text-3); }
     p.addEventListener('click', () => {
       document.getElementById('voice-group').querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
       p.classList.add('active'); state.voiceId = p.dataset.value;
+      saveToStorage();
     });
   });
 
@@ -894,6 +1676,7 @@ textarea::placeholder { color: var(--text-3); }
       document.getElementById('custom-music-btn').classList.remove('active');
       document.getElementById('music-name').textContent = '';
       document.getElementById('music-input').value = '';
+      saveToStorage();
     });
   });
 
@@ -931,92 +1714,193 @@ textarea::placeholder { color: var(--text-3); }
         document.querySelectorAll('.disc-results').forEach(o => { if (o !== c) o.checked = false; });
       }
       updateDisclaimerPreview();
+      saveToStorage();
     });
   });
 
-  function makeFilename(text) {
-    const date  = new Date().toISOString().slice(0,10).replace(/-/g,'');
-    const slug  = text.trim().toLowerCase()
+  function makeFilename(text, name) {
+    const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    if (name) {
+      const safe = name.trim().replace(/[^\wЀ-ӿ-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+      return `${date}_${safe}.mp4`;
+    }
+    const slug = text.trim().toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .split(/\s+/).slice(0, 4).join('-');
     return `${date}_${slug}.mp4`;
   }
 
   // ── Generate ──────────────────────────────────────────
-  async function generateOne(text, resultIdx) {
+  // ── Log panel helpers ────────────────────────────────────────────────────
+  const logPanel = document.getElementById('gen-log-panel');
+  const logBody  = document.getElementById('gen-log-body');
+  let   activeSSE = null;
+
+  function logAppend(text, isError = false) {
+    logPanel.style.display = '';
+    logPanel.open = true;
+    const line = document.createElement('div');
+    line.className = 'gen-log-line' + (isError ? ' error' : '');
+    line.textContent = text;
+    logBody.appendChild(line);
+    logBody.scrollTop = logBody.scrollHeight;
+  }
+
+  function logClear() {
+    logBody.innerHTML = '';
+    logPanel.style.display = 'none';
+    logPanel.open = false;
+  }
+
+  // ── Build FormData helper ─────────────────────────────────────────────────
+  function buildForm(text) {
+    const form = new FormData();
+    form.append('text',                text);
+    form.append('voice_id',            state.voiceId);
+    form.append('font',                state.font);
+    form.append('bg_color',            state.bgColor);
+    form.append('text_color',          state.textColor);
+    form.append('font_size',           state.fontSize);
+    form.append('use_christmas_frame', state.useFrame ? '1' : '0');
+    if (state.useFrame) form.append('frame_file', state.frameFile);
+    if (state.musicChoice === 'preset' && state.presetMusic) {
+      form.append('preset_music', state.presetMusic);
+    } else if (state.musicChoice === 'custom') {
+      const mf = document.getElementById('music-input').files[0];
+      if (mf) form.append('music', mf);
+    }
+    if (state.bgType === 'photo') {
+      const bgFile = document.getElementById('bg-photo-input').files[0];
+      if (bgFile) form.append('bg_image', bgFile);
+    }
+    const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+    if (discLines.length) form.append('disclaimer', discLines.join('\n'));
+    return form;
+  }
+
+  async function generateOne(text, resultIdx, videoName = '') {
     const fill   = document.getElementById(`result-fill-${resultIdx}`);
     const msg    = document.getElementById(`result-msg-${resultIdx}`);
-    const dlBtn  = document.getElementById(`result-dl-${resultIdx}`);
     const result = document.getElementById(`script-result-${resultIdx}`);
 
     result.classList.add('visible');
-    dlBtn.classList.remove('show');
-    msg.className = 'result-msg';
+    document.getElementById(`result-btns-${resultIdx}`).style.display = 'none';
+    msg.className    = 'result-msg';
     fill.style.width = '5%';
-    msg.textContent  = 'Generating audio…';
+    msg.textContent  = 'Запускаємо…';
+    logClear();
 
-    let prog = 5;
-    const iv = setInterval(() => {
-      if (prog < 85) {
-        prog += Math.random() * 3;
-        fill.style.width = prog + '%';
-        if      (prog < 25) msg.textContent = 'Generating audio…';
-        else if (prog < 50) msg.textContent = 'Transcribing…';
-        else if (prog < 70) msg.textContent = 'Building subtitles…';
-        else                msg.textContent = 'Rendering video…';
+    // Step labels mapped to rough progress %
+    const STEPS = {
+      '🎙': 10, '✅ Голос': 30, '🔊': 40, '✂️': 50,
+      '📝': 60, '✅': 70, '🖼': 75, '🎬': 88, '🎵': 94,
+    };
+
+    function stepProgress(line) {
+      for (const [key, pct] of Object.entries(STEPS)) {
+        if (line.startsWith(key)) return pct;
       }
-    }, 2000);
+      return null;
+    }
 
     try {
-      const form = new FormData();
-      form.append('text',                text);
-      form.append('voice_id',            state.voiceId);
-      form.append('font',                state.font);
-      form.append('bg_color',            state.bgColor);
-      form.append('text_color',          state.textColor);
-      form.append('font_size',           state.fontSize);
-      form.append('use_christmas_frame', state.useFrame ? '1' : '0');
-      if (state.useFrame) form.append('frame_file', state.frameFile);
-      if (state.musicChoice === 'preset' && state.presetMusic) {
-        form.append('preset_music', state.presetMusic);
-      } else if (state.musicChoice === 'custom') {
-        const mf = document.getElementById('music-input').files[0];
-        if (mf) form.append('music', mf);
+      // 1. Start generation
+      const startRes = await fetch('/generate/start', {
+        method: 'POST', body: buildForm(text),
+        signal: abortController?.signal,
+      });
+      if (!startRes.ok) throw new Error(await startRes.text());
+      const { job_id } = await startRes.json();
+
+      // 2. Subscribe to SSE log
+      await new Promise((resolve, reject) => {
+        if (activeSSE) { activeSSE.close(); activeSSE = null; }
+        const sse = new EventSource(`/events/${job_id}`);
+        activeSSE = sse;
+
+        abortController?.signal?.addEventListener('abort', () => {
+          sse.close(); activeSSE = null; reject(new DOMException('', 'AbortError'));
+        });
+
+        sse.onmessage = (e) => {
+          if (e.data === '__DONE__') {
+            sse.close(); activeSSE = null; resolve();
+            return;
+          }
+          const line = e.data;
+          logAppend(line, line.startsWith('❌'));
+          msg.textContent = line.replace(/^[^\s]+ /, '');  // strip leading emoji
+          const pct = stepProgress(line);
+          if (pct) fill.style.width = pct + '%';
+        };
+
+        sse.onerror = () => {
+          sse.close(); activeSSE = null; resolve();  // will check status on /result
+        };
+      });
+
+      // 3. Poll result (handles SSE drop on Railway proxies)
+      fill.style.width = '95%';
+      msg.textContent  = 'Завантажуємо…';
+      let data;
+      const deadline = Date.now() + 360_000; // 6 min max
+      while (Date.now() < deadline) {
+        const r = await fetch(`/result/${job_id}`,
+                              { signal: abortController?.signal });
+        if (!r.ok) throw new Error(await r.text());
+        const body = await r.json();
+        if (body.status === 'running') {
+          await new Promise(res => setTimeout(res, 2000));
+          continue;
+        }
+        if (body.status === 'error') throw new Error(body.error || 'Generation failed');
+        data = body;
+        break;
       }
-      if (state.bgType === 'photo') {
-        const bgFile = document.getElementById('bg-photo-input').files[0];
-        if (bgFile) form.append('bg_image', bgFile);
-      }
-      const discLines = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
-      if (discLines.length) form.append('disclaimer', discLines.join('\n'));
+      if (!data) throw new Error('Generation timed out');
+      const basename = makeFilename(text, videoName).replace('.mp4', '');
 
-      const res = await fetch('/generate', { method: 'POST', body: form, signal: abortController?.signal });
-      clearInterval(iv);
-      if (!res.ok) throw new Error(await res.text());
+      // Auto-download video directly from server (no base64 in memory)
+      const tmpA = document.createElement('a');
+      tmpA.href = data.video_url; tmpA.download = basename + '.mp4'; tmpA.click();
 
-      const blob     = await res.blob();
-      const filename = makeFilename(text);
-      const url      = URL.createObjectURL(blob);
-
-      // Auto-download
-      const tmp = document.createElement('a');
-      tmp.href = url; tmp.download = filename;
-      tmp.click();
-
-      fill.style.width  = '100%';
-      msg.textContent   = '✓ Done';
+      fill.style.width = '100%';
+      msg.textContent  = '✓ Done';
       msg.classList.add('done');
-      dlBtn.href        = url;
-      dlBtn.download    = filename;
-      dlBtn.textContent = '✓ Downloaded';
-      dlBtn.classList.add('show');
+
+      // Build download buttons
+      const btns = document.getElementById(`result-btns-${resultIdx}`);
+      btns.style.display = 'flex';
+      btns.innerHTML = '';
+
+      function makeBtn(label, blobContent, mime, filename) {
+        const blob = new Blob([blobContent], { type: mime });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.className = 'result-dl' + (mime === 'video/mp4' ? '' : ' secondary');
+        a.href = url; a.download = filename; a.textContent = label;
+        return a;
+      }
+      function makeLinkBtn(label, href, filename) {
+        const a = document.createElement('a');
+        a.className = 'result-dl';
+        a.href = href; a.download = filename; a.textContent = label;
+        return a;
+      }
+
+      btns.appendChild(makeLinkBtn('✓ Video', data.video_url, basename + '.mp4'));
+      btns.appendChild(makeBtn('↓ MP3',      new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))]), 'audio/mpeg', basename + '.mp3'));
+      btns.appendChild(makeBtn('↓ TXT',      data.txt,      'text/plain', basename + '.txt'));
+      btns.appendChild(makeBtn('↓ SRT',      data.srt,      'text/plain', basename + '.srt'));
+      btns.appendChild(makeBtn('↓ Settings', data.settings, 'text/plain', basename + '_settings.txt'));
+
     } catch(e) {
-      clearInterval(iv);
       fill.style.width = '0%';
       if (e.name === 'AbortError') {
         msg.textContent = '⊘ Cancelled';
       } else {
         msg.textContent = e.message?.slice(0, 180) || 'Unknown error';
+        logAppend('❌ ' + (e.message || 'Unknown error'), true);
       }
       msg.classList.add('error');
     }
@@ -1028,7 +1912,8 @@ textarea::placeholder { color: var(--text-3); }
     items.forEach(item => {
       const id   = item.id.replace('script-item-', '');
       const text = document.getElementById(`script-text-${id}`)?.value.trim();
-      if (text) scripts.push({ id, text });
+      const name = document.getElementById(`script-name-${id}`)?.value.trim() || '';
+      if (text) scripts.push({ id, text, name });
     });
     if (!scripts.length) { alert('Please enter at least one script.'); return; }
 
@@ -1046,7 +1931,7 @@ textarea::placeholder { color: var(--text-3); }
       stopBtn.textContent = scripts.length > 1
         ? `Stop (${i + 1} of ${scripts.length})`
         : 'Stop generation';
-      await generateOne(scripts[i].text, scripts[i].id);
+      await generateOne(scripts[i].text, scripts[i].id, scripts[i].name);
     }
 
     btn.style.display     = 'block';
@@ -1054,7 +1939,1187 @@ textarea::placeholder { color: var(--text-3); }
     btn.textContent = scripts.length > 1 ? `Generate All (${scripts.length})` : 'Generate';
   });
 
+  // ── Sidebar navigation ────────────────────────────────
+  const URL_TO_PAGE = { '/easy-mh': 'video-generator', '/voiceover': 'voiceover-pipeline', '/scrolling': 'scrolling-video', '/tiktok': 'text-cleaner' };
+
+  function switchToPage(pageId, push = true) {
+    const item = document.querySelector(`.sidebar-item[data-page="${pageId}"]`);
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    if (item) {
+      item.classList.add('active');
+      const section = item.closest('.sidebar-items');
+      if (section && !section.classList.contains('open')) {
+        section.classList.add('open');
+        section.previousElementSibling?.classList.add('open');
+      }
+    }
+    document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+    document.getElementById('page-' + pageId).style.display = 'block';
+    document.getElementById('page-subtitle').textContent = item?.dataset.subtitle || '';
+    const showPreview = pageId === 'video-generator';
+    document.getElementById('preview-col').style.visibility = showPreview ? '' : 'hidden';
+    if (pageId === 'scrolling-video' && typeof svInit === 'function') svInit();
+    if (pageId === 'text-cleaner'   && typeof _tcInit === 'function') _tcInit();
+    if (push) history.pushState({ page: pageId }, '', item?.dataset.url || '/');
+  }
+
+  document.querySelectorAll('.sidebar-section-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.classList.toggle('open');
+      document.getElementById('section-' + header.dataset.section).classList.toggle('open');
+    });
+  });
+
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => switchToPage(item.dataset.page));
+  });
+
+  window.addEventListener('popstate', e => {
+    switchToPage(e.state?.page || URL_TO_PAGE[location.pathname] || 'video-generator', false);
+  });
+
+  switchToPage(URL_TO_PAGE[location.pathname] || 'video-generator', false);
+
+  // ── localStorage ─────────────────────────────────────
+  function saveToStorage() {
+    try {
+      const scripts = [...document.querySelectorAll('.script-text')].map(t => t.value);
+      localStorage.setItem('ag_scripts', JSON.stringify(scripts));
+      localStorage.setItem('ag_state', JSON.stringify({
+        voiceId: state.voiceId, font: state.font, fontFamily: state.fontFamily,
+        fontBold: state.fontBold, bgColor: state.bgColor, textColor: state.textColor,
+        fontSize: state.fontSize, bgType: state.bgType,
+        useFrame: state.useFrame, frameFile: state.frameFile,
+        musicChoice: state.musicChoice, presetMusic: state.presetMusic,
+      }));
+      const discs = [...document.querySelectorAll('.disc-check:checked')].map(c => c.value);
+      localStorage.setItem('ag_disclaimers', JSON.stringify(discs));
+    } catch(e) {}
+  }
+
+  function restoreFromStorage() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ag_state') || 'null');
+      if (saved) Object.assign(state, saved);
+
+      const scripts = JSON.parse(localStorage.getItem('ag_scripts') || '[""]');
+      scripts.forEach(() => addScript());
+      document.querySelectorAll('#scripts-list .script-text').forEach((ta, i) => {
+        ta.value = scripts[i] || '';
+      });
+      updateRemoveButtons(); updateGenerateLabel();
+
+      document.querySelectorAll('#voice-group .pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.value === state.voiceId));
+
+      document.querySelectorAll('#font-group .font-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.value === state.font));
+      document.getElementById('font-size').value = state.fontSize;
+      document.getElementById('font-size-val').textContent = state.fontSize;
+
+      document.getElementById('bg-picker').value   = state.bgColor;
+      document.getElementById('bg-hex').value       = state.bgColor;
+      document.getElementById('text-picker').value  = state.textColor;
+      document.getElementById('text-hex').value     = state.textColor;
+
+      if (state.bgType === 'photo') {
+        document.getElementById('bg-tab-color').classList.remove('active');
+        document.getElementById('bg-tab-photo').classList.add('active');
+        document.getElementById('bg-color-section').style.display = 'none';
+        document.getElementById('bg-photo-section').style.display = '';
+      }
+
+      if (state.useFrame && state.frameFile) {
+        document.querySelectorAll('.frame-check').forEach(cb => {
+          cb.checked = cb.dataset.file === state.frameFile;
+        });
+        document.getElementById('preview-overlay').src = `/static-frames/${state.frameFile}`;
+      }
+
+      if (state.musicChoice === 'preset') {
+        document.querySelectorAll('#music-grid .music-pill').forEach(p =>
+          p.classList.toggle('active', p.dataset.file === state.presetMusic));
+      }
+
+      const discs = JSON.parse(localStorage.getItem('ag_disclaimers') || '[]');
+      document.querySelectorAll('.disc-check').forEach(c => { c.checked = discs.includes(c.value); });
+    } catch(e) { addScript(); }
+  }
+
+  // ── Voiceover Pipeline JS ────────────────────────────
+  const VP_VOICES = [];
+  let vpSelected = null, vpPolling = null, vpHasFile = false;
+
+  async function vpInit() { await vpLoadVoices(); }
+
+  async function vpLoadVoices() {
+    const vs = await (await fetch("/api/voices")).json();
+    VP_VOICES.length = 0; vs.forEach(v => VP_VOICES.push(v));
+    vpRenderVoices(VP_VOICES);
+  }
+
+  async function vpRefreshVoices() {
+    document.getElementById("vpVoiceList").innerHTML = '<div class="vp-voice-empty">Оновлення…</div>';
+    await fetch("/api/voices/refresh");
+    await vpLoadVoices();
+  }
+
+  function vpFilterVoices(q) {
+    const filtered = q.trim() ? VP_VOICES.filter(v => v.name.toLowerCase().includes(q.toLowerCase())) : VP_VOICES;
+    vpRenderVoices(filtered, q);
+  }
+
+  function vpRenderVoices(list, q = "") {
+    const el = document.getElementById("vpVoiceList");
+    if (!list.length) { el.innerHTML = '<div class="vp-voice-empty">Голосів не знайдено</div>'; return; }
+    el.innerHTML = "";
+    const favs = list.filter(v => v.fav), others = list.filter(v => !v.fav);
+    if (favs.length && !q) {
+      const d = document.createElement("div"); d.className = "vp-fav-divider"; d.textContent = "★ Обрані";
+      el.appendChild(d); favs.forEach(v => el.appendChild(vpMakeRow(v, q)));
+      if (others.length) {
+        const d2 = document.createElement("div"); d2.className = "vp-fav-divider"; d2.textContent = "Всі голоси";
+        el.appendChild(d2);
+      }
+    }
+    others.forEach(v => el.appendChild(vpMakeRow(v, q)));
+  }
+
+  function vpMakeRow(v, q = "") {
+    const row = document.createElement("div");
+    row.className = "vp-voice-row" + (vpSelected?.id === v.id ? " selected" : "");
+    row.dataset.id = v.id;
+    if (vpSelected?.id === v.id) {
+      row.style.setProperty("--sel-color", v.color + "99");
+      row.style.setProperty("--sel-bg", v.color + "12");
+    }
+    const cat = v.category ? `<span class="vp-voice-cat">${v.category}</span>` : "";
+    row.innerHTML = `<span class="vp-voice-dot" style="background:${v.color}"></span>
+      <span class="vp-voice-name">${vpHighlight(v.name, q)}</span>${cat}
+      <button class="vp-fav-btn${v.fav ? " active" : ""}" data-vid="${v.id}">★</button>`;
+    row.onclick = e => { if (e.target.closest(".vp-fav-btn")) return; vpSelectVoice(v); };
+    row.querySelector(".vp-fav-btn").onclick = e => { e.stopPropagation(); vpToggleFav(v); };
+    return row;
+  }
+
+  async function vpToggleFav(v) {
+    const d = await (await fetch("/api/favorites/toggle", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({voice_id: v.id})
+    })).json();
+    const voice = VP_VOICES.find(x => x.id === v.id); if (voice) voice.fav = d.fav;
+    vpFilterVoices(document.getElementById("vpVoiceSearch").value);
+  }
+
+  function vpHighlight(name, q) {
+    if (!q) return name;
+    const idx = name.toLowerCase().indexOf(q.toLowerCase()); if (idx < 0) return name;
+    return name.slice(0,idx) + `<mark style="background:#4f8ef730;color:#fff;border-radius:3px">${name.slice(idx,idx+q.length)}</mark>` + name.slice(idx+q.length);
+  }
+
+  function vpSelectVoice(v) {
+    vpSelected = v;
+    document.querySelectorAll("#vpVoiceList .vp-voice-row").forEach(r => {
+      const on = r.dataset.id === v.id; r.classList.toggle("selected", on);
+      if (on) { r.style.setProperty("--sel-color", v.color+"99"); r.style.setProperty("--sel-bg", v.color+"12"); }
+      else { r.style.removeProperty("--sel-color"); r.style.removeProperty("--sel-bg"); }
+    });
+    document.getElementById("vpBadge").innerHTML = `<span class="vp-badge-dot" style="background:${v.color}"></span>${v.name}`;
+    vpUpdateBtn();
+  }
+
+  function vpOnTextInput() {
+    const t = document.getElementById("vpTextInput").value;
+    document.getElementById("vpCharCount").textContent = t.length + " символів";
+    vpUpdateBtn();
+  }
+
+  function vpUpdateBtn() {
+    document.getElementById("vpBtnRun").disabled = !(vpSelected && document.getElementById("vpTextInput").value.trim());
+  }
+
+  async function vpRun() {
+    const text = document.getElementById("vpTextInput").value.trim();
+    if (!text || !vpSelected) return;
+    vpHasFile = false;
+    document.getElementById("vpBtnDownload").style.display = "none";
+    document.getElementById("vpBtnTxt").style.display = "none";
+    const d = await (await fetch("/api/run", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({text, voice_id: vpSelected.id, task_id: document.getElementById("vpTaskInput").value.trim()})
+    })).json();
+    if (!d.ok) { vpShowToast("❌ " + d.error); return; }
+    vpSetRunning(true); vpStartPolling();
+  }
+
+  async function vpStop() {
+    await fetch("/api/stop", {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"});
+  }
+
+  function vpDownload() { window.location.href = "/api/download"; }
+  function vpDownloadTxt() { window.location.href = "/api/download_txt"; }
+
+  function vpSetRunning(v) {
+    document.getElementById("vpBtnRun").style.display  = v ? "none" : "";
+    document.getElementById("vpBtnStop").style.display = v ? "" : "none";
+    document.getElementById("vpSpinner").style.display = v ? "" : "none";
+    if (!v) vpStopPolling();
+  }
+
+  function vpStartPolling() { vpStopPolling(); vpPolling = setInterval(vpFetchLog, 600); vpFetchLog(); }
+  function vpStopPolling() { if (vpPolling) { clearInterval(vpPolling); vpPolling = null; } }
+
+  async function vpFetchLog() {
+    try {
+      const d = await (await fetch("/api/log")).json();
+      const box = document.getElementById("vpLogBox");
+      if (d.log) { box.classList.remove("empty"); box.textContent = d.log; box.scrollTop = box.scrollHeight; }
+      if (d.txt) document.getElementById("vpBtnTxt").style.display = "";
+      if (d.file && !vpHasFile) { vpHasFile = true; document.getElementById("vpBtnDownload").style.display = ""; }
+      if (!d.running) vpSetRunning(false);
+    } catch(e) {}
+  }
+
+  function vpShowToast(msg) {
+    const t = document.getElementById("vpToast");
+    t.textContent = msg; t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3500);
+  }
+
+  // ── Reset all ─────────────────────────────────────────
+  function clearAll() {
+    if (!confirm('Скинути всі налаштування?\nСкрипти та вибір будуть видалені.')) return;
+
+    localStorage.removeItem('ag_scripts');
+    localStorage.removeItem('ag_state');
+    localStorage.removeItem('ag_disclaimers');
+
+    Object.assign(state, {
+      voiceId: 'cm1VTuOWsFQRdZ5uDzSB',
+      font: 'Montserrat', fontFamily: 'F-Montserrat', fontBold: true,
+      bgColor: '#000000', textColor: '#FFFFFF', fontSize: 58,
+      bgType: 'color', bgImageURL: null,
+      useFrame: false, frameFile: 'christmas.png',
+      musicChoice: 'none', presetMusic: '',
+    });
+
+    document.getElementById('scripts-list').innerHTML = '';
+    scriptCount = 0;
+    addScript();
+
+    document.querySelectorAll('#voice-group .pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+
+    document.querySelectorAll('#font-group .font-pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+    document.getElementById('font-size').value = 58;
+    document.getElementById('font-size-val').textContent = 58;
+
+    document.getElementById('bg-picker').value   = '#000000';
+    document.getElementById('bg-hex').value       = '#000000';
+    document.getElementById('text-picker').value  = '#FFFFFF';
+    document.getElementById('text-hex').value     = '#FFFFFF';
+
+    document.getElementById('bg-tab-color').classList.add('active');
+    document.getElementById('bg-tab-photo').classList.remove('active');
+    document.getElementById('bg-color-section').style.display = '';
+    document.getElementById('bg-photo-section').style.display = 'none';
+
+    document.querySelectorAll('.frame-check').forEach(cb => cb.checked = false);
+    document.getElementById('preview-overlay').src = '/static-frames/christmas.png';
+
+    document.querySelectorAll('#music-grid .music-pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+    document.getElementById('custom-music-btn').classList.remove('active');
+    document.getElementById('music-name').textContent = '';
+
+    document.querySelectorAll('.disc-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.preset-swatch').forEach((s, i) => s.classList.toggle('active', i === 0));
+
+    updatePreview();
+  }
+
+  vpInit();
+
+  restoreFromStorage();
   updatePreview();
+
+// ── Scrolling Video ────────────────────────────────────────────────────────
+(function() {
+  const SV_PRESETS = [
+    {bg:"#87CDEB", tx:"#0E2273"},
+    {bg:"#000000", tx:"#ffffff"},
+    {bg:"#ffffff", tx:"#000000"},
+    {bg:"#F1EBE4", tx:"#102127"},
+    {bg:"#102127", tx:"#ffffff"},
+  ];
+
+  let svAlign      = 'left';
+  let svFont       = 'Georgia';
+  let svTitleFont  = '';
+  let svTitleColor = '#ffffff';
+  let svTitleSize  = 53;
+  let svMusic      = null;
+  let svVoice      = null;
+  let svAllVoices  = [];
+  let svFontCssMap = {};
+  let svPanelOpen  = false;
+  let svCurAudio   = null;
+  let svCurPlayBtn = null;
+  let svBgImageFile    = null;
+  let svBgImageObjUrl  = null;
+  let svBgOpacity      = 0.5;
+  let svOverlayFile    = null;
+  let svOverlayObjUrl  = null;
+  let svOverlayAnchorY = 0.5;
+  let svTitleColorLinked = true;
+  let svInited = false;
+  let svPoll   = null;
+
+  const SV_LS_KEY = 'sv_form_v1';
+
+  function svSaveState() {
+    try {
+      localStorage.setItem(SV_LS_KEY, JSON.stringify({
+        text:      document.getElementById('sv-text').value,
+        title:     document.getElementById('sv-title-input').value,
+        bg:        document.getElementById('sv-bg-hex').value,
+        txt:       document.getElementById('sv-txt-hex').value,
+        tc:        svTitleColor,
+        tcLinked:  svTitleColorLinked,
+        font:      svFont,
+        titleFont: svTitleFont,
+        titleSize: svTitleSize,
+        fontSize:  document.getElementById('sv-font-size').value,
+        voice:     svVoice,
+        music:     svMusic,
+        align:     svAlign,
+        speed:     document.getElementById('sv-speed').value,
+        discAi:    document.getElementById('sv-disc-ai').checked,
+        discActor: document.getElementById('sv-disc-actor').checked,
+        discVary:  document.getElementById('sv-disc-vary').checked,
+        opacity:   svBgOpacity,
+      }));
+    } catch {}
+  }
+
+  function svRestoreState() {
+    try {
+      const raw = localStorage.getItem(SV_LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (s.text  != null) { document.getElementById('sv-text').value = s.text; document.getElementById('sv-cc').textContent = s.text.length; }
+      if (s.title != null) document.getElementById('sv-title-input').value = s.title;
+      if (s.bg)  svSetColor('bg',  s.bg);
+      if (s.txt) svSetColor('txt', s.txt);
+      if (s.tc)  { svSetTitleColor(s.tc); svTitleColorLinked = !!s.tcLinked; }
+      if (s.font) svFont = s.font;
+      if (s.titleFont) { svTitleFont = s.titleFont; const sel = document.getElementById('sv-title-font'); if (sel) sel.value = s.titleFont; }
+      if (s.titleSize != null) { svTitleSize = +s.titleSize; const el = document.getElementById('sv-title-size'); if (el) { el.value = s.titleSize; document.getElementById('sv-tfs-val').textContent = s.titleSize + 'px'; } }
+      if (s.fontSize) { document.getElementById('sv-font-size').value = s.fontSize; document.getElementById('sv-fs-val').textContent = s.fontSize + 'px'; }
+      if (s.voice) {
+        svVoice = s.voice;
+        const dot = document.getElementById('sv-sel-dot');
+        dot.style.display = 'inline-block';
+        dot.style.background = s.voice.color || 'transparent';
+        document.getElementById('sv-sel-name').textContent = s.voice.name;
+        document.getElementById('sv-speed-row').style.display = 'none';
+      }
+      if (s.music != null) svMusic = s.music;
+      if (s.align) { svAlign = s.align; document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.toggle('active', b.dataset.align === s.align)); }
+      if (s.speed) { document.getElementById('sv-speed').value = s.speed; document.getElementById('sv-sp-val').textContent = s.speed + ' px/с'; }
+      if (s.discAi    != null) document.getElementById('sv-disc-ai').checked    = s.discAi;
+      if (s.discActor != null) document.getElementById('sv-disc-actor').checked = s.discActor;
+      if (s.discVary  != null) document.getElementById('sv-disc-vary').checked  = s.discVary;
+      if (s.opacity != null) { svBgOpacity = s.opacity; const el = document.getElementById('sv-bg-opacity'); if (el) { el.value = Math.round(s.opacity * 100); document.getElementById('sv-bg-op-val').textContent = Math.round(s.opacity * 100) + '%'; } }
+    } catch {}
+  }
+
+  window.svResetAll = function() {
+    if (!confirm('Скинути всі налаштування та очистити форму?')) return;
+    if (svPoll) { clearInterval(svPoll); svPoll = null; }
+    try { localStorage.removeItem(SV_LS_KEY); } catch {}
+    document.getElementById('sv-text').value = '';
+    document.getElementById('sv-title-input').value = '';
+    document.getElementById('sv-cc').textContent = '0';
+    svSetColor('bg', '#0a0a0a'); svSetColor('txt', '#ffffff'); svSetTitleColor('#ffffff'); svTitleColorLinked = true;
+    document.querySelectorAll('.sv-color-card').forEach((c,i) => c.classList.toggle('active', i===1));
+    svFont = 'Georgia';
+    document.querySelectorAll('.sv-font-card').forEach(c => c.classList.toggle('active', c.dataset.font === 'Georgia'));
+    svTitleFont = ''; document.getElementById('sv-title-font').value = '';
+    svTitleSize = 53; document.getElementById('sv-title-size').value = '53'; document.getElementById('sv-tfs-val').textContent = '53px';
+    document.getElementById('sv-font-size').value = '40'; document.getElementById('sv-fs-val').textContent = '40px';
+    svVoice = null;
+    document.getElementById('sv-sel-dot').style.display = 'none';
+    document.getElementById('sv-sel-name').textContent = '— без озвучки —';
+    document.getElementById('sv-speed-row').style.display = 'block';
+    document.querySelectorAll('.sv-vrow').forEach(r => r.classList.remove('active'));
+    const noneVRow = document.querySelector('#sv-vlist .sv-vrow');
+    if (noneVRow) noneVRow.classList.add('active');
+    svMusic = null; svStopAudio();
+    document.querySelectorAll('.sv-music-track').forEach(c => c.classList.remove('active'));
+    const noneMEl = document.querySelector('#sv-music-wrap .sv-music-none');
+    if (noneMEl) { noneMEl.classList.add('active'); }
+    svAlign = 'left';
+    document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.toggle('active', b.dataset.align === 'left'));
+    document.getElementById('sv-speed').value = '40'; document.getElementById('sv-sp-val').textContent = '40 px/с';
+    document.getElementById('sv-disc-ai').checked = false;
+    document.getElementById('sv-disc-actor').checked = false;
+    document.getElementById('sv-disc-vary').checked = false;
+    svBgImageFile = null; svBgImageObjUrl = null; svOverlayFile = null; svOverlayObjUrl = null; svBgOpacity = 0.5;
+    document.getElementById('sv-bg-opacity').value = '50'; document.getElementById('sv-bg-op-val').textContent = '50%';
+    document.getElementById('sv-bg-img-preview-row').style.display = 'none';
+    document.getElementById('sv-bg-img-thumb').src = '';
+    document.getElementById('sv-overlay-preview-row').style.display = 'none';
+    document.getElementById('sv-overlay-pos-wrap').style.display = 'none';
+    document.getElementById('sv-overlay-thumb').src = '';
+    document.getElementById('sv-prog-card').style.display = 'none';
+    document.getElementById('sv-res-card').style.display = 'none';
+    document.getElementById('sv-err-msg').style.display = 'none';
+    document.getElementById('sv-gen-btn').disabled = false;
+    svUpdatePreview();
+  };
+
+  function svIsLight(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return false;
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return (0.299*r+0.587*g+0.114*b)>128;
+  }
+  function svDiscText() {
+    const p=[];
+    if(document.getElementById('sv-disc-ai').checked)    p.push('Generative AI used');
+    if(document.getElementById('sv-disc-actor').checked) p.push('Actor portrayal. Individual results may vary.');
+    if(document.getElementById('sv-disc-vary').checked)  p.push('Individual results may vary.');
+    return p.join('\n');
+  }
+
+  function svSetColor(k, val) {
+    document.getElementById(`sv-${k}-picker`).value = val;
+    document.getElementById(`sv-${k}-hex`).value = val;
+  }
+  function svSetTitleColor(val) {
+    svTitleColor = val;
+    document.getElementById('sv-tc-picker').value = val;
+    document.getElementById('sv-tc-hex').value = val;
+  }
+
+  function svUpdatePreview() {
+    const bgColor  = document.getElementById('sv-bg-hex').value;
+    const txtColor = document.getElementById('sv-txt-hex').value;
+    const fontSize = +document.getElementById('sv-font-size').value;
+    const rawText  = document.getElementById('sv-text').value;
+    const titleTxt = document.getElementById('sv-title-input').value;
+
+    const lBgColor = document.getElementById('sv-lyr-bg-color');
+    const lBgImg   = document.getElementById('sv-lyr-bg-img');
+    const wrap     = document.getElementById('sv-live-wrap');
+
+    if (/^#[0-9a-fA-F]{6}$/.test(bgColor)) lBgColor.style.background = bgColor;
+    if (svBgImageObjUrl) {
+      lBgImg.style.backgroundImage = `url(${svBgImageObjUrl})`;
+      lBgImg.style.opacity = svBgOpacity;
+      lBgImg.style.display = 'block';
+    } else {
+      lBgImg.style.display = 'none';
+    }
+
+    const overlayEl  = document.getElementById('sv-live-overlay');
+    const overlayImg = document.getElementById('sv-live-overlay-img');
+    if (svOverlayObjUrl) {
+      overlayImg.src = svOverlayObjUrl;
+      overlayEl.style.display = 'block';
+    } else {
+      overlayEl.style.display = 'none';
+    }
+
+    const css   = svFontCssMap[svFont] || {f:'Arial', w:'normal'};
+    const w     = wrap.getBoundingClientRect().width || 260;
+    const scale = w / 1080;
+    const col   = /^#[0-9a-fA-F]{6}$/.test(txtColor) ? txtColor : '#ffffff';
+
+    const lTitle = document.getElementById('sv-live-title');
+    const lText  = document.getElementById('sv-live-text');
+
+    if (titleTxt.trim()) {
+      const tcss = (svTitleFont && svFontCssMap[svTitleFont]) || css;
+      const tCol = /^#[0-9a-fA-F]{6}$/.test(svTitleColor) ? svTitleColor : col;
+      lTitle.style.display    = 'block';
+      lTitle.style.color      = tCol;
+      lTitle.style.fontFamily = tcss.f;
+      lTitle.style.fontWeight = 'bold';
+      lTitle.style.textAlign  = svAlign;
+      lTitle.style.fontSize   = Math.round(svTitleSize * scale) + 'px';
+      lTitle.style.marginBottom = Math.round(svTitleSize * 0.05 * scale) + 'px';
+      lTitle.textContent = titleTxt;
+    } else {
+      lTitle.style.display = 'none';
+    }
+
+    lText.style.color      = col;
+    lText.style.fontFamily = css.f;
+    lText.style.fontWeight = css.w;
+    lText.style.textAlign  = svAlign;
+    lText.style.fontSize   = Math.round(fontSize * scale) + 'px';
+    lText.textContent = rawText.trim() ? rawText : 'Твій текст зʼявиться тут…';
+
+    const disc   = svDiscText();
+    const discEl = document.getElementById('sv-live-disclaimer');
+    if (disc) {
+      discEl.style.color    = svIsLight(bgColor) ? '#555555' : '#ffffff';
+      discEl.style.fontSize = Math.round(28 * scale) + 'px';
+      discEl.textContent    = disc;
+      discEl.style.display  = 'block';
+    } else {
+      discEl.style.display = 'none';
+    }
+    if (svInited) svSaveState();
+  }
+
+  async function svLoadFonts() {
+    try {
+      const fonts = await fetch('/scrolling/fonts').then(r => r.json());
+      const grid  = document.getElementById('sv-font-grid');
+      const tSel  = document.getElementById('sv-title-font');
+      grid.innerHTML = '';
+      fonts.forEach(f => {
+        if (f.file) {
+          const s = document.createElement('style');
+          s.textContent = `@font-face{font-family:'sv-${f.name}';src:url('/fonts/${f.file}')}`;
+          document.head.appendChild(s);
+          svFontCssMap[f.name] = {f:`'sv-${f.name}'`, w:'normal'};
+        }
+        const css  = svFontCssMap[f.name] || {f:'Arial', w:'normal'};
+        const card = document.createElement('div');
+        card.className = 'sv-font-card' + (f.name === svFont ? ' active' : '');
+        card.dataset.font = f.name;
+        card.innerHTML = `<div class="sv-font-card-name">${f.name}</div>
+          <div class="sv-font-card-preview" style="font-family:${css.f};font-weight:${css.w}">The way you love her.</div>`;
+        card.onclick = () => {
+          document.querySelectorAll('.sv-font-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          svFont = f.name;
+          svUpdatePreview();
+        };
+        grid.appendChild(card);
+        const opt = document.createElement('option');
+        opt.value = f.name; opt.textContent = f.name;
+        tSel.appendChild(opt);
+      });
+    } catch {
+      document.getElementById('sv-font-grid').innerHTML =
+        '<div style="color:var(--text-3);font-size:.78rem;grid-column:1/-1;">Помилка</div>';
+    }
+  }
+
+  function svSelectVoice(id, name, color) {
+    svVoice = id ? {id, name, color} : null;
+    const dot = document.getElementById('sv-sel-dot');
+    dot.style.display = id ? 'inline-block' : 'none';
+    dot.style.background = color || 'transparent';
+    document.getElementById('sv-sel-name').textContent = name;
+    document.querySelectorAll('.sv-vrow').forEach(r => r.classList.toggle('active', r.dataset.id === id));
+    document.getElementById('sv-speed-row').style.display = id ? 'none' : 'block';
+    svPanelOpen = false;
+    document.getElementById('sv-voice-panel').classList.remove('open');
+    document.getElementById('sv-voice-trigger').classList.remove('open');
+    document.getElementById('sv-vchev').classList.remove('open');
+  }
+
+  function svMakeVoiceRow(v) {
+    const row = document.createElement('div');
+    row.className = 'sv-vrow' + (svVoice && svVoice.id === v.id ? ' active' : '');
+    row.dataset.id = v.id;
+    row.innerHTML = `<span class="sv-vdot-sm" style="background:${v.color}"></span><span class="sv-vrow-name">${v.name}</span><button class="sv-vstar${v.fav?' fav':''}">${v.fav?'★':'☆'}</button>`;
+    row.onclick = e => { if (e.target.classList.contains('sv-vstar')) return; svSelectVoice(v.id, v.name, v.color); };
+    row.querySelector('.sv-vstar').onclick = async e => {
+      e.stopPropagation();
+      try {
+        const res = await fetch('/scrolling/favorites/toggle', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voice_id:v.id})}).then(r=>r.json());
+        v.fav = res.fav;
+        const q = document.getElementById('sv-vsearch').value.toLowerCase();
+        svRenderVoiceList(svAllVoices.filter(x => x.name.toLowerCase().includes(q)));
+      } catch {}
+    };
+    return row;
+  }
+
+  function svRenderVoiceList(voices) {
+    const list = document.getElementById('sv-vlist');
+    list.innerHTML = '';
+    const noneRow = document.createElement('div');
+    noneRow.className = 'sv-vrow' + (!svVoice ? ' active' : '');
+    noneRow.innerHTML = `<span class="sv-vdot-sm" style="background:var(--text-3)"></span><span class="sv-vrow-name">— без озвучки —</span>`;
+    noneRow.onclick = () => svSelectVoice(null, '— без озвучки —', null);
+    list.appendChild(noneRow);
+    const favs = voices.filter(v => v.fav);
+    if (favs.length) {
+      const lbl = document.createElement('div'); lbl.className='sv-vsec-lbl'; lbl.textContent='⭐ Обрані'; list.appendChild(lbl);
+      favs.forEach(v => list.appendChild(svMakeVoiceRow(v)));
+    }
+    const allLbl = document.createElement('div'); allLbl.className='sv-vsec-lbl'; allLbl.textContent='Усі голоси'; list.appendChild(allLbl);
+    voices.forEach(v => list.appendChild(svMakeVoiceRow(v)));
+  }
+
+  async function svLoadVoices() {
+    try {
+      svAllVoices = await fetch('/scrolling/voices').then(r => r.json());
+      svRenderVoiceList(svAllVoices);
+    } catch {
+      document.getElementById('sv-vlist').innerHTML = '<div style="padding:.5rem;color:var(--text-3);font-size:.78rem;">Помилка завантаження</div>';
+    }
+  }
+
+  function svStopAudio() {
+    if (svCurAudio)   { svCurAudio.pause(); svCurAudio = null; }
+    if (svCurPlayBtn) { svCurPlayBtn.classList.remove('playing'); svCurPlayBtn.textContent='▶'; svCurPlayBtn=null; }
+  }
+  function svTogglePlay(file, btn) {
+    if (svCurPlayBtn===btn) {
+      if (svCurAudio.paused) { svCurAudio.play(); btn.classList.add('playing'); btn.textContent='⏸'; }
+      else { svCurAudio.pause(); btn.classList.remove('playing'); btn.textContent='▶'; }
+      return;
+    }
+    svStopAudio();
+    svCurAudio = new Audio(`/scrolling/music/${encodeURIComponent(file)}`);
+    svCurAudio.play(); svCurPlayBtn=btn; btn.classList.add('playing'); btn.textContent='⏸';
+    svCurAudio.onended = () => { btn.classList.remove('playing'); btn.textContent='▶'; svCurAudio=null; svCurPlayBtn=null; };
+  }
+
+  function svRenderMusicList(tracks) {
+    const wrap = document.getElementById('sv-music-wrap');
+    wrap.innerHTML = '';
+    const noneEl = document.createElement('div');
+    noneEl.className = 'sv-music-none' + (!svMusic ? ' active' : '');
+    noneEl.innerHTML = `<span class="sv-track-name">— без музики —</span>`;
+    noneEl.onclick = () => { svMusic=null; svStopAudio(); wrap.querySelectorAll('.sv-music-track').forEach(c=>c.classList.remove('active')); noneEl.classList.add('active'); };
+    wrap.appendChild(noneEl);
+    if (!tracks.length) {
+      const em = document.createElement('div');
+      em.style.cssText='color:var(--text-3);font-size:.75rem;padding:.35rem 0;';
+      em.textContent='Немає треків — завантаж нижче'; wrap.appendChild(em); return;
+    }
+    tracks.forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'sv-music-track' + (svMusic===t.file ? ' active' : '');
+      el.dataset.file = t.file;
+      const btn = document.createElement('button'); btn.className='sv-play-btn'; btn.title='Прослухати'; btn.textContent='▶';
+      btn.onclick = e => { e.stopPropagation(); svTogglePlay(t.file, btn); };
+      const nm = document.createElement('span'); nm.className='sv-track-name'; nm.title=t.name; nm.textContent=t.name;
+      el.appendChild(btn); el.appendChild(nm);
+      el.onclick = e => { if(e.target===btn||btn.contains(e.target)) return; svMusic=t.file; wrap.querySelectorAll('.sv-music-track').forEach(c=>c.classList.remove('active')); noneEl.classList.remove('active'); el.classList.add('active'); };
+      wrap.appendChild(el);
+    });
+  }
+
+  async function svLoadMusic() {
+    try { const tracks = await fetch('/scrolling/music').then(r=>r.json()); svRenderMusicList(tracks); } catch {}
+  }
+
+  async function svUploadImage(file) {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/scrolling/upload/image', {method:'POST', body:fd}).then(r=>r.json());
+    if (res.error) throw new Error(res.error);
+    return res.filename;
+  }
+
+  async function svCheckStatus(tid, btn) {
+    try {
+      const d = await fetch(`/scrolling/status/${tid}`).then(r=>r.json());
+      document.getElementById('sv-status-txt').textContent = d.status;
+      document.getElementById('sv-prog-bar').style.width = d.progress+'%';
+      if (d.status==='done') {
+        clearInterval(svPoll);
+        document.getElementById('sv-prog-card').style.display='none';
+        document.getElementById('sv-res-card').style.display='block';
+        const link=document.getElementById('sv-dl-link');
+        const dn=d.display_filename||d.filename;
+        link.href=`/scrolling/download/${d.filename.replace('.mp4','')}?name=${encodeURIComponent(dn)}`;
+        link.download=dn;
+        const vid=document.getElementById('sv-result-video');
+        vid.src=`/scrolling/preview/${d.filename.replace('.mp4','')}`;
+        vid.load();
+        btn.disabled=false;
+        link.click();
+      } else if (d.status==='error') {
+        clearInterval(svPoll);
+        const el=document.getElementById('sv-err-msg'); el.textContent=d.error||'Помилка'; el.style.display='block';
+        btn.disabled=false;
+      }
+    } catch {}
+  }
+
+  window.svGenerate = async function() {
+    const text = document.getElementById('sv-text').value.trim();
+    if (!text) return alert('Введи текст!');
+    const btn = document.getElementById('sv-gen-btn');
+    btn.disabled = true;
+    document.getElementById('sv-prog-card').style.display = 'block';
+    document.getElementById('sv-err-msg').style.display = 'none';
+    document.getElementById('sv-prog-bar').style.width = '0%';
+    document.getElementById('sv-status-txt').textContent = '...';
+
+    const body = {
+      title:              document.getElementById('sv-title-input').value.trim(),
+      title_font_family:  svTitleFont,
+      title_font_size:    svTitleSize,
+      title_color:        svTitleColor,
+      text,
+      bg_color:           document.getElementById('sv-bg-hex').value,
+      text_color:         document.getElementById('sv-txt-hex').value,
+      font_size:          +document.getElementById('sv-font-size').value,
+      font_family:        svFont,
+      text_align:         svAlign,
+      voice_id:           svVoice?.id || null,
+      scroll_speed:       +document.getElementById('sv-speed').value,
+      music_file:         svMusic,
+      bg_image_file:      svBgImageFile,
+      bg_image_opacity:   svBgOpacity,
+      overlay_image_file: svOverlayFile,
+      overlay_anchor_y:   svOverlayAnchorY,
+      disclaimer:         svDiscText(),
+    };
+
+    try {
+      const {task_id} = await fetch('/scrolling/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}).then(r=>r.json());
+      svPoll = setInterval(() => svCheckStatus(task_id, btn), 2000);
+    } catch(e) {
+      const el=document.getElementById('sv-err-msg'); el.textContent=e.message; el.style.display='block';
+      btn.disabled=false;
+    }
+  };
+
+  window.svRemoveImage = function(type) {
+    if (type === 'overlay') {
+      svOverlayObjUrl=null; svOverlayFile=null;
+      document.getElementById('sv-overlay-preview-row').style.display='none';
+      document.getElementById('sv-overlay-pos-wrap').style.display='none';
+      document.getElementById('sv-overlay-thumb').src='';
+    } else {
+      svBgImageObjUrl=null; svBgImageFile=null;
+      document.getElementById('sv-bg-img-preview-row').style.display='none';
+      document.getElementById('sv-bg-img-thumb').src='';
+    }
+    svUpdatePreview();
+  };
+
+  window.svInit = function() {
+    if (svInited) return;
+    svInited = true;
+
+    // Color preset cards
+    const cardsEl = document.getElementById('sv-color-cards');
+    SV_PRESETS.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'sv-color-card' + (i === 1 ? ' active' : '');
+      card.style.background = p.bg;
+      card.innerHTML = `<span style="color:${p.tx};pointer-events:none">Aa</span>`;
+      card.onclick = () => {
+        svSetColor('bg', p.bg); svSetColor('txt', p.tx);
+        svSetTitleColor(p.tx); svTitleColorLinked = true;
+        document.querySelectorAll('.sv-color-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        svUpdatePreview();
+      };
+      cardsEl.appendChild(card);
+    });
+
+    // Align buttons
+    document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('#page-scrolling-video .sv-align-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        svAlign = btn.dataset.align;
+        svUpdatePreview();
+      };
+    });
+
+    // Color pickers
+    ['bg','txt'].forEach(k => {
+      document.getElementById(`sv-${k}-picker`).oninput = e => {
+        document.getElementById(`sv-${k}-hex`).value = e.target.value;
+        if (k==='txt' && svTitleColorLinked) svSetTitleColor(e.target.value);
+        document.querySelectorAll('.sv-color-card').forEach(c=>c.classList.remove('active'));
+        svUpdatePreview();
+      };
+      document.getElementById(`sv-${k}-hex`).oninput = e => {
+        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+          document.getElementById(`sv-${k}-picker`).value = e.target.value;
+          if (k==='txt' && svTitleColorLinked) svSetTitleColor(e.target.value);
+          document.querySelectorAll('.sv-color-card').forEach(c=>c.classList.remove('active'));
+          svUpdatePreview();
+        }
+      };
+    });
+    document.getElementById('sv-tc-picker').oninput = e => {
+      svTitleColorLinked=false; svTitleColor=e.target.value;
+      document.getElementById('sv-tc-hex').value=e.target.value; svUpdatePreview();
+    };
+    document.getElementById('sv-tc-hex').oninput = e => {
+      if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) {
+        svTitleColorLinked=false; svTitleColor=e.target.value;
+        document.getElementById('sv-tc-picker').value=e.target.value; svUpdatePreview();
+      }
+    };
+    document.getElementById('sv-title-size').oninput = e => {
+      svTitleSize=+e.target.value;
+      document.getElementById('sv-tfs-val').textContent=e.target.value+'px'; svUpdatePreview();
+    };
+    document.getElementById('sv-text').oninput = e => {
+      document.getElementById('sv-cc').textContent=e.target.value.length; svUpdatePreview();
+    };
+    document.getElementById('sv-title-input').oninput = svUpdatePreview;
+    document.getElementById('sv-font-size').oninput = e => {
+      document.getElementById('sv-fs-val').textContent=e.target.value+'px'; svUpdatePreview();
+    };
+    document.getElementById('sv-speed').oninput = e =>
+      document.getElementById('sv-sp-val').textContent=e.target.value+' px/с';
+    document.getElementById('sv-title-font').onchange = e => {
+      svTitleFont=e.target.value; svUpdatePreview();
+    };
+
+    // Disclaimer
+    document.getElementById('sv-disc-actor').onchange = function() {
+      if(this.checked) document.getElementById('sv-disc-vary').checked=false; svUpdatePreview();
+    };
+    document.getElementById('sv-disc-vary').onchange = function() {
+      if(this.checked) document.getElementById('sv-disc-actor').checked=false; svUpdatePreview();
+    };
+    document.getElementById('sv-disc-ai').onchange = svUpdatePreview;
+
+    // Image uploads
+    document.getElementById('sv-overlay-file').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      svOverlayObjUrl=URL.createObjectURL(file);
+      document.getElementById('sv-overlay-thumb').src=svOverlayObjUrl;
+      document.getElementById('sv-overlay-name').textContent=file.name;
+      document.getElementById('sv-overlay-preview-row').style.display='flex';
+      document.getElementById('sv-overlay-pos-wrap').style.display='block';
+      svUpdatePreview();
+      try { svOverlayFile=await svUploadImage(file); } catch(e) { alert(e.message); }
+      this.value='';
+    };
+    document.getElementById('sv-overlay-pos').oninput = e => {
+      svOverlayAnchorY=+e.target.value/100;
+      document.getElementById('sv-overlay-pos-val').textContent=e.target.value+'%';
+      document.getElementById('sv-live-overlay-img').style.objectPosition=`50% ${e.target.value}%`;
+    };
+    document.getElementById('sv-bg-img-file').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      svBgImageObjUrl=URL.createObjectURL(file);
+      document.getElementById('sv-bg-img-thumb').src=svBgImageObjUrl;
+      document.getElementById('sv-bg-img-name').textContent=file.name;
+      document.getElementById('sv-bg-img-preview-row').style.display='flex';
+      svUpdatePreview();
+      try { svBgImageFile=await svUploadImage(file); } catch(e) { alert(e.message); }
+      this.value='';
+    };
+    document.getElementById('sv-bg-opacity').oninput = e => {
+      svBgOpacity=+e.target.value/100;
+      document.getElementById('sv-bg-op-val').textContent=e.target.value+'%'; svUpdatePreview();
+    };
+
+    // Voice panel
+    document.getElementById('sv-voice-trigger').onclick = e => {
+      e.stopPropagation();
+      svPanelOpen=!svPanelOpen;
+      document.getElementById('sv-voice-panel').classList.toggle('open',svPanelOpen);
+      document.getElementById('sv-voice-trigger').classList.toggle('open',svPanelOpen);
+      document.getElementById('sv-vchev').classList.toggle('open',svPanelOpen);
+      if(svPanelOpen) document.getElementById('sv-vsearch').focus();
+    };
+    document.addEventListener('click', e => {
+      if(!e.target.closest('#sv-voice-selector')) {
+        svPanelOpen=false;
+        document.getElementById('sv-voice-panel').classList.remove('open');
+        document.getElementById('sv-voice-trigger').classList.remove('open');
+        document.getElementById('sv-vchev').classList.remove('open');
+      }
+    });
+    document.getElementById('sv-vsearch').oninput = () => {
+      const q=document.getElementById('sv-vsearch').value.toLowerCase();
+      svRenderVoiceList(svAllVoices.filter(v=>v.name.toLowerCase().includes(q)));
+    };
+
+    // Music upload
+    document.getElementById('sv-music-file-input').onchange = async function() {
+      const file=this.files[0]; if(!file) return;
+      const fd=new FormData(); fd.append('file',file);
+      try {
+        const track=await fetch('/scrolling/music/upload',{method:'POST',body:fd}).then(r=>r.json());
+        if(track.error){alert(track.error);return;}
+        const tracks=await fetch('/scrolling/music').then(r=>r.json());
+        svMusic=track.file; svRenderMusicList(tracks);
+      } catch { alert('Помилка завантаження файлу'); }
+      this.value='';
+    };
+
+    window.addEventListener('resize', svUpdatePreview);
+
+    svRestoreState();
+    svLoadFonts();
+    svLoadVoices();
+    svLoadMusic();
+    svUpdatePreview();
+  };
+})();
+
+// switchToPage ran before the IIFEs defined their inits — call them now if needed
+if (typeof svInit   === 'function' && URL_TO_PAGE[location.pathname] === 'scrolling-video') svInit();
+if (typeof _tcInit  === 'function' && URL_TO_PAGE[location.pathname] === 'text-cleaner')    _tcInit();
+
+// ── Text Cleaner ──────────────────────────────────────────────────────────────
+(function() {
+  const TC_DEFAULT_RULES = [
+    { from: 'get hard',          to: 'Get firm' },
+    { from: 'hard',              to: 'Firm' },
+    { from: 'sex',               to: 'Intimacy' },
+    { from: 'masturb[a-z]*|masturnat[a-z]*', to: 'Beat off', regex: true },
+    { from: 'anxiety',           to: 'Stress' },
+    { from: 'porn',              to: 'Spicy content' },
+    { from: 'penis',             to: 'Member' },
+    { from: 'pills',             to: 'Supplements' },
+    { from: 'doctor',            to: 'Specialist' },
+    { from: 'morning erections', to: 'morning wood' },
+    { from: 'sexual position',   to: 'position' },
+  ];
+
+  const TC_LS_KEY = 'tc_text_v1';
+
+  let tcRules = [];
+  let tcClean = '';
+  let tcMode  = 'static';
+  let tcRulesOpen = true;
+  let tcDirty = false;
+  let tcInited = false;
+
+  function tcSaveText() {
+    try { localStorage.setItem(TC_LS_KEY, document.getElementById('tc-input').value); } catch {}
+  }
+
+  function tcRestoreText() {
+    try {
+      const saved = localStorage.getItem(TC_LS_KEY);
+      if (saved) {
+        document.getElementById('tc-input').value = saved;
+        document.getElementById('tc-char-count').textContent =
+          `${saved.length.toLocaleString('uk')} символів`;
+      }
+    } catch {}
+  }
+
+  async function tcInit() {
+    if (tcInited) return;
+    tcInited = true;
+    await tcLoadRules();
+    tcRestoreText();
+    const k = localStorage.getItem('tc_api_key');
+    if (k) document.getElementById('tc-api-key').value = k;
+    tcSetupEvents();
+  }
+
+  async function tcLoadRules() {
+    try {
+      const res = await fetch('/tiktok/rules');
+      if (!res.ok) throw new Error();
+      tcRules = await res.json();
+      if (!tcRules.length) tcRules = TC_DEFAULT_RULES.map(r => ({...r}));
+    } catch {
+      tcRules = TC_DEFAULT_RULES.map(r => ({...r}));
+    }
+    tcRenderRules();
+  }
+
+  function tcRenderRules() {
+    const body = document.getElementById('tc-rules-body');
+    body.innerHTML = '';
+    if (!tcRules.length) {
+      body.innerHTML = '<p style="color:var(--text-3);font-size:12px;padding:4px 0">Правил немає. Натисни + Додати.</p>';
+      tcUpdateBadge(); return;
+    }
+    tcRules.forEach((rule, i) => {
+      const row = document.createElement('div');
+      row.className = 'tc-rule-row';
+      row.innerHTML = `
+        <input class="tc-rule-input" type="text" value="${tcEsc(rule.from)}" placeholder="Знайти…" data-i="${i}" data-f="from">
+        <span class="tc-rule-sep">→</span>
+        <input class="tc-rule-input" type="text" value="${tcEsc(rule.to)}" placeholder="Замінити…" data-i="${i}" data-f="to">
+        <button class="btn-tc-del" data-i="${i}" title="Видалити">✕</button>`;
+      body.appendChild(row);
+    });
+    body.querySelectorAll('.tc-rule-input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        tcRules[+e.target.dataset.i][e.target.dataset.f] = e.target.value;
+        tcMarkDirty();
+      });
+    });
+    body.querySelectorAll('.btn-tc-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        tcRules.splice(+e.target.dataset.i, 1);
+        tcRenderRules();
+        tcSaveRules();
+      });
+    });
+    tcUpdateBadge();
+  }
+
+  function tcMarkDirty() {
+    tcDirty = true;
+    document.getElementById('tc-rules-ft').style.display = 'block';
+  }
+
+  async function tcSaveRules() {
+    try {
+      await fetch('/tiktok/rules', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(tcRules),
+      });
+      tcDirty = false;
+      document.getElementById('tc-rules-ft').style.display = 'none';
+      tcShowStatus('✓ Правила збережено');
+    } catch { tcShowStatus('Помилка збереження', true); }
+  }
+
+  function tcUpdateBadge() {
+    document.getElementById('tc-rules-badge').textContent = tcRules.filter(r => r.from).length;
+  }
+
+  async function tcRunClean() {
+    const text = document.getElementById('tc-input').value.trim();
+    if (!text) { tcShowStatus('Введи текст!', true); return; }
+    const btn = document.getElementById('tc-btn-clean');
+    btn.disabled = true;
+    btn.textContent = tcMode === 'ai' ? 'AI обробка…' : 'Очищаємо…';
+    const api_key = localStorage.getItem('tc_api_key') || '';
+    try {
+      const res  = await fetch('/tiktok/clean', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text, mode: tcMode, api_key }),
+      });
+      const data = await res.json();
+      if (data.error) { tcShowStatus('❌ ' + data.error, true); return; }
+      tcClean = data.cleaned;
+      document.getElementById('tc-output').innerHTML = data.diff_html;
+      document.getElementById('tc-btn-copy').disabled = false;
+      document.getElementById('tc-btn-dl').disabled   = false;
+      const n = (data.diff_html.match(/<mark>/g) || []).length;
+      document.getElementById('tc-changes-count').textContent =
+        n ? `${n} замін${n===1?'а':n<5?'и':''}` : 'Змін не виявлено';
+      tcShowStatus(tcMode === 'ai' ? '✓ AI + Static готово' : `✓ Готово — ${n} замін`);
+    } catch (e) {
+      tcShowStatus('❌ ' + (e.message || 'Помилка'), true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Очистити →';
+    }
+  }
+
+  function tcSetupEvents() {
+    document.getElementById('tc-input').addEventListener('input', e => {
+      document.getElementById('tc-char-count').textContent =
+        `${e.target.value.length.toLocaleString('uk')} символів`;
+      tcSaveText();
+    });
+    document.getElementById('tc-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); tcRunClean(); }
+    });
+    document.querySelectorAll('.tc-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tc-mode-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tcMode = btn.dataset.tcmode;
+      });
+    });
+    document.getElementById('tc-btn-clean').addEventListener('click', tcRunClean);
+    document.getElementById('tc-btn-paste').addEventListener('click', async () => {
+      try {
+        const t = await navigator.clipboard.readText();
+        document.getElementById('tc-input').value = t;
+        document.getElementById('tc-char-count').textContent = `${t.length.toLocaleString('uk')} символів`;
+      } catch { tcShowStatus('Використай ⌘V / Ctrl+V', true); }
+    });
+    document.getElementById('tc-btn-clear').addEventListener('click', () => {
+      document.getElementById('tc-input').value = '';
+      document.getElementById('tc-char-count').textContent = '0 символів';
+      document.getElementById('tc-output').innerHTML = "<span class='tc-output-placeholder'>Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>";
+      document.getElementById('tc-changes-count').textContent = '';
+      document.getElementById('tc-btn-copy').disabled = true;
+      document.getElementById('tc-btn-dl').disabled   = true;
+      tcClean = '';
+      tcSaveText();
+    });
+    document.getElementById('tc-btn-reset').addEventListener('click', () => {
+      if (!confirm('Скинути текст і результат?')) return;
+      localStorage.removeItem(TC_LS_KEY);
+      document.getElementById('tc-input').value = '';
+      document.getElementById('tc-char-count').textContent = '0 символів';
+      document.getElementById('tc-output').innerHTML = "<span class='tc-output-placeholder'>Тут з'явиться очищений текст.<br>Підсвічені слова — замінені.</span>";
+      document.getElementById('tc-changes-count').textContent = '';
+      document.getElementById('tc-btn-copy').disabled = true;
+      document.getElementById('tc-btn-dl').disabled   = true;
+      tcClean = '';
+    });
+    document.getElementById('tc-btn-copy').addEventListener('click', async () => {
+      if (!tcClean) return;
+      await navigator.clipboard.writeText(tcClean);
+      tcShowStatus('✓ Скопійовано!');
+    });
+    document.getElementById('tc-btn-dl').addEventListener('click', () => {
+      if (!tcClean) return;
+      const blob = new Blob([tcClean], {type:'text/plain;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {href:url, download:`cleaned_${new Date().toISOString().slice(0,10)}.txt`});
+      a.click(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('tc-rules-toggle').addEventListener('click', e => {
+      if (e.target.closest('#tc-btn-add-rule')) return;
+      tcRulesOpen = !tcRulesOpen;
+      document.getElementById('tc-rules-body').classList.toggle('closed', !tcRulesOpen);
+      document.getElementById('tc-rules-arrow').style.transform = tcRulesOpen ? '' : 'rotate(-90deg)';
+    });
+    document.getElementById('tc-btn-add-rule').addEventListener('click', e => {
+      e.stopPropagation();
+      if (!tcRulesOpen) {
+        tcRulesOpen = true;
+        document.getElementById('tc-rules-body').classList.remove('closed');
+        document.getElementById('tc-rules-arrow').style.transform = '';
+      }
+      tcRules.push({from:'', to:''});
+      tcRenderRules();
+      tcMarkDirty();
+      const inputs = document.querySelectorAll('.tc-rule-input[data-f="from"]');
+      if (inputs.length) inputs[inputs.length-1].focus();
+    });
+    document.getElementById('tc-btn-save-rules').addEventListener('click', tcSaveRules);
+    document.getElementById('tc-btn-settings').addEventListener('click', () => {
+      document.getElementById('tc-modal').style.display = 'flex';
+    });
+    document.getElementById('tc-modal-close').addEventListener('click', tcCloseModal);
+    document.getElementById('tc-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('tc-modal')) tcCloseModal();
+    });
+    document.getElementById('tc-btn-save-key').addEventListener('click', () => {
+      const key = document.getElementById('tc-api-key').value.trim();
+      if (key) localStorage.setItem('tc_api_key', key);
+      else     localStorage.removeItem('tc_api_key');
+      tcCloseModal();
+      tcShowStatus('✓ API ключ збережено');
+    });
+  }
+
+  function tcCloseModal() { document.getElementById('tc-modal').style.display = 'none'; }
+
+  let _tcStatusTimer = null;
+  function tcShowStatus(msg, isErr = false) {
+    const bar = document.getElementById('tc-status');
+    bar.textContent = msg;
+    bar.style.color   = isErr ? '#ef4444' : '#32d74b';
+    bar.style.opacity = '1';
+    clearTimeout(_tcStatusTimer);
+    _tcStatusTimer = setTimeout(() => { bar.style.opacity = '0'; }, 3500);
+  }
+
+  function tcEsc(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window._tcInit = tcInit;
+})();
 </script>
 </body>
 </html>

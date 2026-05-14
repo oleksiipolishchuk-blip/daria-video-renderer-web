@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy fonts from repo
 COPY fonts/ /usr/share/fonts/truetype/montserrat/
+COPY fonts/ /app/fonts/
 RUN fc-cache -f -v
 
 WORKDIR /app
@@ -15,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY index.html .
+COPY scrolling_generator.py .
+COPY scrolling_tts.py .
 COPY frames/ /app/frames/
 COPY music/  /app/music/
 
