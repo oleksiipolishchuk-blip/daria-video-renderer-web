@@ -455,7 +455,7 @@ def render_frame(text: str, bg_rgb: tuple, text_rgb: tuple, font, bg_image_pil=N
         ov_draw   = ImageDraw.Draw(overlay)
         disc_line_h = 26
         total_disc_h = len(disclaimer_lines) * disc_line_h
-        y = VIDEO_HEIGHT - 260 - total_disc_h
+        y = VIDEO_HEIGHT - 400 - total_disc_h
         # Pick text color based on bg brightness; photo bg → white with stroke
         if bg_image_pil is not None:
             disc_fill   = (255, 255, 255, 140)
